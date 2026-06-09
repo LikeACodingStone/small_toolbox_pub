@@ -69,6 +69,22 @@ def env_int(name, default):
         return max(1, int(default))
 
 
+def env_nonnegative_int(name, default):
+    try:
+        return max(0, int(os.getenv(name, default)))
+    except ValueError:
+        logger.warning("Invalid integer env %s=%r, using default=%s", name, os.getenv(name), default)
+        return max(0, int(default))
+
+
+def env_float(name, default):
+    try:
+        return max(0.0, float(os.getenv(name, default)))
+    except ValueError:
+        logger.warning("Invalid float env %s=%r, using default=%s", name, os.getenv(name), default)
+        return max(0.0, float(default))
+
+
 def env_bool(name, default=True):
     value = os.getenv(name)
     if value is None:
@@ -82,6 +98,18 @@ def get_ollama_model():
 
 def get_whisper_cpu_threads():
     return env_int("JOEROGAN_WHISPER_CPU_THREADS", "1")
+
+
+def get_whisper_gpu_retries():
+    return env_nonnegative_int("JOEROGAN_WHISPER_GPU_RETRIES", "1")
+
+
+def get_whisper_retry_sleep_seconds():
+    return env_float("JOEROGAN_WHISPER_RETRY_SLEEP_SECONDS", "45")
+
+
+def get_whisper_subprocess_timeout_seconds():
+    return env_float("JOEROGAN_WHISPER_SUBPROCESS_TIMEOUT_SECONDS", "1200")
 
 
 def get_whisper_device():
@@ -285,15 +313,28 @@ def transcribe_chunk_subprocess(chunk_path, tmp_dir, chunk_index, device, comput
     env = os.environ.copy()
     env.setdefault("PYTHONFAULTHANDLER", "1")
     env.setdefault("TQDM_DISABLE", "1")
+    env.setdefault("TOKENIZERS_PARALLELISM", "false")
     description = f"Whisper chunk child index={chunk_index} device={device}"
-    proc = subprocess.run(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        errors="replace",
-        env=env,
-    )
+    timeout_seconds = get_whisper_subprocess_timeout_seconds()
+    logger.info("%s timeout_seconds=%.1f", description, timeout_seconds)
+    try:
+        proc = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            errors="replace",
+            env=env,
+            timeout=timeout_seconds if timeout_seconds > 0 else None,
+        )
+    except subprocess.TimeoutExpired as exc:
+        stdout = (exc.stdout or "")[-4000:] if isinstance(exc.stdout, str) else exc.stdout
+        stderr = (exc.stderr or "")[-8000:] if isinstance(exc.stderr, str) else exc.stderr
+        if stdout:
+            logger.error("%s timeout stdout: %s", description, stdout)
+        if stderr:
+            logger.error("%s timeout stderr: %s", description, stderr)
+        raise RuntimeError(f"{description} timed out after {timeout_seconds:.1f}s") from exc
     if proc.stdout.strip():
         logger.info("%s stdout: %s", description, proc.stdout[-4000:])
     if proc.stderr.strip():
@@ -319,32 +360,70 @@ def transcribe_chunk_with_fallback(chunk_path, tmp_dir, chunk_index):
     device = get_whisper_device()
     compute_type = get_whisper_compute_type(device)
     cpu_threads = get_whisper_cpu_threads()
+    gpu_attempts = get_whisper_gpu_retries() + 1
+    retry_sleep = get_whisper_retry_sleep_seconds()
 
-    try:
-        return transcribe_chunk_subprocess(
-            chunk_path,
-            tmp_dir,
-            chunk_index,
-            device,
-            compute_type,
-            cpu_threads,
-        )
-    except Exception:
-        if device == "cpu" or not env_bool("JOEROGAN_WHISPER_FALLBACK_CPU", True):
-            raise
-        logger.exception(
-            "GPU chunk subprocess failed index=%d path=%s; retrying this chunk on CPU int8",
-            chunk_index,
-            chunk_path,
-        )
+    if device == "cpu":
         return transcribe_chunk_subprocess(
             chunk_path,
             tmp_dir,
             chunk_index,
             "cpu",
-            "int8",
+            compute_type,
             cpu_threads,
         )
+
+    last_error = None
+    for attempt in range(1, gpu_attempts + 1):
+        try:
+            logger.info(
+                "GPU chunk attempt %d/%d index=%d path=%s device=%s compute_type=%s",
+                attempt,
+                gpu_attempts,
+                chunk_index,
+                chunk_path,
+                device,
+                compute_type,
+            )
+            return transcribe_chunk_subprocess(
+                chunk_path,
+                tmp_dir,
+                chunk_index,
+                device,
+                compute_type,
+                cpu_threads,
+            )
+        except Exception as exc:
+            last_error = exc
+            if attempt < gpu_attempts:
+                logger.exception(
+                    "GPU chunk attempt failed index=%d attempt=%d/%d; sleeping %.1fs before retry",
+                    chunk_index,
+                    attempt,
+                    gpu_attempts,
+                    retry_sleep,
+                )
+                time.sleep(retry_sleep)
+                continue
+
+    if not env_bool("JOEROGAN_WHISPER_FALLBACK_CPU", True):
+        raise last_error
+
+    logger.error(
+        "GPU chunk subprocess failed after %d attempt(s) index=%d path=%s; retrying this chunk on CPU int8",
+        gpu_attempts,
+        chunk_index,
+        chunk_path,
+        exc_info=(type(last_error), last_error, last_error.__traceback__),
+    )
+    return transcribe_chunk_subprocess(
+        chunk_path,
+        tmp_dir,
+        chunk_index,
+        "cpu",
+        "int8",
+        cpu_threads,
+    )
 
 
 def iter_whisper_segments_chunked(model, input_mp3, chunk_seconds):

@@ -111,6 +111,8 @@ def setup_logging():
 
 def clear_log_dir():
     LOG_DIR.mkdir(parents=True, exist_ok=True)
+    if not env_bool("JOEROGAN_CLEAR_LOGS", True):
+        return
     for path in LOG_DIR.iterdir():
         if path.is_file():
             path.unlink()
@@ -394,7 +396,7 @@ def main():
 
     if not SRC_DIR.exists():
         logging.error("Source directory does not exist: %s", SRC_DIR)
-        return
+        return 1
 
     files = sorted(
         path
@@ -419,7 +421,7 @@ def main():
 
     logging.info("Pending source audio files: %d", len(pending_files))
     if not pending_files:
-        return
+        return 0
 
     worker_count = min(MAX_WORKERS, len(pending_files))
     logging.info("Start parallel processing with %d workers", worker_count)
@@ -448,7 +450,7 @@ def main():
                 failed += 1
                 logging.exception("Processing failed: %s", mp3_path)
         logging.info("Batch completed: success=%d failed=%d", completed, failed)
-        return
+        return 1 if failed else 0
 
     try:
         with ProcessPoolExecutor(max_workers=worker_count) as executor:
@@ -488,7 +490,8 @@ def main():
         raise
 
     logging.info("Batch completed: success=%d failed=%d", completed, failed)
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
