@@ -1,8 +1,9 @@
-import logging
+﻿import logging
 import os
 import re
 import gc
 import argparse
+import configparser
 import json
 import shutil
 import subprocess
@@ -22,10 +23,15 @@ from wordfreq import word_frequency
 logger = logging.getLogger(__name__)
 _LOG_INITIALIZED = False
 _LOG_FILE = None
+_RUNTIME_CORE_CACHE = {"mtime": None, "core": None}
+_PROPER_NOUN_CONFIG_CACHE = {"mtime": None, "config": None}
+_TRANSLATION_CONFIG_CACHE = {"mtime": None, "config": None}
+_SPACY_NLP_CACHE = {"model": None, "nlp": None, "failed_models": set()}
 
 analyzer = CEFRAnalyzer()
 OLLAMA_API = "http://localhost:11434/api/generate"
 FILTER_FILE = Path(__file__).resolve().parent / "filter.txt"
+CONFIG_FILE = Path(__file__).resolve().parent / "config.ini"
 COMPLETE_MARKER = "<!-- TRANSCRIPTION_COMPLETE -->"
 
 
@@ -93,48 +99,73 @@ def env_bool(name, default=True):
 
 
 def get_ollama_model():
-    return os.getenv("JOEROGAN_OLLAMA_MODEL", "qwen2.5:7b").strip() or "qwen2.5:7b"
+    return os.getenv("AUDIOSOURCE_OLLAMA_MODEL", "qwen2.5:7b").strip() or "qwen2.5:7b"
+
+
+def get_configured_calculate_core():
+    mtime = CONFIG_FILE.stat().st_mtime if CONFIG_FILE.exists() else None
+    if _RUNTIME_CORE_CACHE["core"] is not None and _RUNTIME_CORE_CACHE["mtime"] == mtime:
+        return _RUNTIME_CORE_CACHE["core"]
+
+    core = "GPU"
+    if CONFIG_FILE.exists():
+        parser = configparser.ConfigParser()
+        parser.read(CONFIG_FILE, encoding="utf-8")
+        if parser.has_section("RuntimeConfig"):
+            section = parser["RuntimeConfig"]
+            core = section.get("CaculateCore", section.get("CalculateCore", "GPU"))
+
+    core = "CPU" if str(core).strip().upper() == "CPU" else "GPU"
+    _RUNTIME_CORE_CACHE["mtime"] = mtime
+    _RUNTIME_CORE_CACHE["core"] = core
+    return core
 
 
 def get_whisper_cpu_threads():
-    return env_int("JOEROGAN_WHISPER_CPU_THREADS", "1")
+    value = os.getenv("AUDIOSOURCE_WHISPER_CPU_THREADS")
+    if value is not None:
+        return env_int("AUDIOSOURCE_WHISPER_CPU_THREADS", "1")
+    if get_configured_calculate_core() == "CPU":
+        return os.cpu_count() or 1
+    return 1
 
 
 def get_whisper_gpu_retries():
-    return env_nonnegative_int("JOEROGAN_WHISPER_GPU_RETRIES", "1")
+    return env_nonnegative_int("AUDIOSOURCE_WHISPER_GPU_RETRIES", "1")
 
 
 def get_whisper_retry_sleep_seconds():
-    return env_float("JOEROGAN_WHISPER_RETRY_SLEEP_SECONDS", "45")
+    return env_float("AUDIOSOURCE_WHISPER_RETRY_SLEEP_SECONDS", "45")
 
 
 def get_whisper_subprocess_timeout_seconds():
-    return env_float("JOEROGAN_WHISPER_SUBPROCESS_TIMEOUT_SECONDS", "1200")
+    return env_float("AUDIOSOURCE_WHISPER_SUBPROCESS_TIMEOUT_SECONDS", "1200")
 
 
 def get_whisper_device():
-    return os.getenv("JOEROGAN_WHISPER_DEVICE", "cuda").strip() or "cuda"
+    configured_default = "cpu" if get_configured_calculate_core() == "CPU" else "cuda"
+    return os.getenv("AUDIOSOURCE_WHISPER_DEVICE", configured_default).strip() or configured_default
 
 
 def get_whisper_compute_type(device):
     default = "int8" if device == "cpu" else "float16"
-    return os.getenv("JOEROGAN_WHISPER_COMPUTE_TYPE", default).strip() or default
+    return os.getenv("AUDIOSOURCE_WHISPER_COMPUTE_TYPE", default).strip() or default
 
 
 def get_whisper_chunk_seconds():
-    value = os.getenv("JOEROGAN_WHISPER_CHUNK_SECONDS")
+    value = os.getenv("AUDIOSOURCE_WHISPER_CHUNK_SECONDS")
     if value is None:
-        return 0 if get_whisper_device() == "cpu" else 900
+        return 0 if get_whisper_device() == "cpu" else 300
 
     try:
         return max(0, int(value))
     except ValueError:
-        logger.warning("Invalid JOEROGAN_WHISPER_CHUNK_SECONDS=%r, using default", value)
-        return 0 if get_whisper_device() == "cpu" else 900
+        logger.warning("Invalid AUDIOSOURCE_WHISPER_CHUNK_SECONDS=%r, using default", value)
+        return 0 if get_whisper_device() == "cpu" else 300
 
 
 def get_whisper_isolate_chunks():
-    return env_bool("JOEROGAN_WHISPER_ISOLATE_CHUNKS", get_whisper_device() != "cpu")
+    return env_bool("AUDIOSOURCE_WHISPER_ISOLATE_CHUNKS", get_whisper_device() != "cpu")
 
 
 def load_whisper_model():
@@ -160,7 +191,7 @@ def load_whisper_model():
         logger.info("Loaded WhisperModel on device=%s elapsed=%.2fs", device, time.monotonic() - start_time)
         return model
     except Exception:
-        if device == "cpu" or not env_bool("JOEROGAN_WHISPER_FALLBACK_CPU", True):
+        if device == "cpu" or not env_bool("AUDIOSOURCE_WHISPER_FALLBACK_CPU", True):
             raise
 
         logger.exception(
@@ -406,7 +437,7 @@ def transcribe_chunk_with_fallback(chunk_path, tmp_dir, chunk_index):
                 time.sleep(retry_sleep)
                 continue
 
-    if not env_bool("JOEROGAN_WHISPER_FALLBACK_CPU", True):
+    if not env_bool("AUDIOSOURCE_WHISPER_FALLBACK_CPU", True):
         raise last_error
 
     logger.error(
@@ -437,7 +468,7 @@ def iter_whisper_segments_chunked(model, input_mp3, chunk_seconds):
         isolate_chunks,
     )
 
-    with tempfile.TemporaryDirectory(prefix="joerogan_whisper_chunks_") as tmp_dir:
+    with tempfile.TemporaryDirectory(prefix="audiosource_whisper_chunks_") as tmp_dir:
         tmp_dir = Path(tmp_dir)
         chunk_index = 0
         chunk_start = 0.0
@@ -526,6 +557,37 @@ SKIP_WORDS = {
 }
 
 _FILTER_WORDS_CACHE = {"mtime": None, "words": set()}
+_DIFFICULTY_CONFIG_CACHE = {"mtime": None, "config": None}
+
+DEFAULT_DIFFICULTY_CONFIG = {
+    "advanced_levels": {"C1", "C2"},
+    "min_candidate_length": 5,
+    "b1_min_length": 8,
+    "b1_frequency_threshold": 0.000003,
+    "b2_min_length": 8,
+    "b2_frequency_threshold": 0.000012,
+    "unknown_min_length": 8,
+    "unknown_frequency_threshold": 0.000003,
+}
+
+DEFAULT_PROPER_NOUN_CONFIG = {
+    "enabled": True,
+    "model": "en_core_web_sm",
+    "entity_labels": {"PERSON", "GPE", "LOC", "FAC", "ORG"},
+    "skip_words": set(),
+}
+
+DEFAULT_TRANSLATION_CONFIG = {
+    "segments_per_translation": 1,
+    "use_context_meaning": True,
+    "max_meaning_chars": 8,
+    "retry_on_verbose_meaning": True,
+    "ambiguous_meaning_policy": "skip",
+    "ollama_temperature": 0.0,
+    "repeat_window_seconds": 120,
+}
+
+RECENT_TRANSLATION_WINDOW_SECONDS = 120.0
 
 
 def normalize_word(raw_word):
@@ -538,6 +600,294 @@ def cefr_level_to_text(level):
     if hasattr(level, "name"):
         return str(level.name).upper()
     return str(level).strip().upper()
+
+
+def parse_csv_levels(value, default):
+    levels = {item.strip().upper() for item in str(value).split(",") if item.strip()}
+    return levels or set(default)
+
+
+def parse_csv_words(value):
+    words = set()
+    for item in str(value).split(","):
+        for token in re.findall(r"\b[A-Za-z][A-Za-z'-]*\b", item):
+            normalized = normalize_word(token).lower()
+            if normalized:
+                words.add(normalized)
+    return words
+
+
+def config_bool(section, key, default):
+    return config_section_bool(section, "ProperNounConfig", key, default)
+
+
+def config_section_bool(section, section_name, key, default):
+    try:
+        return section.getboolean(key, fallback=default)
+    except ValueError:
+        logger.warning("Invalid %s.%s=%r, using default=%s", section_name, key, section.get(key), default)
+        return default
+
+
+def config_positive_int(section, section_name, key, default):
+    try:
+        return max(1, section.getint(key, fallback=default))
+    except ValueError:
+        logger.warning("Invalid %s.%s=%r, using default=%s", section_name, key, section.get(key), default)
+        return max(1, int(default))
+
+
+def config_nonnegative_float(section, section_name, key, default):
+    try:
+        return max(0.0, section.getfloat(key, fallback=default))
+    except ValueError:
+        logger.warning("Invalid %s.%s=%r, using default=%s", section_name, key, section.get(key), default)
+        return max(0.0, float(default))
+
+
+def config_int(section, key, default):
+    try:
+        return max(0, section.getint(key, fallback=default))
+    except ValueError:
+        logger.warning("Invalid DifficultyConfig.%s=%r, using default=%s", key, section.get(key), default)
+        return default
+
+
+def config_float(section, key, default):
+    try:
+        return max(0.0, section.getfloat(key, fallback=default))
+    except ValueError:
+        logger.warning("Invalid DifficultyConfig.%s=%r, using default=%s", key, section.get(key), default)
+        return default
+
+
+def load_difficulty_config():
+    mtime = CONFIG_FILE.stat().st_mtime if CONFIG_FILE.exists() else None
+    cached_config = _DIFFICULTY_CONFIG_CACHE["config"]
+    if cached_config is not None and _DIFFICULTY_CONFIG_CACHE["mtime"] == mtime:
+        return cached_config
+
+    config = dict(DEFAULT_DIFFICULTY_CONFIG)
+    if CONFIG_FILE.exists():
+        parser = configparser.ConfigParser()
+        parser.read(CONFIG_FILE, encoding="utf-8")
+        section = parser["DifficultyConfig"] if parser.has_section("DifficultyConfig") else {}
+        if section:
+            config["advanced_levels"] = parse_csv_levels(
+                section.get("AdvancedLevels", ",".join(sorted(config["advanced_levels"]))),
+                config["advanced_levels"],
+            )
+            config["min_candidate_length"] = config_int(section, "MinCandidateLength", config["min_candidate_length"])
+            config["b1_min_length"] = config_int(section, "B1MinLength", config["b1_min_length"])
+            config["b1_frequency_threshold"] = config_float(
+                section,
+                "B1FrequencyThreshold",
+                config["b1_frequency_threshold"],
+            )
+            config["b2_min_length"] = config_int(section, "B2MinLength", config["b2_min_length"])
+            config["b2_frequency_threshold"] = config_float(
+                section,
+                "B2FrequencyThreshold",
+                config["b2_frequency_threshold"],
+            )
+            config["unknown_min_length"] = config_int(section, "UnknownMinLength", config["unknown_min_length"])
+            config["unknown_frequency_threshold"] = config_float(
+                section,
+                "UnknownFrequencyThreshold",
+                config["unknown_frequency_threshold"],
+            )
+
+    logger.info(
+        "Difficulty config: advanced_levels=%s min_candidate_length=%s "
+        "B1(len>=%s,freq<%s) B2(len>=%s,freq<%s) unknown(len>=%s,freq<%s)",
+        ",".join(sorted(config["advanced_levels"])),
+        config["min_candidate_length"],
+        config["b1_min_length"],
+        config["b1_frequency_threshold"],
+        config["b2_min_length"],
+        config["b2_frequency_threshold"],
+        config["unknown_min_length"],
+        config["unknown_frequency_threshold"],
+    )
+    _DIFFICULTY_CONFIG_CACHE["mtime"] = mtime
+    _DIFFICULTY_CONFIG_CACHE["config"] = config
+    return config
+
+
+def load_proper_noun_config():
+    mtime = CONFIG_FILE.stat().st_mtime if CONFIG_FILE.exists() else None
+    cached_config = _PROPER_NOUN_CONFIG_CACHE["config"]
+    if cached_config is not None and _PROPER_NOUN_CONFIG_CACHE["mtime"] == mtime:
+        return cached_config
+
+    config = {
+        "enabled": DEFAULT_PROPER_NOUN_CONFIG["enabled"],
+        "model": DEFAULT_PROPER_NOUN_CONFIG["model"],
+        "entity_labels": set(DEFAULT_PROPER_NOUN_CONFIG["entity_labels"]),
+        "skip_words": set(DEFAULT_PROPER_NOUN_CONFIG["skip_words"]),
+    }
+    if CONFIG_FILE.exists():
+        parser = configparser.ConfigParser()
+        parser.read(CONFIG_FILE, encoding="utf-8")
+        if parser.has_section("ProperNounConfig"):
+            section = parser["ProperNounConfig"]
+            config["enabled"] = config_bool(section, "SkipProperNouns", config["enabled"])
+            config["model"] = section.get("NlpModel", config["model"]).strip() or config["model"]
+            config["entity_labels"] = parse_csv_levels(
+                section.get("EntityLabels", ",".join(sorted(config["entity_labels"]))),
+                config["entity_labels"],
+            )
+            config["skip_words"] = parse_csv_words(section.get("SkipWords", ""))
+
+    logger.info(
+        "Proper noun config: enabled=%s model=%s labels=%s skip_words=%d",
+        config["enabled"],
+        config["model"],
+        ",".join(sorted(config["entity_labels"])),
+        len(config["skip_words"]),
+    )
+    _PROPER_NOUN_CONFIG_CACHE["mtime"] = mtime
+    _PROPER_NOUN_CONFIG_CACHE["config"] = config
+    return config
+
+
+def load_translation_config():
+    mtime = CONFIG_FILE.stat().st_mtime if CONFIG_FILE.exists() else None
+    cached_config = _TRANSLATION_CONFIG_CACHE["config"]
+    if cached_config is not None and _TRANSLATION_CONFIG_CACHE["mtime"] == mtime:
+        return cached_config
+
+    config = dict(DEFAULT_TRANSLATION_CONFIG)
+    if CONFIG_FILE.exists():
+        parser = configparser.ConfigParser()
+        parser.read(CONFIG_FILE, encoding="utf-8")
+        if parser.has_section("TranslationConfig"):
+            section = parser["TranslationConfig"]
+            config["segments_per_translation"] = config_positive_int(
+                section,
+                "TranslationConfig",
+                "SegmentsPerTranslation",
+                config["segments_per_translation"],
+            )
+            config["use_context_meaning"] = config_section_bool(
+                section,
+                "TranslationConfig",
+                "UseContextMeaning",
+                config["use_context_meaning"],
+            )
+            config["max_meaning_chars"] = config_positive_int(
+                section,
+                "TranslationConfig",
+                "MaxMeaningChars",
+                config["max_meaning_chars"],
+            )
+            config["retry_on_verbose_meaning"] = config_section_bool(
+                section,
+                "TranslationConfig",
+                "RetryOnVerboseMeaning",
+                config["retry_on_verbose_meaning"],
+            )
+            policy = section.get("AmbiguousMeaningPolicy", config["ambiguous_meaning_policy"]).strip().lower()
+            if policy not in {"skip"}:
+                logger.warning("Invalid TranslationConfig.AmbiguousMeaningPolicy=%r, using skip", policy)
+                policy = "skip"
+            config["ambiguous_meaning_policy"] = policy
+            config["ollama_temperature"] = config_nonnegative_float(
+                section,
+                "TranslationConfig",
+                "OllamaTemperature",
+                config["ollama_temperature"],
+            )
+            config["repeat_window_seconds"] = config_positive_int(
+                section,
+                "TranslationConfig",
+                "TranslationRepeatWindowSeconds",
+                config["repeat_window_seconds"],
+            )
+
+    logger.info(
+        "Translation config: segments_per_translation=%s use_context_meaning=%s "
+        "max_meaning_chars=%s retry_on_verbose_meaning=%s ambiguous_meaning_policy=%s "
+        "ollama_temperature=%s repeat_window_seconds=%s",
+        config["segments_per_translation"],
+        config["use_context_meaning"],
+        config["max_meaning_chars"],
+        config["retry_on_verbose_meaning"],
+        config["ambiguous_meaning_policy"],
+        config["ollama_temperature"],
+        config["repeat_window_seconds"],
+    )
+    _TRANSLATION_CONFIG_CACHE["mtime"] = mtime
+    _TRANSLATION_CONFIG_CACHE["config"] = config
+    return config
+
+
+def get_spacy_nlp(model_name):
+    if _SPACY_NLP_CACHE["model"] == model_name and _SPACY_NLP_CACHE["nlp"] is not None:
+        return _SPACY_NLP_CACHE["nlp"]
+    if model_name in _SPACY_NLP_CACHE["failed_models"]:
+        return None
+
+    try:
+        import spacy
+    except ImportError:
+        logger.warning("spaCy is not installed; proper noun filtering is disabled")
+        _SPACY_NLP_CACHE["failed_models"].add(model_name)
+        return None
+
+    try:
+        nlp = spacy.load(
+            model_name,
+            disable=["tagger", "parser", "attribute_ruler", "lemmatizer"],
+        )
+    except Exception as exc:
+        logger.warning(
+            "spaCy model %s is unavailable; proper noun filtering is disabled: %s",
+            model_name,
+            exc,
+        )
+        _SPACY_NLP_CACHE["failed_models"].add(model_name)
+        return None
+
+    _SPACY_NLP_CACHE["model"] = model_name
+    _SPACY_NLP_CACHE["nlp"] = nlp
+    logger.info("Loaded spaCy NER model=%s pipes=%s", model_name, ",".join(nlp.pipe_names))
+    return nlp
+
+
+def find_proper_noun_words(english_text):
+    config = load_proper_noun_config()
+    if not config["enabled"]:
+        return set()
+
+    words = set(config["skip_words"])
+    if not english_text.strip():
+        return words
+
+    nlp = get_spacy_nlp(config["model"])
+    if nlp is None:
+        return words
+
+    try:
+        doc = nlp(english_text)
+    except Exception:
+        logger.exception("spaCy proper noun detection failed; using configured SkipWords only")
+        return words
+
+    entity_words = set()
+    for entity in doc.ents:
+        if entity.label_.upper() not in config["entity_labels"]:
+            continue
+        for token in re.findall(r"\b[A-Za-z][A-Za-z'-]*\b", entity.text):
+            normalized = normalize_word(token).lower()
+            if normalized:
+                entity_words.add(normalized)
+
+    if entity_words:
+        logger.info("Filtered proper noun words: %s", ", ".join(sorted(entity_words)))
+        words.update(entity_words)
+
+    return words
 
 
 def load_filter_words():
@@ -570,7 +920,10 @@ def load_filter_words():
     return words
 
 
-def is_acronym_or_tool_name(raw_word, filter_words=None):
+def is_acronym_or_tool_name(raw_word, filter_words=None, difficulty_config=None):
+    if difficulty_config is None:
+        difficulty_config = load_difficulty_config()
+
     word = normalize_word(raw_word)
     if not word:
         return True
@@ -584,7 +937,7 @@ def is_acronym_or_tool_name(raw_word, filter_words=None):
     if lower in SKIP_WORDS:
         return True
 
-    if len(compact) <= 4:
+    if len(compact) < difficulty_config["min_candidate_length"]:
         return True
 
     if compact.isupper() and compact.isalpha():
@@ -609,83 +962,427 @@ def is_acronym_or_tool_name(raw_word, filter_words=None):
 def is_difficult(
     word,
     filter_words=None,
-    b1_freq_threshold=0.000003,
-    b2_freq_threshold=0.000012,
-    unknown_freq_threshold=0.000003,
+    difficulty_config=None,
 ):
+    if difficulty_config is None:
+        difficulty_config = load_difficulty_config()
+
     word = normalize_word(word)
     clean_word = word.lower()
 
     if not clean_word.isalpha():
         return False
 
-    if is_acronym_or_tool_name(word, filter_words=filter_words):
+    if is_acronym_or_tool_name(word, filter_words=filter_words, difficulty_config=difficulty_config):
         return False
 
     level = cefr_level_to_text(analyzer.get_average_word_level_CEFR(clean_word))
     freq = word_frequency(clean_word, "en")
 
-    if level in ["C1", "C2"]:
+    if level in difficulty_config["advanced_levels"]:
         return True
 
-    if level == "B2" and len(clean_word) >= 8 and freq < b2_freq_threshold:
+    if (
+        level == "B2"
+        and len(clean_word) >= difficulty_config["b2_min_length"]
+        and freq < difficulty_config["b2_frequency_threshold"]
+    ):
         return True
 
-    if level == "B1" and len(clean_word) >= 8 and freq < b1_freq_threshold:
+    if (
+        level == "B1"
+        and len(clean_word) >= difficulty_config["b1_min_length"]
+        and freq < difficulty_config["b1_frequency_threshold"]
+    ):
         return True
 
-    if not level and len(clean_word) >= 8 and freq < unknown_freq_threshold:
+    if (
+        not level
+        and len(clean_word) >= difficulty_config["unknown_min_length"]
+        and freq < difficulty_config["unknown_frequency_threshold"]
+    ):
         return True
 
     return False
 
 
-def translate_words_list(words_list, filter_words=None):
-    if not words_list:
-        return ""
+def extract_json_payload(text):
+    stripped = text.strip()
+    stripped = re.sub(r"^```(?:json)?\s*", "", stripped, flags=re.IGNORECASE)
+    stripped = re.sub(r"\s*```$", "", stripped)
 
+    start = stripped.find("[")
+    end = stripped.rfind("]")
+    if start != -1 and end != -1 and end > start:
+        return stripped[start:end + 1]
+
+    start = stripped.find("{")
+    end = stripped.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        return stripped[start:end + 1]
+
+    return stripped
+
+
+def parse_translation_json(response_text):
+    payload = extract_json_payload(response_text)
+    try:
+        data = json.loads(payload)
+    except json.JSONDecodeError:
+        return None
+
+    if isinstance(data, dict) and isinstance(data.get("translations"), list):
+        data = data["translations"]
+
+    mapping = {}
+    if isinstance(data, dict):
+        for word, meaning in data.items():
+            normalized = normalize_word(str(word)).lower()
+            if normalized:
+                mapping[normalized] = "" if meaning is None else str(meaning).strip()
+        return mapping
+
+    if isinstance(data, list):
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+            word = normalize_word(str(item.get("word", ""))).lower()
+            meaning = item.get("meaning", "")
+            if word:
+                mapping[word] = "" if meaning is None else str(meaning).strip()
+        return mapping
+
+    return None
+
+
+def parse_translation_fallback(response_text):
+    if any(separator in response_text for separator in (";", "；", "、")):
+        return None
+
+    mapping = {}
+    for line in response_text.splitlines():
+        if ":" not in line:
+            continue
+        word, meaning = line.split(":", 1)
+        normalized = normalize_word(word).lower()
+        if normalized:
+            mapping[normalized] = meaning.strip()
+    return mapping or None
+
+
+def meaning_char_count(meaning):
+    return len(re.sub(r"\s+", "", meaning))
+
+
+def normalize_context_meaning(meaning, max_chars):
+    value = str(meaning or "").strip()
+    lowered = value.strip().lower()
+    if lowered in {"", "skip", "[skip]", "none", "n/a", "na", "unclear", "unknown"}:
+        return "", "skip"
+
+    if meaning_char_count(value) > 20:
+        return "", "skip verbose meaning"
+
+    if any(separator in value for separator in (";", "；", "、", "/", "|", "\n", "，", ",")):
+        value = re.split(r"[;；、/|\n，,]+", value, maxsplit=1)[0].strip()
+        lowered = value.strip().lower()
+        if lowered in {"", "skip", "[skip]", "none", "n/a", "na", "unclear", "unknown"}:
+            return "", "skip"
+
+    if ":" in value or "：" in value:
+        return None, "contains nested label"
+
+    if meaning_char_count(value) > max_chars:
+        return None, f"exceeds {max_chars} chars"
+
+    return value, ""
+
+
+def parse_context_translation_response(response_text, expected_words, max_chars):
+    parsed = parse_translation_json(response_text)
+    if parsed is None:
+        parsed = parse_translation_fallback(response_text)
+    if parsed is None:
+        return {}, set(expected_words), set()
+
+    valid = {}
+    invalid = set()
+    skipped = set()
+    for word in expected_words:
+        meaning, reason = normalize_context_meaning(parsed.get(word, ""), max_chars)
+        if meaning is None:
+            invalid.add(word)
+            logger.warning("Invalid contextual meaning word=%s reason=%s raw=%r", word, reason, parsed.get(word, ""))
+        elif meaning:
+            valid[word] = meaning
+        else:
+            skipped.add(word)
+
+    return valid, invalid, skipped
+
+
+def build_context_translation_prompt(unique_words, context_text, max_chars, strict_retry=False):
+    strict_line = (
+        "Previous output was invalid. Return JSON only and obey the character limit exactly.\n"
+        if strict_retry
+        else ""
+    )
+    return (
+        "You are translating English vocabulary for Chinese learners.\n"
+        f"{strict_line}"
+        "Use the context to choose the single best Chinese meaning for each word.\n"
+        f"Each Chinese meaning must be {max_chars} Chinese characters or fewer.\n"
+        "Return one concise meaning only. Do not list alternatives. Do not give dictionary-style explanations.\n"
+        "Do not translate person names, place names, organization names, brand names, or other proper nouns.\n"
+        "If the meaning is unclear from context, use an empty string.\n\n"
+        f"Context:\n{context_text}\n\n"
+        f"Words:\n{json.dumps(unique_words, ensure_ascii=False)}\n\n"
+        'Return JSON only: [{"word":"example","meaning":"中文"}]'
+    )
+
+
+def format_translated_words(translated_meanings):
+    return "; ".join(
+        f"{word}: {translated_meanings[word]}"
+        for word in sorted(translated_meanings)
+    )
+
+
+def translate_words_mapping(words_list, context_text="", filter_words=None):
+    if not words_list:
+        return {}
+
+    difficulty_config = load_difficulty_config()
+    translation_config = load_translation_config()
     unique_words = sorted(
         {
             normalize_word(word).lower()
             for word in words_list
-            if normalize_word(word) and not is_acronym_or_tool_name(word, filter_words=filter_words)
+            if normalize_word(word)
+            and not is_acronym_or_tool_name(
+                word,
+                filter_words=filter_words,
+                difficulty_config=difficulty_config,
+            )
         }
     )
 
     if not unique_words:
-        return ""
+        return {}
 
-    prompt = (
-        "You are an English vocabulary teacher. Translate the following English words into Chinese. "
-        "Return only compact entries in this format: word: Chinese meaning; word2: Chinese meaning.\n\n"
-        f"Words: {', '.join(unique_words)}"
-    )
     model_name = get_ollama_model()
-    payload = {"model": model_name, "prompt": prompt, "stream": False}
+    max_chars = translation_config["max_meaning_chars"]
+    attempts = 2 if translation_config["retry_on_verbose_meaning"] else 1
+    final_meanings = {}
+    remaining_words = list(unique_words)
 
-    try:
-        logger.info("Ollama translation model=%s words=%d", model_name, len(unique_words))
-        response = requests.post(OLLAMA_API, json=payload, timeout=60)
-        response.raise_for_status()
-        return response.json().get("response", "").strip()
-    except Exception as exc:
-        logger.exception("Ollama translation failed: %s", exc)
-        return "[translation error]"
+    for attempt in range(1, attempts + 1):
+        if not remaining_words:
+            break
+
+        if translation_config["use_context_meaning"]:
+            prompt = build_context_translation_prompt(
+                remaining_words,
+                context_text,
+                max_chars,
+                strict_retry=attempt > 1,
+            )
+        else:
+            prompt = build_context_translation_prompt(
+                remaining_words,
+                "",
+                max_chars,
+                strict_retry=attempt > 1,
+            )
+
+        payload = {
+            "model": model_name,
+            "prompt": prompt,
+            "stream": False,
+            "options": {"temperature": translation_config["ollama_temperature"]},
+        }
+
+        try:
+            logger.info(
+                "Ollama contextual translation model=%s words=%d attempt=%d/%d max_chars=%d",
+                model_name,
+                len(remaining_words),
+                attempt,
+                attempts,
+                max_chars,
+            )
+            response = requests.post(OLLAMA_API, json=payload, timeout=60)
+            response.raise_for_status()
+            response_text = response.json().get("response", "").strip()
+        except Exception as exc:
+            logger.exception("Ollama translation failed: %s", exc)
+            return {word: final_meanings[word] for word in unique_words if word in final_meanings}
+
+        valid, invalid, skipped = parse_context_translation_response(response_text, remaining_words, max_chars)
+        final_meanings.update(valid)
+        if skipped:
+            logger.info("Skipped unclear contextual meanings: %s", ", ".join(sorted(skipped)))
+
+        if invalid and attempt < attempts:
+            logger.warning("Retrying invalid contextual meanings: %s", ", ".join(sorted(invalid)))
+            remaining_words = sorted(invalid)
+            continue
+
+        if invalid:
+            logger.warning("Skipping invalid contextual meanings after validation failure: %s", ", ".join(sorted(invalid)))
+        break
+
+    return {word: final_meanings[word] for word in unique_words if word in final_meanings}
 
 
-def write_segment(handle, start_seconds, english_text, filter_words=None):
+def translate_words_list(words_list, context_text="", filter_words=None):
+    return format_translated_words(
+        translate_words_mapping(words_list, context_text=context_text, filter_words=filter_words)
+    )
+
+
+def filter_recent_translation_words(
+    words,
+    start_seconds,
+    recent_translations=None,
+    window_seconds=RECENT_TRANSLATION_WINDOW_SECONDS,
+):
+    if recent_translations is None:
+        return words
+
+    eligible_words = []
+    skipped_words = set()
+    for word in words:
+        normalized = normalize_word(word).lower()
+        if not normalized:
+            continue
+
+        last_translated_at = recent_translations.get(normalized)
+        if last_translated_at is not None and 0 <= start_seconds - last_translated_at <= window_seconds:
+            skipped_words.add(normalized)
+            continue
+
+        eligible_words.append(word)
+
+    if skipped_words:
+        logger.info(
+            "Skipped recently translated words at %.2fs window=%.0fs: %s",
+            start_seconds,
+            window_seconds,
+            ", ".join(sorted(skipped_words)),
+        )
+
+    return eligible_words
+
+
+def build_translation_text(
+    start_seconds,
+    english_text,
+    filter_words=None,
+    recent_translations=None,
+    repeat_window_seconds=RECENT_TRANSLATION_WINDOW_SECONDS,
+):
     words = re.findall(r"\b[A-Za-z][A-Za-z'-]*\b", english_text)
-    difficult_words = [word for word in words if is_difficult(word, filter_words=filter_words)]
+    difficulty_config = load_difficulty_config()
+    combined_filter_words = set(filter_words or set())
+    combined_filter_words.update(find_proper_noun_words(english_text))
+    difficult_words = [
+        word
+        for word in words
+        if is_difficult(word, filter_words=combined_filter_words, difficulty_config=difficulty_config)
+    ]
+    difficult_words = filter_recent_translation_words(
+        difficult_words,
+        start_seconds,
+        recent_translations=recent_translations,
+        window_seconds=repeat_window_seconds,
+    )
 
     translation_text = ""
     if difficult_words:
-        translated_words = translate_words_list(difficult_words, filter_words=filter_words)
+        translated_meanings = translate_words_mapping(
+            difficult_words,
+            context_text=english_text,
+            filter_words=combined_filter_words,
+        )
+        translated_words = format_translated_words(translated_meanings)
         if translated_words and translated_words != "[translation error]":
             translation_text = f"Vocabulary: {translated_words}"
+            if recent_translations is not None:
+                for word in translated_meanings:
+                    recent_translations[word] = start_seconds
             logger.info("Difficult words at %.2fs: %s", start_seconds, translated_words)
 
+    return translation_text
+
+
+def write_markdown_segment(handle, start_seconds, english_text, translation_text):
     handle.write(f"**[{start_seconds:.2f}s] English:** {english_text}  \n")
     handle.write(f"**Translation:** {translation_text}\n\n")
+
+
+def write_segment(
+    handle,
+    start_seconds,
+    english_text,
+    filter_words=None,
+    recent_translations=None,
+    repeat_window_seconds=RECENT_TRANSLATION_WINDOW_SECONDS,
+):
+    translation_text = build_translation_text(
+        start_seconds,
+        english_text,
+        filter_words=filter_words,
+        recent_translations=recent_translations,
+        repeat_window_seconds=repeat_window_seconds,
+    )
+    write_markdown_segment(handle, start_seconds, english_text, translation_text)
+    handle.flush()
+
+
+def write_segment_group(
+    handle,
+    segments,
+    filter_words=None,
+    recent_translations=None,
+    repeat_window_seconds=RECENT_TRANSLATION_WINDOW_SECONDS,
+):
+    if not segments:
+        return
+
+    if len(segments) == 1:
+        start_seconds, english_text = segments[0]
+        write_segment(
+            handle,
+            start_seconds,
+            english_text,
+            filter_words=filter_words,
+            recent_translations=recent_translations,
+            repeat_window_seconds=repeat_window_seconds,
+        )
+        return
+
+    group_start = segments[0][0]
+    group_end = segments[-1][0]
+    combined_text = " ".join(english_text for _start_seconds, english_text in segments if english_text)
+    translation_text = build_translation_text(
+        group_end,
+        combined_text,
+        filter_words=filter_words,
+        recent_translations=recent_translations,
+        repeat_window_seconds=repeat_window_seconds,
+    )
+    logger.info(
+        "Grouped translation segments=%d start=%.2fs end=%.2fs",
+        len(segments),
+        group_start,
+        group_end,
+    )
+
+    for index, (start_seconds, english_text) in enumerate(segments):
+        segment_translation = translation_text if index == len(segments) - 1 else ""
+        write_markdown_segment(handle, start_seconds, english_text, segment_translation)
+
     handle.flush()
 
 
@@ -829,6 +1526,9 @@ def process_transcription(input_mp3, output_md, subtitle_file=None):
     process_start = time.monotonic()
     Path(output_md).parent.mkdir(parents=True, exist_ok=True)
     filter_words = load_filter_words()
+    translation_config = load_translation_config()
+    segments_per_translation = translation_config["segments_per_translation"]
+    repeat_window_seconds = translation_config["repeat_window_seconds"]
 
     try:
         logger.info(
@@ -848,11 +1548,25 @@ def process_transcription(input_mp3, output_md, subtitle_file=None):
             handle.write("\n")
 
             wrote_segments = False
+            segment_buffer = []
+            recent_translations = {}
+
+            def enqueue_segment(start_seconds, english_text):
+                segment_buffer.append((start_seconds, english_text))
+                if len(segment_buffer) >= segments_per_translation:
+                    write_segment_group(
+                        handle,
+                        segment_buffer,
+                        filter_words=filter_words,
+                        recent_translations=recent_translations,
+                        repeat_window_seconds=repeat_window_seconds,
+                    )
+                    segment_buffer.clear()
 
             if subtitle_file:
                 logger.info("Generating translation md from subtitle file: %s", subtitle_file)
                 for start_seconds, english_text in iter_subtitle_segments(subtitle_file):
-                    write_segment(handle, start_seconds, english_text, filter_words=filter_words)
+                    enqueue_segment(start_seconds, english_text)
                     wrote_segments = True
 
             if not wrote_segments:
@@ -892,10 +1606,10 @@ def process_transcription(input_mp3, output_md, subtitle_file=None):
                                 chunk_index,
                                 absolute_start,
                                 absolute_end,
-                            )
+                        )
                         english_text = segment.text.strip()
                         if english_text:
-                            write_segment(handle, absolute_start, english_text, filter_words=filter_words)
+                            enqueue_segment(absolute_start, english_text)
                             wrote_segments = True
                 else:
                     logger.info("Whisper transcribe call start input=%s beam_size=5", input_mp3)
@@ -910,10 +1624,10 @@ def process_transcription(input_mp3, output_md, subtitle_file=None):
                                 segment_count,
                                 segment.start,
                                 segment.end,
-                            )
+                        )
                         english_text = segment.text.strip()
                         if english_text:
-                            write_segment(handle, segment.start, english_text, filter_words=filter_words)
+                            enqueue_segment(segment.start, english_text)
                             wrote_segments = True
 
                 logger.info(
@@ -922,6 +1636,16 @@ def process_transcription(input_mp3, output_md, subtitle_file=None):
                     time.monotonic() - transcribe_start,
                     chunk_seconds,
                 )
+
+            if segment_buffer:
+                write_segment_group(
+                    handle,
+                    segment_buffer,
+                    filter_words=filter_words,
+                    recent_translations=recent_translations,
+                    repeat_window_seconds=repeat_window_seconds,
+                )
+                segment_buffer.clear()
 
             if not wrote_segments:
                 logger.warning("No segments were written to markdown: %s", output_md)

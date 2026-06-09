@@ -1,8 +1,9 @@
-import logging
+﻿import logging
 import os
 import faulthandler
 import multiprocessing
 import platform
+import re
 import resource
 import configparser
 import sys
@@ -24,6 +25,7 @@ CONFIG_FILE = SCRIPT_DIR / "config.ini"
 LOG_DIR = SCRIPT_DIR / "Log"
 RUNNING_RECORD_FILE = LOG_DIR / "RunningListRecording.log"
 AUDIO_SUFFIXES = (".mp3", ".opus")
+NUMBER_RE = re.compile(r"\d+")
 
 
 def ensure_default_config():
@@ -32,9 +34,60 @@ def ensure_default_config():
 
     CONFIG_FILE.write_text(
         "[OriginalConfigPath]\n"
+        "# Directory that contains the original input audio files.\n"
         "OriginalAudioPath=../Resource/Dwark\n"
+        "# Directory where generated markdown translation notes are written.\n"
         "TranslatePath=../Resource/translate\n"
-        "AudioTranslatedPath=../Resource/chineseTTS\n",
+        "# Directory where generated Chinese vocabulary audio files are written.\n"
+        "AudioTranslatedPath=../Resource/chineseTTS\n"
+        "\n"
+        "[RuntimeConfig]\n"
+        "# Select the compute branch: GPU uses the ROCm/CUDA Whisper path, CPU uses all available CPU cores.\n"
+        "CaculateCore=GPU\n"
+        "\n"
+        "[DifficultyConfig]\n"
+        "# CEFR levels that should always be treated as difficult vocabulary.\n"
+        "AdvancedLevels=C1,C2\n"
+        "# Minimum word length before a word can be considered for difficulty checks.\n"
+        "MinCandidateLength=5\n"
+        "# Minimum length for B1 words before frequency filtering can mark them as difficult.\n"
+        "B1MinLength=8\n"
+        "# Maximum word frequency for B1 words to be treated as difficult.\n"
+        "B1FrequencyThreshold=0.000003\n"
+        "# Minimum length for B2 words before frequency filtering can mark them as difficult.\n"
+        "B2MinLength=8\n"
+        "# Maximum word frequency for B2 words to be treated as difficult.\n"
+        "B2FrequencyThreshold=0.000012\n"
+        "# Minimum length for words with unknown CEFR level before frequency filtering can mark them as difficult.\n"
+        "UnknownMinLength=8\n"
+        "# Maximum word frequency for unknown-level words to be treated as difficult.\n"
+        "UnknownFrequencyThreshold=0.000003\n"
+        "\n"
+        "[TranslationConfig]\n"
+        "# Number of source segments to group before extracting and translating vocabulary.\n"
+        "SegmentsPerTranslation=2\n"
+        "# Use the current segment group as context to choose one best Chinese meaning per word.\n"
+        "UseContextMeaning=1\n"
+        "# Maximum number of characters allowed for each Chinese meaning.\n"
+        "MaxMeaningChars=8\n"
+        "# Retry once when the model returns a verbose or invalid meaning.\n"
+        "RetryOnVerboseMeaning=1\n"
+        "# Policy for unclear meanings; skip means the word is omitted from the output.\n"
+        "AmbiguousMeaningPolicy=skip\n"
+        "# Ollama sampling temperature for deterministic vocabulary meanings.\n"
+        "OllamaTemperature=0\n"
+        "# Do not translate the same word again within this many seconds.\n"
+        "TranslationRepeatWindowSeconds=120\n"
+        "\n"
+        "[ProperNounConfig]\n"
+        "# Enable spaCy NER filtering so person/place/organization names are not translated.\n"
+        "SkipProperNouns=1\n"
+        "# spaCy English NER model loaded on CPU.\n"
+        "NlpModel=en_core_web_sm\n"
+        "# Entity labels that should be filtered before vocabulary translation.\n"
+        "EntityLabels=PERSON,GPE,LOC,FAC,ORG\n"
+        "# Extra comma-separated words to skip even if the NER model misses them.\n"
+        "SkipWords=\n",
         encoding="utf-8",
     )
 
@@ -53,14 +106,14 @@ def load_config_paths():
     section = parser["OriginalConfigPath"]
 
     original_audio_path = resolve_config_path(
-        os.getenv("JOEROGAN_SRC_DIR", section.get("OriginalAudioPath", "../Resource/Dwark"))
+        os.getenv("AUDIOSOURCE_SRC_DIR", section.get("OriginalAudioPath", "../Resource/Dwark"))
     )
     translate_root = resolve_config_path(
-        os.getenv("JOEROGAN_TRANSLATE_DIR", section.get("TranslatePath", "../Resource/translate"))
+        os.getenv("AUDIOSOURCE_TRANSLATE_DIR", section.get("TranslatePath", "../Resource/translate"))
     )
     audio_root = resolve_config_path(
         os.getenv(
-            "JOEROGAN_AUDIO_TRANSLATED_DIR",
+            "AUDIOSOURCE_AUDIO_TRANSLATED_DIR",
             section.get("AudioTranslatedPath", "../Resource/chineseTTS"),
         )
     )
@@ -69,22 +122,53 @@ def load_config_paths():
     return original_audio_path, translate_root / source_name, audio_root / source_name
 
 
+def load_calculate_core():
+    ensure_default_config()
+    parser = configparser.ConfigParser()
+    parser.read(CONFIG_FILE, encoding="utf-8")
+    if not parser.has_section("RuntimeConfig"):
+        return "GPU"
+    section = parser["RuntimeConfig"]
+    core = section.get("CaculateCore", section.get("CalculateCore", "GPU"))
+    core = core.strip().upper()
+    return "CPU" if core == "CPU" else "GPU"
+
+
+def apply_runtime_config_defaults():
+    core = load_calculate_core()
+    cpu_count = os.cpu_count() or 1
+    if core == "CPU":
+        os.environ.setdefault("AUDIOSOURCE_WHISPER_DEVICE", "cpu")
+        os.environ.setdefault("AUDIOSOURCE_WHISPER_COMPUTE_TYPE", "int8")
+        os.environ.setdefault("AUDIOSOURCE_WHISPER_CPU_THREADS", str(cpu_count))
+        os.environ.setdefault("AUDIOSOURCE_WHISPER_CHUNK_SECONDS", "0")
+        os.environ.setdefault("AUDIOSOURCE_MAX_WORKERS", "1")
+        os.environ.setdefault("AUDIOSOURCE_USE_PROCESS_POOL", "0")
+    else:
+        os.environ.setdefault("AUDIOSOURCE_WHISPER_DEVICE", "cuda")
+        os.environ.setdefault("AUDIOSOURCE_WHISPER_COMPUTE_TYPE", "float16")
+        os.environ.setdefault("AUDIOSOURCE_WHISPER_CHUNK_SECONDS", "300")
+        os.environ.setdefault("AUDIOSOURCE_MAX_WORKERS", "1")
+    return core
+
+
+CALCULATE_CORE = apply_runtime_config_defaults()
 SRC_DIR, MD_DIR, AUDIO_DIR = load_config_paths()
 SUBTITLE_DIRS = [
-    Path(os.getenv("JOEROGAN_SUBTITLE_DIR", "/home/neu/usr/bin/subtitles/JoeRogan")),
-    SCRIPT_DIR / "JoeRoganSub",
+    Path(os.getenv("AUDIOSOURCE_SUBTITLE_DIR", "/home/neu/usr/bin/subtitles/AUDIOSOURCE")),
+    SCRIPT_DIR / "AUDIOSOURCESub",
 ]
 
 LOG_FILE = LOG_DIR / f"main_batch_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 
-DEFAULT_WHISPER_DEVICE = os.getenv("JOEROGAN_WHISPER_DEVICE", "cuda").strip().lower()
+DEFAULT_WHISPER_DEVICE = os.getenv("AUDIOSOURCE_WHISPER_DEVICE", "cuda").strip().lower()
 DEFAULT_MAX_WORKERS = 1 if DEFAULT_WHISPER_DEVICE != "cpu" else min(4, os.cpu_count() or 1)
-MAX_WORKERS = max(1, int(os.getenv("JOEROGAN_MAX_WORKERS", DEFAULT_MAX_WORKERS)))
+MAX_WORKERS = max(1, int(os.getenv("AUDIOSOURCE_MAX_WORKERS", DEFAULT_MAX_WORKERS)))
 OLLAMA_MODELS = [
     model.strip()
     for model in os.getenv(
-        "JOEROGAN_OLLAMA_MODELS",
-        os.getenv("JOEROGAN_OLLAMA_MODEL", "qwen2.5:7b"),
+        "AUDIOSOURCE_OLLAMA_MODELS",
+        os.getenv("AUDIOSOURCE_OLLAMA_MODEL", "qwen2.5:7b"),
     ).split(",")
     if model.strip()
 ]
@@ -111,7 +195,7 @@ def setup_logging():
 
 def clear_log_dir():
     LOG_DIR.mkdir(parents=True, exist_ok=True)
-    if not env_bool("JOEROGAN_CLEAR_LOGS", True):
+    if not env_bool("AUDIOSOURCE_CLEAR_LOGS", True):
         return
     for path in LOG_DIR.iterdir():
         if path.is_file():
@@ -171,15 +255,18 @@ def log_runtime_context(label):
     logging.info("%s pid=%s ppid=%s python=%s", label, os.getpid(), os.getppid(), sys.executable)
     logging.info("%s platform=%s", label, platform.platform())
     logging.info(
-        "%s env JOEROGAN_MAX_WORKERS=%r JOEROGAN_WHISPER_DEVICE=%r "
-        "JOEROGAN_WHISPER_COMPUTE_TYPE=%r JOEROGAN_WHISPER_CPU_THREADS=%r "
-        "JOEROGAN_OLLAMA_MODEL=%r",
+        "%s runtime CaculateCore=%s", label, CALCULATE_CORE
+    )
+    logging.info(
+        "%s env AUDIOSOURCE_MAX_WORKERS=%r AUDIOSOURCE_WHISPER_DEVICE=%r "
+        "AUDIOSOURCE_WHISPER_COMPUTE_TYPE=%r AUDIOSOURCE_WHISPER_CPU_THREADS=%r "
+        "AUDIOSOURCE_OLLAMA_MODEL=%r",
         label,
-        os.getenv("JOEROGAN_MAX_WORKERS"),
-        os.getenv("JOEROGAN_WHISPER_DEVICE"),
-        os.getenv("JOEROGAN_WHISPER_COMPUTE_TYPE"),
-        os.getenv("JOEROGAN_WHISPER_CPU_THREADS"),
-        os.getenv("JOEROGAN_OLLAMA_MODEL"),
+        os.getenv("AUDIOSOURCE_MAX_WORKERS"),
+        os.getenv("AUDIOSOURCE_WHISPER_DEVICE"),
+        os.getenv("AUDIOSOURCE_WHISPER_COMPUTE_TYPE"),
+        os.getenv("AUDIOSOURCE_WHISPER_CPU_THREADS"),
+        os.getenv("AUDIOSOURCE_OLLAMA_MODEL"),
     )
     usage = resource.getrusage(resource.RUSAGE_SELF)
     logging.info("%s resource maxrss_kb=%s user_cpu=%.2f sys_cpu=%.2f", label, usage.ru_maxrss, usage.ru_utime, usage.ru_stime)
@@ -191,6 +278,28 @@ def norm_name(value):
     normalized = normalized.replace("_", " ")
     normalized = normalized.replace("-", " ")
     return "".join(ch.lower() for ch in normalized if ch.isalnum())
+
+
+def natural_path_key(path):
+    try:
+        text = str(path.relative_to(SRC_DIR))
+    except ValueError:
+        text = str(path)
+
+    text = text.casefold()
+    parts = []
+    index = 0
+    for match in NUMBER_RE.finditer(text):
+        if match.start() > index:
+            parts.append((1, text[index:match.start()]))
+        number_text = match.group(0)
+        parts.append((0, int(number_text), len(number_text)))
+        index = match.end()
+
+    if index < len(text):
+        parts.append((1, text[index:]))
+
+    return tuple(parts)
 
 
 def find_recursive(root, suffixes):
@@ -310,11 +419,11 @@ def process_one_file(audio_path, ollama_model=None, configure_worker_logging=Tru
         else:
             _fault_log, fault_handle = setup_fault_logging(stem)
         if ollama_model:
-            os.environ["JOEROGAN_OLLAMA_MODEL"] = ollama_model
+            os.environ["AUDIOSOURCE_OLLAMA_MODEL"] = ollama_model
 
         logging.info("Processing file start: %s", audio_path)
         log_runtime_context("worker-start")
-        logging.info("Ollama model for this file: %s", os.getenv("JOEROGAN_OLLAMA_MODEL", "qwen2.5:7b"))
+        logging.info("Ollama model for this file: %s", os.getenv("AUDIOSOURCE_OLLAMA_MODEL", "qwen2.5:7b"))
 
         final_mp3 = AUDIO_DIR / f"{stem}_Vocab.mp3"
         if final_mp3.exists() and final_mp3.stat().st_size > 0:
@@ -399,9 +508,12 @@ def main():
         return 1
 
     files = sorted(
-        path
-        for path in SRC_DIR.rglob("*")
-        if path.is_file() and path.suffix.lower() in AUDIO_SUFFIXES
+        (
+            path
+            for path in SRC_DIR.rglob("*")
+            if path.is_file() and path.suffix.lower() in AUDIO_SUFFIXES
+        ),
+        key=natural_path_key,
     )
     logging.info("Found %d source audio files suffixes=%s", len(files), ", ".join(AUDIO_SUFFIXES))
 
@@ -429,7 +541,7 @@ def main():
     completed = 0
     failed = 0
     use_process_pool_default = DEFAULT_WHISPER_DEVICE == "cpu" and worker_count > 1
-    use_process_pool = env_bool("JOEROGAN_USE_PROCESS_POOL", use_process_pool_default)
+    use_process_pool = env_bool("AUDIOSOURCE_USE_PROCESS_POOL", use_process_pool_default)
     logging.info("USE_PROCESS_POOL=%s default=%s", use_process_pool, use_process_pool_default)
 
     if not use_process_pool:
@@ -478,7 +590,7 @@ def main():
                         "Process pool broke while processing %s. "
                         "A worker was killed abruptly; check Log/main_batch_worker_*.log "
                         "and Log/main_batch_worker_*.fault.log. "
-                        "If JOEROGAN_WHISPER_DEVICE=cuda, force JOEROGAN_MAX_WORKERS=1 for AMD GPU.",
+                        "If AUDIOSOURCE_WHISPER_DEVICE=cuda, force AUDIOSOURCE_MAX_WORKERS=1 for AMD GPU.",
                         mp3_path,
                     )
                     raise

@@ -446,20 +446,29 @@ def combine_audio_fast_ffmpeg(rows, tts_paths, original_mp3, final_output, tmp_d
     tmp_dir = Path(tmp_dir)
     tmp_dir.mkdir(parents=True, exist_ok=True)
 
-    logger.info("Loading original audio once for clean PCM streaming: %s", original_mp3)
-    original_audio = normalize_audio_segment(AudioSegment.from_file(str(original_mp3)))
-    original_duration_ms = len(original_audio)
-    logger.info("Original audio duration: %.3f seconds", original_duration_ms / 1000)
+    logger.info("Building ffmpeg concat list without loading full original audio: %s", original_mp3)
+    original_duration = get_audio_duration_seconds(original_mp3, ffprobe)
+    logger.info("Original audio duration: %.3f seconds", original_duration)
 
-    silence_before = AudioSegment.silent(
-        duration=INSERT_BEFORE_TTS_SILENCE_MS,
-        frame_rate=int(OUTPUT_SAMPLE_RATE),
-    ).set_channels(int(OUTPUT_CHANNELS)).set_sample_width(2)
-    silence_after = AudioSegment.silent(
-        duration=INSERT_AFTER_TTS_SILENCE_MS,
-        frame_rate=int(OUTPUT_SAMPLE_RATE),
-    ).set_channels(int(OUTPUT_CHANNELS)).set_sample_width(2)
-
+    silence_before = create_silence_mp3(
+        tmp_dir / f"silence_before_{INSERT_BEFORE_TTS_SILENCE_MS}ms.mp3",
+        INSERT_BEFORE_TTS_SILENCE_MS,
+        ffmpeg,
+    )
+    silence_after = create_silence_mp3(
+        tmp_dir / f"silence_after_{INSERT_AFTER_TTS_SILENCE_MS}ms.mp3",
+        INSERT_AFTER_TTS_SILENCE_MS,
+        ffmpeg,
+    )
+    concat_file = write_concat_list(
+        rows,
+        tts_paths,
+        original_mp3,
+        original_duration,
+        silence_before,
+        silence_after,
+        tmp_dir / "tts_concat.ffconcat",
+    )
     tmp_output = final_output.with_name(final_output.stem + ".part.mp3")
     if tmp_output.exists():
         tmp_output.unlink()
@@ -468,44 +477,7 @@ def combine_audio_fast_ffmpeg(rows, tts_paths, original_mp3, final_output, tmp_d
         final_output.unlink()
 
     logger.info("Start ffmpeg concat export: %s", final_output)
-
-    def write_audio(stream):
-        total = len(rows)
-        for index, row in enumerate(rows):
-            if index % 100 == 0:
-                logger.info("Streaming audio chunk %s/%s", index, total)
-
-            start_ms = max(0, int(float(row["start"]) * 1000))
-            next_ms = (
-                int(float(rows[index + 1]["start"]) * 1000)
-                if index + 1 < total
-                else original_duration_ms
-            )
-            next_ms = min(next_ms, original_duration_ms)
-
-            if start_ms >= original_duration_ms or next_ms <= start_ms:
-                logger.warning(
-                    "Skip invalid original segment idx=%s start=%s next=%s duration=%s",
-                    index,
-                    start_ms,
-                    next_ms,
-                    original_duration_ms,
-                )
-                continue
-
-            write_raw_segment(stream, original_audio[start_ms:next_ms])
-
-            tts_path = tts_paths[index] if index < len(tts_paths) else None
-            if tts_path and Path(tts_path).exists() and Path(tts_path).stat().st_size > 0:
-                try:
-                    tts_audio = normalize_audio_segment(AudioSegment.from_file(str(tts_path)))
-                    write_raw_segment(stream, silence_before)
-                    write_raw_segment(stream, tts_audio)
-                    write_raw_segment(stream, silence_after)
-                except Exception:
-                    logger.exception("Failed to stream temp TTS idx=%s path=%s", index, tts_path)
-
-    run_streaming_ffmpeg(
+    run_cmd(
         [
             ffmpeg,
             "-y",
@@ -513,13 +485,11 @@ def combine_audio_fast_ffmpeg(rows, tts_paths, original_mp3, final_output, tmp_d
             "-loglevel",
             "error",
             "-f",
-            "s16le",
-            "-ar",
-            OUTPUT_SAMPLE_RATE,
-            "-ac",
-            OUTPUT_CHANNELS,
+            "concat",
+            "-safe",
+            "0",
             "-i",
-            "pipe:0",
+            str(concat_file),
             "-vn",
             "-ac",
             OUTPUT_CHANNELS,
@@ -534,7 +504,6 @@ def combine_audio_fast_ffmpeg(rows, tts_paths, original_mp3, final_output, tmp_d
             str(tmp_output),
         ],
         "FFmpeg streaming PCM export",
-        write_audio,
     )
 
     if not tmp_output.exists() or tmp_output.stat().st_size <= 0:
