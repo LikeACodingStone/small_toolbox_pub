@@ -25,6 +25,7 @@ CONFIG_FILE = SCRIPT_DIR / "config.ini"
 LOG_DIR = SCRIPT_DIR / "Log"
 RUNNING_RECORD_FILE = LOG_DIR / "RunningListRecording.log"
 AUDIO_SUFFIXES = (".mp3", ".opus")
+OUTPUT_AUDIO_SUFFIXES = (".mp3", ".opus")
 NUMBER_RE = re.compile(r"\d+")
 
 
@@ -315,21 +316,42 @@ def find_recursive(root, suffixes):
 
 def build_existing_audio_index():
     found = {}
-    for path in find_recursive(AUDIO_DIR.parent, [".mp3"]):
-        found.setdefault(norm_name(path.stem), path)
+    for path in find_recursive(AUDIO_DIR.parent, OUTPUT_AUDIO_SUFFIXES):
+        found.setdefault(norm_name(path.stem), []).append(path)
     return found
 
 
-def find_existing_audio(audio_index, stem):
+def output_suffix_for_source(audio_path):
+    return ".opus" if Path(audio_path).suffix.lower() == ".opus" else ".mp3"
+
+
+def output_path_for_source(audio_path):
+    audio_path = Path(audio_path)
+    return AUDIO_DIR / f"{audio_path.stem}_Vocab{output_suffix_for_source(audio_path)}"
+
+
+def find_existing_audio(audio_index, stem, expected_suffix):
+    expected_suffix = expected_suffix.lower()
+
+    def first_matching(paths):
+        for path in paths:
+            if path.suffix.lower() == expected_suffix and path.exists() and path.stat().st_size > 0:
+                return path
+        return None
+
     keys = [norm_name(stem), norm_name(f"{stem}_Vocab")]
     for key in keys:
         if key in audio_index:
-            return audio_index[key]
+            match = first_matching(audio_index[key])
+            if match:
+                return match
 
     normalized_stem = norm_name(stem)
-    for key, path in audio_index.items():
+    for key, paths in audio_index.items():
         if normalized_stem and normalized_stem in key:
-            return path
+            match = first_matching(paths)
+            if match:
+                return match
 
     return None
 
@@ -425,15 +447,15 @@ def process_one_file(audio_path, ollama_model=None, configure_worker_logging=Tru
         log_runtime_context("worker-start")
         logging.info("Ollama model for this file: %s", os.getenv("AUDIOSOURCE_OLLAMA_MODEL", "qwen2.5:7b"))
 
-        final_mp3 = AUDIO_DIR / f"{stem}_Vocab.mp3"
-        if final_mp3.exists() and final_mp3.stat().st_size > 0:
-            logging.info("Skip audio generation, final mp3 exists: %s", final_mp3)
+        final_audio = output_path_for_source(audio_path)
+        if final_audio.exists() and final_audio.stat().st_size > 0:
+            logging.info("Skip audio generation, final audio exists: %s", final_audio)
             md_path = find_existing_translation(stem)
             if md_path and not should_rebuild_translation(md_path):
                 record_running_status("translated", md_path)
-            record_running_status("audio", final_mp3)
+            record_running_status("audio", final_audio)
             result["status"] = "skipped"
-            result["output"] = str(final_mp3)
+            result["output"] = str(final_audio)
             return result
 
         stage_start = time.monotonic()
@@ -460,24 +482,24 @@ def process_one_file(audio_path, ollama_model=None, configure_worker_logging=Tru
             logging.info("Stage transcription done elapsed=%.2fs", time.monotonic() - stage_start)
             record_running_status("translated", md_path)
 
-        if final_mp3.exists() and final_mp3.stat().st_size > 0:
-            logging.info("Skip audio generation, final mp3 exists after transcription: %s", final_mp3)
-            record_running_status("audio", final_mp3)
+        if final_audio.exists() and final_audio.stat().st_size > 0:
+            logging.info("Skip audio generation, final audio exists after transcription: %s", final_audio)
+            record_running_status("audio", final_audio)
             result["status"] = "skipped"
-            result["output"] = str(final_mp3)
+            result["output"] = str(final_audio)
             return result
 
         stage_start = time.monotonic()
-        logging.info("Stage TTS start md=%s original=%s output=%s", md_path, audio_path, final_mp3)
-        process_tts(str(md_path), str(audio_path), str(final_mp3))
+        logging.info("Stage TTS start md=%s original=%s output=%s", md_path, audio_path, final_audio)
+        process_tts(str(md_path), str(audio_path), str(final_audio))
         logging.info("Stage TTS done elapsed=%.2fs", time.monotonic() - stage_start)
 
-        if final_mp3.exists() and final_mp3.stat().st_size > 0:
-            record_running_status("audio", final_mp3)
-            result["output"] = str(final_mp3)
+        if final_audio.exists() and final_audio.stat().st_size > 0:
+            record_running_status("audio", final_audio)
+            result["output"] = str(final_audio)
             return result
 
-        raise RuntimeError(f"TTS did not produce a non-empty mp3: {final_mp3}")
+        raise RuntimeError(f"TTS did not produce a non-empty audio file: {final_audio}")
     except BaseException:
         logging.exception("Worker failed for file=%s elapsed=%.2fs", audio_path, time.monotonic() - start_time)
         raise
@@ -521,7 +543,7 @@ def main():
 
     pending_files = []
     for mp3_path in files:
-        existing_audio = find_existing_audio(audio_index, mp3_path.stem)
+        existing_audio = find_existing_audio(audio_index, mp3_path.stem, output_suffix_for_source(mp3_path))
         if existing_audio:
             logging.info("Skip audio generation, existing translated audio found: %s", existing_audio)
             existing_translation = find_existing_translation(mp3_path.stem)

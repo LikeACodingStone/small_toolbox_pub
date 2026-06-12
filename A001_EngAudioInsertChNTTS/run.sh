@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 # =============================================================================
 # run.sh — Launch podcast toolchain with full ROCm/GPU environment
 # Usage: bash run.sh

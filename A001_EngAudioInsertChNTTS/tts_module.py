@@ -1,5 +1,6 @@
 import asyncio
 import hashlib
+import json
 import logging
 import re
 import shutil
@@ -22,6 +23,7 @@ INSERT_BEFORE_TTS_SILENCE_MS = 300
 INSERT_AFTER_TTS_SILENCE_MS = 600
 
 OUTPUT_BITRATE = "96k"
+OUTPUT_OPUS_BITRATE = "96k"
 OUTPUT_CHANNELS = "2"
 OUTPUT_SAMPLE_RATE = "44100"
 
@@ -355,39 +357,338 @@ def get_audio_duration_seconds(audio_path, ffprobe):
     return float(value)
 
 
-def create_silence_mp3(path, duration_ms, ffmpeg):
+def probe_audio_stream_metadata(audio_path, ffprobe):
+    proc = run_cmd(
+        [
+            ffprobe,
+            "-v",
+            "error",
+            "-select_streams",
+            "a:0",
+            "-show_entries",
+            "stream=sample_rate,channels,channel_layout",
+            "-of",
+            "json",
+            str(audio_path),
+        ],
+        "Probe audio stream metadata",
+    )
+
+    try:
+        payload = json.loads(proc.stdout or "{}")
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"Cannot parse ffprobe stream metadata: {audio_path}") from exc
+
+    streams = payload.get("streams") or []
+    if not streams:
+        raise RuntimeError(f"No audio stream found: {audio_path}")
+
+    stream = streams[0]
+    sample_rate = str(stream.get("sample_rate") or "").strip()
+    channels = str(stream.get("channels") or "").strip() or None
+    channel_layout = str(stream.get("channel_layout") or "").strip() or None
+    if channel_layout and channel_layout.lower() == "unknown":
+        channel_layout = None
+
+    if not sample_rate:
+        raise RuntimeError(f"Cannot probe sample rate: {audio_path}")
+
+    return {
+        "sample_rate": sample_rate,
+        "channels": channels,
+        "channel_layout": channel_layout,
+    }
+
+
+def build_output_profile(original_audio, final_output, ffprobe):
+    suffix = Path(final_output).suffix.lower()
+    if suffix == ".opus":
+        metadata = probe_audio_stream_metadata(original_audio, ffprobe)
+        if not metadata["channel_layout"]:
+            logger.warning(
+                "Source audio has no explicit channel_layout; preserving channel count only: %s channels=%s",
+                original_audio,
+                metadata["channels"],
+            )
+
+        profile = {
+            "format": "opus",
+            "codec": "libopus",
+            "suffix": ".opus",
+            "bitrate": OUTPUT_OPUS_BITRATE,
+            "silence_bitrate": OUTPUT_OPUS_BITRATE,
+            "sample_rate": metadata["sample_rate"],
+            "channels": metadata["channels"],
+            "channel_layout": metadata["channel_layout"],
+            "normalize_concat_inputs": True,
+            "presegment_original": True,
+        }
+        logger.info(
+            "Opus output profile from source: sample_rate=%s channels=%s channel_layout=%s bitrate=%s",
+            profile["sample_rate"],
+            profile["channels"],
+            profile["channel_layout"] or "",
+            profile["bitrate"],
+        )
+        return profile
+
+    return {
+        "format": "mp3",
+        "codec": "libmp3lame",
+        "suffix": ".mp3",
+        "bitrate": OUTPUT_BITRATE,
+        "silence_bitrate": "64k",
+        "sample_rate": OUTPUT_SAMPLE_RATE,
+        "channels": OUTPUT_CHANNELS,
+        "channel_layout": None,
+        "normalize_concat_inputs": False,
+        "presegment_original": False,
+    }
+
+
+def default_channel_layout(channels):
+    try:
+        channel_count = int(channels)
+    except (TypeError, ValueError):
+        return None
+
+    if channel_count == 1:
+        return "mono"
+    if channel_count == 2:
+        return "stereo"
+    return None
+
+
+def ffmpeg_audio_shape_args(profile):
+    args = ["-ar", str(profile["sample_rate"])]
+    channel_layout = profile.get("channel_layout")
+    if channel_layout:
+        args.extend(["-channel_layout", channel_layout])
+    elif profile.get("channels"):
+        args.extend(["-ac", str(profile["channels"])])
+    return args
+
+
+def anullsrc_spec(profile):
+    spec = f"anullsrc=r={profile['sample_rate']}"
+    channel_layout = profile.get("channel_layout") or default_channel_layout(profile.get("channels"))
+    if channel_layout:
+        spec += f":cl={channel_layout}"
+    return spec
+
+
+def create_silence_audio(path, duration_ms, ffmpeg, profile):
     path = Path(path)
 
     if path.exists() and path.stat().st_size > 0:
         return path
 
     duration_seconds = duration_ms / 1000
-
-    run_cmd(
+    cmd = [
+        ffmpeg,
+        "-y",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-f",
+        "lavfi",
+        "-i",
+        anullsrc_spec(profile),
+        "-t",
+        f"{duration_seconds:.3f}",
+    ]
+    cmd.extend(ffmpeg_audio_shape_args(profile))
+    cmd.extend(
         [
-            ffmpeg,
-            "-y",
             "-f",
-            "lavfi",
-            "-i",
-            "anullsrc=r=44100:cl=stereo",
-            "-t",
-            f"{duration_seconds:.3f}",
-            "-f",
-            "mp3",
+            profile["format"],
             "-acodec",
-            "libmp3lame",
+            profile["codec"],
             "-b:a",
-            "64k",
+            profile["silence_bitrate"],
             str(path),
-        ],
-        f"Create silence {duration_ms}ms",
+        ]
     )
 
+    run_cmd(cmd, f"Create silence {duration_ms}ms")
+
     if not path.exists() or path.stat().st_size <= 0:
-        raise RuntimeError(f"Failed to create silence mp3: {path}")
+        raise RuntimeError(f"Failed to create silence audio: {path}")
 
     return path
+
+
+def transcode_audio_for_concat(input_path, output_path, ffmpeg, profile):
+    input_path = Path(input_path)
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if output_path.exists() and output_path.stat().st_size > 0:
+        return output_path
+
+    cmd = [
+        ffmpeg,
+        "-y",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-i",
+        str(input_path),
+        "-vn",
+    ]
+    cmd.extend(ffmpeg_audio_shape_args(profile))
+    cmd.extend(
+        [
+            "-f",
+            profile["format"],
+            "-c:a",
+            profile["codec"],
+            "-b:a",
+            profile["bitrate"],
+            str(output_path),
+        ]
+    )
+    run_cmd(cmd, f"Normalize TTS for {profile['format']} concat")
+
+    if not output_path.exists() or output_path.stat().st_size <= 0:
+        raise RuntimeError(f"Failed to normalize TTS audio: {output_path}")
+
+    return output_path
+
+
+def normalize_tts_paths_for_concat(tts_paths, tmp_dir, profile, ffmpeg):
+    if not profile.get("normalize_concat_inputs"):
+        return tts_paths
+
+    normalized_dir = Path(tmp_dir) / "normalized_tts"
+    normalized_paths = []
+    for tts_path in tts_paths:
+        if not tts_path:
+            normalized_paths.append(tts_path)
+            continue
+
+        tts_path = Path(tts_path)
+        if not tts_path.exists() or tts_path.stat().st_size <= 0:
+            normalized_paths.append(str(tts_path))
+            continue
+
+        output_path = normalized_dir / f"{tts_path.stem}{profile['suffix']}"
+        normalized_paths.append(str(transcode_audio_for_concat(tts_path, output_path, ffmpeg, profile)))
+
+    return normalized_paths
+
+
+def create_original_audio_segment(input_path, start_seconds, duration_seconds, output_path, ffmpeg, profile):
+    input_path = Path(input_path)
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if output_path.exists() and output_path.stat().st_size > 0:
+        return output_path
+
+    cmd = [
+        ffmpeg,
+        "-y",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-ss",
+        f"{start_seconds:.3f}",
+        "-t",
+        f"{duration_seconds:.3f}",
+        "-i",
+        str(input_path),
+        "-vn",
+        "-avoid_negative_ts",
+        "make_zero",
+    ]
+    cmd.extend(ffmpeg_audio_shape_args(profile))
+    cmd.extend(
+        [
+            "-f",
+            profile["format"],
+            "-c:a",
+            profile["codec"],
+            "-b:a",
+            profile["bitrate"],
+            str(output_path),
+        ]
+    )
+    run_cmd(cmd, f"Create original audio concat segment start={start_seconds:.3f}")
+
+    if not output_path.exists() or output_path.stat().st_size <= 0:
+        raise RuntimeError(f"Failed to create original audio segment: {output_path}")
+
+    return output_path
+
+
+def write_presegmented_concat_list(
+    rows,
+    tts_paths,
+    original_audio,
+    original_duration,
+    silence_before,
+    silence_after,
+    concat_file,
+    tmp_dir,
+    ffmpeg,
+    profile,
+):
+    silence_before = Path(silence_before).resolve()
+    silence_after = Path(silence_after).resolve()
+    concat_file = Path(concat_file)
+    original_segments_dir = Path(tmp_dir) / "original_segments"
+
+    total = len(rows)
+    entries = 0
+
+    with concat_file.open("w", encoding="utf-8") as handle:
+        handle.write("ffconcat version 1.0\n")
+
+        for index, row in enumerate(rows):
+            start_seconds = max(0.0, float(row["start"]))
+            next_seconds = float(rows[index + 1]["start"]) if index + 1 < total else original_duration
+            next_seconds = min(next_seconds, original_duration)
+
+            if start_seconds >= original_duration or next_seconds <= start_seconds:
+                logger.warning(
+                    "Skip invalid original segment idx=%s start=%.3f next=%.3f duration=%.3f",
+                    index,
+                    start_seconds,
+                    next_seconds,
+                    original_duration,
+                )
+                continue
+
+            segment_path = original_segments_dir / (
+                f"original_{index:05d}_{int(start_seconds * 1000):012d}_{int(next_seconds * 1000):012d}"
+                f"{profile['suffix']}"
+            )
+            segment_path = create_original_audio_segment(
+                original_audio,
+                start_seconds,
+                next_seconds - start_seconds,
+                segment_path,
+                ffmpeg,
+                profile,
+            ).resolve()
+            handle.write(f"file '{ffconcat_escape(segment_path)}'\n")
+            entries += 1
+
+            tts_path = tts_paths[index] if index < len(tts_paths) else None
+            if tts_path and Path(tts_path).exists() and Path(tts_path).stat().st_size > 0:
+                tts_path = Path(tts_path).resolve()
+                handle.write(f"file '{ffconcat_escape(silence_before)}'\n")
+                handle.write(f"file '{ffconcat_escape(tts_path)}'\n")
+                handle.write(f"file '{ffconcat_escape(silence_after)}'\n")
+                entries += 3
+
+    logger.info("Presegmented concat list written: %s entries=%s", concat_file, entries)
+
+    if entries <= 0:
+        raise RuntimeError("Concat list is empty")
+
+    return concat_file
 
 
 def write_concat_list(rows, tts_paths, original_mp3, original_duration, silence_before, silence_after, concat_file):
@@ -446,30 +747,49 @@ def combine_audio_fast_ffmpeg(rows, tts_paths, original_mp3, final_output, tmp_d
     tmp_dir = Path(tmp_dir)
     tmp_dir.mkdir(parents=True, exist_ok=True)
 
+    output_profile = build_output_profile(original_mp3, final_output, ffprobe)
+
     logger.info("Building ffmpeg concat list without loading full original audio: %s", original_mp3)
     original_duration = get_audio_duration_seconds(original_mp3, ffprobe)
     logger.info("Original audio duration: %.3f seconds", original_duration)
 
-    silence_before = create_silence_mp3(
-        tmp_dir / f"silence_before_{INSERT_BEFORE_TTS_SILENCE_MS}ms.mp3",
+    silence_before = create_silence_audio(
+        tmp_dir / f"silence_before_{INSERT_BEFORE_TTS_SILENCE_MS}ms{output_profile['suffix']}",
         INSERT_BEFORE_TTS_SILENCE_MS,
         ffmpeg,
+        output_profile,
     )
-    silence_after = create_silence_mp3(
-        tmp_dir / f"silence_after_{INSERT_AFTER_TTS_SILENCE_MS}ms.mp3",
+    silence_after = create_silence_audio(
+        tmp_dir / f"silence_after_{INSERT_AFTER_TTS_SILENCE_MS}ms{output_profile['suffix']}",
         INSERT_AFTER_TTS_SILENCE_MS,
         ffmpeg,
+        output_profile,
     )
-    concat_file = write_concat_list(
-        rows,
-        tts_paths,
-        original_mp3,
-        original_duration,
-        silence_before,
-        silence_after,
-        tmp_dir / "tts_concat.ffconcat",
-    )
-    tmp_output = final_output.with_name(final_output.stem + ".part.mp3")
+    concat_tts_paths = normalize_tts_paths_for_concat(tts_paths, tmp_dir, output_profile, ffmpeg)
+    if output_profile.get("presegment_original"):
+        concat_file = write_presegmented_concat_list(
+            rows,
+            concat_tts_paths,
+            original_mp3,
+            original_duration,
+            silence_before,
+            silence_after,
+            tmp_dir / "tts_concat.ffconcat",
+            tmp_dir,
+            ffmpeg,
+            output_profile,
+        )
+    else:
+        concat_file = write_concat_list(
+            rows,
+            concat_tts_paths,
+            original_mp3,
+            original_duration,
+            silence_before,
+            silence_after,
+            tmp_dir / "tts_concat.ffconcat",
+        )
+    tmp_output = final_output.with_name(final_output.stem + ".part" + final_output.suffix)
     if tmp_output.exists():
         tmp_output.unlink()
 
@@ -477,34 +797,33 @@ def combine_audio_fast_ffmpeg(rows, tts_paths, original_mp3, final_output, tmp_d
         final_output.unlink()
 
     logger.info("Start ffmpeg concat export: %s", final_output)
-    run_cmd(
+    cmd = [
+        ffmpeg,
+        "-y",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-f",
+        "concat",
+        "-safe",
+        "0",
+        "-i",
+        str(concat_file),
+        "-vn",
+    ]
+    cmd.extend(ffmpeg_audio_shape_args(output_profile))
+    cmd.extend(
         [
-            ffmpeg,
-            "-y",
-            "-hide_banner",
-            "-loglevel",
-            "error",
             "-f",
-            "concat",
-            "-safe",
-            "0",
-            "-i",
-            str(concat_file),
-            "-vn",
-            "-ac",
-            OUTPUT_CHANNELS,
-            "-ar",
-            OUTPUT_SAMPLE_RATE,
-            "-f",
-            "mp3",
+            output_profile["format"],
             "-c:a",
-            "libmp3lame",
+            output_profile["codec"],
             "-b:a",
-            OUTPUT_BITRATE,
+            output_profile["bitrate"],
             str(tmp_output),
-        ],
-        "FFmpeg streaming PCM export",
+        ]
     )
+    run_cmd(cmd, "FFmpeg streaming PCM export")
 
     if not tmp_output.exists() or tmp_output.stat().st_size <= 0:
         raise RuntimeError(f"FFmpeg produced empty output: {tmp_output}")
