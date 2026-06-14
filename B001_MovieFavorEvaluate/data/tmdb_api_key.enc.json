@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "algorithm": "AES-256-GCM",
+  "kdf": "PBKDF2-HMAC-SHA256",
+  "iterations": 200000,
+  "salt": "gX+iiQenpQhjll0KH7LS0A==",
+  "nonce": "Nj+xYtlOe2GGhWSE",
+  "ciphertext": "VS2kyjpvUHhS5Y0LFnavlVCkseZa/bvSUubUcQFmx4U=",
+  "tag": "ESd5z2oqMD3nEqXwnsQmjA==",
+  "note": "TMDb API key encrypted with AES-256-GCM. Enter passphrase 8964 when evaluate.py starts."
+}

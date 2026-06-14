@@ -1,0 +1,77 @@
+# Movies in movies_details that are not in any JSON movie data file
+# Format: sentiment<TAB>source_file<TAB>movie_title
+
+negative	00 record.md	死神来了
+negative	00 record.md	孤岛惊魂
+negative	00 record.md	鬼水怪谈
+negative	00 record.md	咒怨
+negative	00 record.md	东京塔
+negative	00 record.md	2001天空漫游
+negative	00 record.md	巴比伦
+negative	00 record.md	戏台
+negative	00 record.md	祝你好运里奥·格兰德
+negative	00 record.md	了不起的盖茨比
+negative	00 record.md	壮志凌云：独行侠
+negative	00 record.md	生化危机
+negative	00 record.md	F1狂飙飞车
+negative	00 record.md	雷霆特工队
+negative	00 record.md	哪吒
+negative	00 record.md	黑夜传说
+negative	00 record.md	后天
+negative	00 record.md	真实谎言
+negative	00 record.md	危机13小时
+negative	00 record.md	金矿
+positive	01 动作科幻无脑.md	勇闯夺命岛 The Rock
+positive	01 动作科幻无脑.md	银河护卫队 Guardians of the Galaxy
+positive	01 动作科幻无脑.md	闪电侠 The Flash
+positive	01 动作科幻无脑.md	阿凡达 Avatar
+positive	01 动作科幻无脑.md	加勒比海盗 Dead Man’s Chest
+positive	01 动作科幻无脑.md	秘密特工 The Man from U.N.C.L.E.
+positive	01 动作科幻无脑.md	芬奇
+positive	01 动作科幻无脑.md	安娜
+positive	01 动作科幻无脑.md	阿丽塔战斗天使
+positive	01 动作科幻无脑.md	头号玩家
+positive	01 动作科幻无脑.md	碟中谍8最终清算
+positive	01 动作科幻无脑.md	地心历险记
+positive	01 动作科幻无脑.md	失控玩家
+positive	01 动作科幻无脑.md	复仇者联盟
+positive	02 华语.md	童年往事
+positive	02 华语.md	背靠背，脸对脸
+positive	02 华语.md	茶馆
+positive	02 华语.md	遥望南方的童年
+positive	02 华语.md	捕风追影
+positive	02 华语.md	不成问题的问题
+positive	03 帮派犯罪.md	子弹横飞百老汇 Bullets Over Broadway
+positive	03 帮派犯罪.md	盗火线 Heat
+positive	03 帮派犯罪.md	骗中骗
+positive	04 文艺类.md	The Journey 旅途
+positive	04 文艺类.md	Sin City 罪恶之城
+positive	06 治愈坚韧勇敢.md	Fly Away Home 伴你高飞
+positive	06 治愈坚韧勇敢.md	A Man Called Ove 一个叫欧维的男人决定去死
+positive	06 治愈坚韧勇敢.md	Wall Street 华尔街
+positive	06 治愈坚韧勇敢.md	城市英雄 (Falling Down?)
+positive	06 治愈坚韧勇敢.md	天堂电影院 (Cinema Paradiso)
+positive	06 治愈坚韧勇敢.md	A Perfect World 完美的世界
+positive	06 治愈坚韧勇敢.md	心灵捕手 (Good Will Hunting)
+positive	06 治愈坚韧勇敢.md	心灵点滴 (Soul?)
+positive	06 治愈坚韧勇敢.md	总有一天 (Lang historie kort?)
+positive	06 治愈坚韧勇敢.md	I Am Sam 我是山姆
+positive	06 治愈坚韧勇敢.md	Legends of the Fall 燃情岁月
+positive	06 治愈坚韧勇敢.md	雷米奇遇记 (Rémi sans famille)
+positive	06 治愈坚韧勇敢.md	The Cure 鳄鱼波鞋走天涯
+positive	08 经典高分.md	Dear Comrades! 亲爱的同志
+positive	08 经典高分.md	The Hole 洞（1960 经典）
+positive	08 经典高分.md	看不见的客人 Contratiempo
+positive	08 经典高分.md	卡萨布兰卡 Casablanca
+positive	09 超长3小时起.md	指环王三部曲 加长版
+positive	09 超长3小时起.md	婚姻生活
+positive	09 超长3小时起.md	牯岭街少年杀人事件
+positive	09 超长3小时起.md	金刚
+positive	10 韩国高分.md	狩猎
+positive	11 音乐.md	福禄双霸天 The Blues Brothers
+positive	11 音乐.md	雨中曲 Singin’ in the Rain
+positive	11 音乐.md	音乐救赎者
+positive	12 人物传记真实改编.md	The King’s Speech 国王的演讲
+positive	12 人物传记真实改编.md	Togo 多哥
+positive	12 人物传记真实改编.md	Cinderella Man 铁拳男人
+positive	12 人物传记真实改编.md	血钻

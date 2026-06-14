@@ -1,0 +1,4796 @@
+{
+  "created_at": "2026-06-14T01:23:27+09:00",
+  "updated_at": "2026-06-14T01:23:29+09:00",
+  "rounds": [
+    {
+      "round_id": "round_1_baseline_known_labels",
+      "started_at": "2026-06-14T01:23:27+09:00",
+      "finished_at": "2026-06-14T01:23:29+09:00",
+      "config": {
+        "positive_importance": 1.0,
+        "negative_importance": 1.0,
+        "selection": {
+          "positive_limit": 12,
+          "negative_limit": 14,
+          "feedback_limit": 10
+        },
+        "dimension_weights": {
+          "剧本与人性深度": 2.0,
+          "视听语言与导演风格": 0.7,
+          "口味契合度": 3.4
+        },
+        "score_calibration": {
+          "anchor_blend": 0.55,
+          "minimum_anchor_relevance": 0.08
+        },
+        "respect_known_labels": true
+      },
+      "items": [
+        {
+          "case_id": "positive::切腹",
+          "status": "ok",
+          "group": "positive",
+          "title": "切腹",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "切腹",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：深层次剖析武士阶层的状态与实质，带给人更多的是一种悲凉与一声叹息。如果抛开武士道本身的关系，这部片子反映的大哲也发人深思，不论政治统治与行政上的意义如何，可能某些用来束缚人的所谓“道义”都是一种矛盾综合体的表现。而在要求别人这样遵守的同时，在“道义”与实实在在的生活、人性相冲突的时候，自己能否知道如何选择呢？可能不身临其境，永远也无法下结论。而此片对于武士阶层唱出了挽歌，真实、可叹。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::辛德勒的名单",
+          "status": "ok",
+          "group": "positive",
+          "title": "辛德勒的名单",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "辛德勒的名单",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：人性中的光辉，厚重的历史感，和人性中的难能可贵的坚持与勇敢",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::教父",
+          "status": "ok",
+          "group": "positive",
+          "title": "教父",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "教父",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：这不仅仅是一部黑帮片，而是关于权力、家族命运与男人如何在道德与忠诚之间做出不可逆抉择的史诗。科里昂家族的内部结构就是一个微缩的权力社会——温情与残酷并存，这种古典叙事节奏和厚重的文学质感是绝大多数电影无法企及的。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::12怒汉",
+          "status": "ok",
+          "group": "positive",
+          "title": "12怒汉",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "12怒汉",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：偏见，合理的怀疑。任何时候都要保持怀疑的能力。最后，当意见终于统一，每个人默默地穿上外套，离开，桌子上是刚刚一个半小时内发生的巨大震荡留下的痕迹，烟灰缸，纸团，凌乱的纸张，笔，还有那把刀。经过这些震荡后的十二个男人，不管之前是多么的抱着偏见不放，此刻都闪着光。这是人类进步的光芒。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::杀人回忆",
+          "status": "ok",
+          "group": "positive",
+          "title": "杀人回忆",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "杀人回忆",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：它探讨的不止是一桩震撼了一代韩国人的凶残案件，而是一些更深层次的问题。在电影中我看到一系列深刻的正反对立。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::美国往事",
+          "status": "ok",
+          "group": "positive",
+          "title": "美国往事",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "美国往事",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：我知道这是一部男人不得不看的电影，里面的热血，情谊，背叛，理想，现实似乎很远，却也很近。厚重的历史史诗变迁",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::1987：黎明到来的那一天",
+          "status": "ok",
+          "group": "positive",
+          "title": "1987：黎明到来的那一天",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "1987：黎明到来的那一天",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：光州民主运动的最值得记住的瞬间，以电影题材映照民运的那种惨烈和勇敢",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::偷自行车的人",
+          "status": "ok",
+          "group": "positive",
+          "title": "偷自行车的人",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "偷自行车的人",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：剧情没有任何意外性的发展，我们都知道发现小偷的几率极低，但是我们都抱着那一点点的希望，这是最大的悬念。导演用平实的手法来表达了事件的发展，仿佛就发生在你的周遭，深谙人的心理状态，演员表演的很到位，让了看了情不自禁的揪心与伤感。低层的人都是生活的受害者。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::灿烂人生",
+          "status": "ok",
+          "group": "positive",
+          "title": "灿烂人生",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "灿烂人生",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：我们应该以怎样的方式来爱这个世界？是马提奥那样宁为玉碎，朱莉叶那样飞蛾扑火，还是像尼古拉那样柔情似水？追寻自由之路究竟通向何方？到底怎样才能用爱换取爱？这些最重要的问题，我们从来也得不到回答，多少人的一生就这样枉惘而过。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::血色将至",
+          "status": "ok",
+          "group": "positive",
+          "title": "血色将至",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "血色将至",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：真实的刻画了一个石油商为了成功最终完整抛弃人性的那种过程和孤独感",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::出租车司机 (1976)",
+          "status": "ok",
+          "group": "positive",
+          "title": "出租车司机 (1976)",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "出租车司机 (1976)",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：马丁·斯科塞斯对都市孤独灵魂的显微镜式观察。越战后的虚无感与社会的腐朽交织，最终爆发为一场暴力的自我救赎，冷峻且迷幻。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::辩护人",
+          "status": "ok",
+          "group": "positive",
+          "title": "辩护人",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "辩护人",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。很佩服韩国人正视民族历史的勇气，《辩护人》充分展现国家权力机器与国民之间的缓和与争锋。我也套用《熔炉》里面的台词“我们所做的，不是为了改变世界，而是为了不让世界改变我们“。我们每一个国民只不过是乔治·奥威尔《动物庄园》中的一个动物，我们所做的就是过清醒的人生，做自由的灵魂！",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::他们已不再变老",
+          "status": "ok",
+          "group": "positive",
+          "title": "他们已不再变老",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "他们已不再变老",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：修复得相当完美，着色部分很有默片感，“他们已不再变老”，摄影机前不无稚气的笑容与战场上的尸横遍野被剪辑得异常有冲击力；另加的旁白采用当年老兵视角，还原出在极端恶劣的环境下如何艰难求生，如何在生理和心理双重煎熬下克服对恐惧本身的恐惧，如何切实地、以血肉之驱感受何谓死亡气息弥漫，甚而拥有剧情片的跌宕与沉浸，开启修复新模式。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::控方证人",
+          "status": "ok",
+          "group": "positive",
+          "title": "控方证人",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "控方证人",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：比利·怀尔德的巅峰编剧之作。层层反转中是对人性多面性的深刻嘲讽，在黑白电影时代就将悬疑与法庭博弈玩到了极致。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::卢旺达饭店",
+          "status": "ok",
+          "group": "positive",
+          "title": "卢旺达饭店",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "卢旺达饭店",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：在国际社会集体沉默与种族仇杀的极端背景下，一个普通酒店经理凭借人性中最后的勇气撑起了一片庇护地。它震撼的不是战争本身，而是在极度黑暗中那种稀薄却坚韧的人性微光——这恰恰是你最能共情的叙事核心。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::刺杀肯尼迪",
+          "status": "ok",
+          "group": "positive",
+          "title": "刺杀肯尼迪",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "刺杀肯尼迪",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：一个理想主义者的求真故事。这要有着极其坚韧的人性，而且这个故事是真实改编，更加打动人",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::海街R记",
+          "status": "ok",
+          "group": "positive",
+          "title": "海街R记",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "海街R记",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：是枝裕和不靠戏剧冲突，而用日常生活的肌理去刻画人与人之间的复杂情感。四姐妹在共同生活中对父亲缺席的无声消化，对彼此的依赖与隔阂，都藏在一餐饭、一次漫步里。这种东方式的克制温情，是你能够感受到的那类深层情感。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::海上钢琴师",
+          "status": "ok",
+          "group": "positive",
+          "title": "海上钢琴师",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "海上钢琴师",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：一部关于孤独与纯粹的浪漫寓言。1900拒绝下船不仅是恐惧，更是对一个无法掌控的世界的无声抗议，这种极致的理想主义令人动容。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::首尔之春",
+          "status": "ok",
+          "group": "positive",
+          "title": "首尔之春",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "首尔之春",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：毫无疑问这是又一部大胆纰漏独裁者如何上位，以及和他勇敢抗争的真实历史故事",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::老爷车",
+          "status": "ok",
+          "group": "positive",
+          "title": "老爷车",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "老爷车",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：伊斯特伍德式的硬汉柔情。老兵在偏见与孤独中选择为跨种族的邻居牺牲，完成了一次关于尊严与救赎的谢幕，这种克制的叙事极具力量。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::热天午后",
+          "status": "ok",
+          "group": "positive",
+          "title": "热天午后",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "热天午后",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：一出荒诞的抢劫剧，实则是社会边缘人的绝望呐喊。阿尔·帕西诺演活了那种在现实压力下被逼入绝境的狂躁与无奈。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::可可西里",
+          "status": "ok",
+          "group": "positive",
+          "title": "可可西里",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "可可西里",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：中国西部电影的硬核之作。陆川用近乎纪录片的镜头对准了保护藏羚羊的巡山队，展现了在无人区极其残酷的环境下，理想与生命的惨烈博弈。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::英伦病人",
+          "status": "ok",
+          "group": "positive",
+          "title": "英伦病人",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "英伦病人",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：战火中的废墟、撒哈拉的黄沙与禁忌的爱。叙事结构如文学般精妙，探讨了国族、背叛与超越死亡的情感，极具古典史诗质感。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::被解救的姜戈",
+          "status": "ok",
+          "group": "positive",
+          "title": "被解救的姜戈",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "被解救的姜戈",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：昆汀将暴力美学、西部片符号与废奴主题完美融合。在血腥与黑色幽默中实现了一场酣畅淋漓的历史复仇，叙事节奏极具快感。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::末路狂花",
+          "status": "ok",
+          "group": "positive",
+          "title": "末路狂花",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "末路狂花",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：女性主义公路片的先驱。逃离男权社会的压迫，在飞向深渊的瞬间完成了最后的自由宣言，这种悲剧性的反叛极其震撼。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::奥本海默",
+          "status": "ok",
+          "group": "positive",
+          "title": "奥本海默",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "奥本海默",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：诺兰在原子弹的闪光中审视科学家破碎的内心。通过剪辑让普罗米修斯式的创世与自毁同时发生，不仅是传记，更是道德恐怖片。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::赎罪",
+          "status": "ok",
+          "group": "positive",
+          "title": "赎罪",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "赎罪",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：一个少女的谎言摧毁了两段人生。敦刻尔克海滩的长镜头令人叹为观止，影片对“赎罪”这种终身精神困境的探讨极其深刻且残酷。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::浪潮",
+          "status": "ok",
+          "group": "positive",
+          "title": "浪潮",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "浪潮",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：德国人对独裁基因最深刻的自省。通过一场失控的校园实验证明了极权主义离我们仅有五天，这种对群体心理的解剖让人不寒而栗。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::爱尔兰人",
+          "status": "ok",
+          "group": "positive",
+          "title": "爱尔兰人",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "爱尔兰人",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：斯科塞斯对黑帮类型片的黄昏总结。它褪去了《好家伙》的浮华，只剩下晚年的孤独、衰老与对往昔罪恶的无声忏悔，极具时间消逝的苍凉感。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::邮差",
+          "status": "ok",
+          "group": "positive",
+          "title": "邮差",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "邮差",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：意大利式的温情与浪漫。诗人与邮差的忘年交，证明了文字与诗意如何觉醒一个普通人的灵魂，结局那种淡淡的哀伤极具杀伤力。",
+          "evaluated_at": "2026-06-14T01:23:27+09:00"
+        },
+        {
+          "case_id": "positive::隐藏人物",
+          "status": "ok",
+          "group": "positive",
+          "title": "隐藏人物",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "隐藏人物",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：聚焦被历史遮蔽的非裔女性科学家。在种族隔离最严酷的时代，靠才智突破偏见的边界，叙事流畅且具有极强的现实启发意义。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::超脱",
+          "status": "ok",
+          "group": "positive",
+          "title": "超脱",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "超脱",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：镜头极其致郁且迷幻，精准捕捉了现代社会的孤独与崩塌。替代教师眼中的世界荒芜而破碎，是对教育与人性缺失的灵魂拷问。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::绿里奇迹",
+          "status": "ok",
+          "group": "positive",
+          "title": "绿里奇迹",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "绿里奇迹",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：斯蒂芬·金式的奇幻与人性实验。在死牢这个极致压抑的环境下探讨神迹与罪恶，结局对善良之死的回避更显社会的残酷。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::共同警备区 JSA",
+          "status": "ok",
+          "group": "positive",
+          "title": "共同警备区 JSA",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "共同警备区 JSA",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：在极致的政治对立中建立的跨边界友情。朴赞郁用悬疑外壳包裹了一段南北韩士兵的悲剧，对战争与意识形态的荒诞性进行了深刻讽刺。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::模仿游戏",
+          "status": "ok",
+          "group": "positive",
+          "title": "模仿游戏",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "模仿游戏",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：图灵作为孤胆英雄的悲剧传记。他拯救了世界，却因取向被世界毁灭，影片对这种时代悖论的刻画极具批判深度。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::隐入尘烟",
+          "status": "ok",
+          "group": "positive",
+          "title": "隐入尘烟",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "隐入尘烟",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：国产电影中罕见的、对土地与农民生活极其纯粹的白描。在西北荒凉的土地上，两个边缘人的相濡以沫展现了极其厚重的人道主义关怀。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::寄生虫",
+          "status": "ok",
+          "group": "positive",
+          "title": "寄生虫",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "寄生虫",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：奉俊昊用精巧的类型片外壳包装了血淋淋的阶级寓言。气味作为无法跨越的阶级鸿沟，最终引向必然的暴力爆发，结构完美且讽刺精准。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::特工",
+          "status": "ok",
+          "group": "positive",
+          "title": "特工",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "特工",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：没有枪战却惊心动魄的间谍片。揭示了政治高层如何操弄民族矛盾来稳固权力，南北韩两位主角在权谋中的惺惺相惜非常动人。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::华丽的假期",
+          "status": "ok",
+          "group": "positive",
+          "title": "华丽的假期",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "华丽的假期",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：正面强攻1980光州事件，展现普通人在国家暴力面前的抵抗与牺牲。作为历史的见证，其诚意与情感烈度都非常出色。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::两杆大烟枪",
+          "status": "ok",
+          "group": "positive",
+          "title": "两杆大烟枪",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "两杆大烟枪",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：盖·里奇把多线叙事玩到极致，荒诞巧合层层叠加却严丝合缝，黑色幽默与英式底层江湖气质浑然一体。这部电影让你看到犯罪片也可以既聪明又酷，剧情结构本身就是一种审美享受。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::我们的父辈",
+          "status": "ok",
+          "group": "positive",
+          "title": "我们的父辈",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "我们的父辈",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：从德国人的视角反思二战。五个年轻人的理想如何被战争彻底粉碎和异化，这种对个体道德溃败的直视具有极强的历史反思力。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::生活多美好",
+          "status": "ok",
+          "group": "positive",
+          "title": "生活多美好",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "生活多美好",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：虽然是圣诞经典，但其核心是对普通人生活价值的深刻肯定。在绝望与希望的交替中，展现了微小善意如何汇聚成对抗世界的防线。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::宾虚 (1959)",
+          "status": "ok",
+          "group": "positive",
+          "title": "宾虚 (1959)",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "宾虚 (1959)",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：古典好莱坞大片的极致。史诗级的赛车场面下，是关于背叛、复仇与信仰重塑的宏大命题，跨越半个世纪依然具有震撼力。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::南山的部长们",
+          "status": "ok",
+          "group": "positive",
+          "title": "南山的部长们",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "南山的部长们",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：极其冷峻的政治政治心理剧。将刺杀朴正熙之前的内斗与权欲刻画得丝丝入扣，电影色调阴郁，透出一种令人窒息的权力高压感。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::蝴蝶效应",
+          "status": "ok",
+          "group": "positive",
+          "title": "蝴蝶效应",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "蝴蝶效应",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：科幻外壳下的悲剧宿命论。无论如何试图修正过去，人生总会有无法弥合的裂痕，这种对“最优解”不存在的绝望认知非常深刻。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::为了明天 (2023)",
+          "status": "ok",
+          "group": "positive",
+          "title": "为了明天 (2023)",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "为了明天 (2023)",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：意大利新片中表现出色的治愈系作品，在细腻的日常中展现了战后女性意识的觉醒。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::为奴十二年",
+          "status": "ok",
+          "group": "positive",
+          "title": "为奴十二年",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "为奴十二年",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：史蒂夫·麦奎因用极其直观、甚至有些残忍的镜头语言还原了奴隶制的罪恶。它剥落了浪漫化的滤镜，直视人类历史上最黑暗的篇章。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::华盛顿邮报",
+          "status": "ok",
+          "group": "positive",
+          "title": "华盛顿邮报",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "华盛顿邮报",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：斯皮尔伯格对新闻自由的致敬。在权力施压下对真相的坚守，展现了媒体作为社会第四权力的道德高光时刻。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::饮食男女",
+          "status": "ok",
+          "group": "positive",
+          "title": "饮食男女",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "饮食男女",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：李安将中国传统的饮食文化与错综复杂的家庭情感完美融合。在推杯换盏间揭示了欲望与传统的张力，是东方美学与现代情感的交响。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::九区",
+          "status": "ok",
+          "group": "positive",
+          "title": "九区",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "九区",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：以科幻外壳影射种族隔离与难民危机。那种手持摄影带来的伪纪录片感，赋予了外星人题材前所未有的现实主义质感。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::上帝之城",
+          "status": "ok",
+          "group": "positive",
+          "title": "上帝之城",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "上帝之城",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：被上帝抛弃的贫民窟里只有暴力与毒品。快速剪辑与极具张力的叙事，展现了巴西底层社会循环往复的暴力宿命。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::末代皇帝",
+          "status": "ok",
+          "group": "positive",
+          "title": "末代皇帝",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "末代皇帝",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：贝托鲁奇用西方视角审视中国最后的王朝。溥仪一生的起伏不仅是个人的悲剧，更是整个时代在历史洪流中身不由己的缩影。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::恐怖直播",
+          "status": "ok",
+          "group": "positive",
+          "title": "恐怖直播",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "恐怖直播",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：单场景电影的极致。媒体伦理、政府无能与边缘人的绝望在窄小的播音室内激烈碰撞，结局那种玉石俱焚的决绝极其震撼。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::我的章鱼老师",
+          "status": "ok",
+          "group": "positive",
+          "title": "我的章鱼老师",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "我的章鱼老师",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：不仅是自然纪录片，更是关于跨物种情感与自我疗愈的心灵旅程。在自然的律动中找回对生命的敬畏，情感极其细腻。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::岁月神偷",
+          "status": "ok",
+          "group": "positive",
+          "title": "岁月神偷",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "岁月神偷",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：老香港情怀的感人呈现。在困顿的岁月中展现家庭的坚韧与亲情的温度，那种“一步难，一步佳”的生活哲学非常动人。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::剃头匠",
+          "status": "ok",
+          "group": "positive",
+          "title": "剃头匠",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "剃头匠",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：记录93岁汉族老剃头匠在北京胡同日常，展现平凡坚守与温情。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::间谍之桥",
+          "status": "ok",
+          "group": "positive",
+          "title": "间谍之桥",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "间谍之桥",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：冷战背景下的谈判专家，展现了个体如何凭借法律素养与人性坚持，在两大强权的夹缝中完成不可能的营救。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::天注定",
+          "status": "ok",
+          "group": "positive",
+          "title": "天注定",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "天注定",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：贾樟柯对当代中国社会暴力根源的冷峻观察。将真实社会案件进行艺术化处理，展现了在转型期社会中，被逼入死角的个体如何暴力突围。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::黄昏双镖客",
+          "status": "ok",
+          "group": "positive",
+          "title": "黄昏双镖客",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "黄昏双镖客",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：塞尔乔·莱昂内西部三部曲的代表作。极简的对白、完美的构图与莫里科内的配乐，定义了那种带有宿命感的暴力美学。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::不一样的天空",
+          "status": "ok",
+          "group": "positive",
+          "title": "不一样的天空",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "不一样的天空",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：边缘小镇少年的生存困境。在沉重的家庭负担与渴望自由的本能之间挣扎，展现了成长过程中那种隐忍而温情的力量。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::伴我同行",
+          "status": "ok",
+          "group": "positive",
+          "title": "伴我同行",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "伴我同行",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：表面上是四个少年寻找尸体的公路故事，实际上是对童年终结、友谊本质与成长代价的深情祭奠。那种关于'你记得那年夏天吗'的忧伤共鸣，是成年后回望时最让人心碎的情感。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::大河恋",
+          "status": "ok",
+          "group": "positive",
+          "title": "大河恋",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "大河恋",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：极其诗意的家庭史诗。在蒙大拿州的溪流间，通过飞钓探讨了亲情中那种无法逾越的隔阂与深刻的爱，画面与情感同样纯净。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::走出非洲",
+          "status": "ok",
+          "group": "positive",
+          "title": "走出非洲",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "走出非洲",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：不是一个关于爱情的故事，而是一段关于在异乡的土地上寻找自我归属的文学式旅程。凯伦·白列森在非洲广袤草原上感受到的自由与失去，那种诗意与哀愁兼具的叙事，读来如同沉浸于一部优雅的文学小说。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::盲井",
+          "status": "ok",
+          "group": "positive",
+          "title": "盲井",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "盲井",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：用煤矿这一极端环境剥光了人性中的贪婪与恶，却在最后留下一线微弱的良知之光。它不美化，不升华，只是冷静地呈现人在生存压力下如何一步步滑向最丑陋的自己，真实得令人不寒而栗。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::年少日记",
+          "status": "ok",
+          "group": "positive",
+          "title": "年少日记",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "年少日记",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：对青少年心理创伤与家庭暴力极其残酷的剖析。在多重叙事诡计下揭开那个无法愈合的伤疤，具有极强的现实批判性。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::萨利机长",
+          "status": "ok",
+          "group": "positive",
+          "title": "萨利机长",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "萨利机长",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：不仅是奇迹营救，更是对职业精神与官僚主义审判的博弈。伊斯特伍德展现了那种沉默而坚定的专业主义力量。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::好东西",
+          "status": "ok",
+          "group": "positive",
+          "title": "好东西",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "好东西",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：难得的、视角细腻且充满智性趣味的当代女性题材。在轻盈的基调下探讨单亲妈妈与女性互助，充满力量且不显说教。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::回到太空",
+          "status": "ok",
+          "group": "positive",
+          "title": "回到太空",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "回到太空",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：马斯克与SpaceX的追梦历程。虽然是纪录片，却拍出了科幻大片的张力，展现了人类探索边界时那种纯粹的疯狂与执着。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::天国王朝",
+          "status": "ok",
+          "group": "positive",
+          "title": "天国王朝",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "天国王朝",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：骑士精神、英雄主义与宏大史诗场面背后，是对信仰与宽容的深层追问——'耶路撒冷值什么？什么都不值，或者，一切。'这种哲学厚度赋予了一部动作史诗片罕见的精神维度，让你不仅被场面震撼，更被这种精神高度所打动。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::南营洞1985",
+          "status": "ok",
+          "group": "positive",
+          "title": "南营洞1985",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "南营洞1985",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：这部电影的震撼来自真实性——政治体制对个人身体与精神的系统性摧残，在一个密闭的审讯室里被冷静而残酷地呈现出来。与中国现实隐隐相通的那种权力压迫感，让你感到这不只是一段历史，而是一种至今未散的阴影。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::Pink Floyd: The Wall",
+          "status": "ok",
+          "group": "positive",
+          "title": "Pink Floyd: The Wall",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "Pink Floyd: The Wall",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：这不是一部普通的音乐电影，而是一场关于创伤、孤立与自我囚禁的意识流视觉实验。迷幻摇滚的音乐语言与动画影像完美融合，将一个人如何用自我构建的'墙'与世界隔绝这一内心旅程，拍得撕裂而真实。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::自闭历程",
+          "status": "ok",
+          "group": "positive",
+          "title": "自闭历程",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "自闭历程",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：关于自闭症专家Temple Grandin的感人传记。展现了与众不同的思维方式如何改变世界，具有极强的人文关怀。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::勇士",
+          "status": "ok",
+          "group": "positive",
+          "title": "勇士",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "勇士",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：MMA拳台上的两兄弟之战。将家庭矛盾、创伤与救赎浓缩在暴力的对抗中，最后那个降服镜头的情感冲击力极强。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::大鱼",
+          "status": "ok",
+          "group": "positive",
+          "title": "大鱼",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "大鱼",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：蒂姆·波顿用绚丽的幻象包裹了一段关于理解父亲的真实旅程。在虚幻与现实之间，揭示了故事如何赋予生命超越平凡的力量。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::偷拐抢骗",
+          "status": "ok",
+          "group": "positive",
+          "title": "偷拐抢骗",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "偷拐抢骗",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：盖·里奇的群像犯罪片代表作，多线叙事精密交织，角色各有鲜明个性，黑色幽默与英式街头江湖气贯穿始终。它不依赖暴力奇观，而是靠剧情结构的精妙和人物的化学反应产生持续的观影快感，是那种看完会忍不住想再刷一遍的电影。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::绅士们",
+          "status": "ok",
+          "group": "positive",
+          "title": "绅士们",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "绅士们",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：盖·里奇回归最擅长的犯罪喜剧领域，以大麻帝国的权力交接为核心，编织出一场多方博弈的阴谋大戏。对话机锋十足，节奏紧凑，英式黑色幽默与精英犯罪世界的混搭产生了独特的酷劲，是纯粹的类型片享受。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::出走的决心",
+          "status": "ok",
+          "group": "positive",
+          "title": "出走的决心",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "出走的决心",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：基于真实事件。展现了长期被家庭劳作束缚的女性如何通过出走找回自我，这种对平庸之恶的决绝反抗极具时代共鸣。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::马茹娜的非凡旅程",
+          "status": "ok",
+          "group": "positive",
+          "title": "马茹娜的非凡旅程",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "马茹娜的非凡旅程",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：通过一只流浪狗的视角审视人类世界。画风独特且极具共情力，是对爱与忠诚最柔软的艺术化呈现。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::大卫·爱登堡：地球上的一段生命旅程",
+          "status": "ok",
+          "group": "positive",
+          "title": "大卫·爱登堡：地球上的一段生命旅程",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "大卫·爱登堡：地球上的一段生命旅程",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：一代传奇博物学家的临终告白。在记录自然之美的同时，对人类破坏生态发出的最后警钟，既是赞歌也是挽歌。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::盗梦空间",
+          "status": "ok",
+          "group": "positive",
+          "title": "盗梦空间",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "盗梦空间",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：诺兰操控现实与梦境的黑科技盗梦片，哲学般探讨潜意识与罪恶。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::猫鼠游戏",
+          "status": "ok",
+          "group": "positive",
+          "title": "猫鼠游戏",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "猫鼠游戏",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：斯皮尔伯格执导。讲述少年弗兰克伪造身份骗取千万，FBI探员追捕下的猫鼠游戏与成长救赎。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::灵魂歌王",
+          "status": "ok",
+          "group": "positive",
+          "title": "灵魂歌王",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "灵魂歌王",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：传记片。讲述盲人黑人音乐家雷·查尔斯的成长、音乐与人生救赎。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::急速车王",
+          "status": "ok",
+          "group": "positive",
+          "title": "急速车王",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "急速车王",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：这不仅是赛车史上最经典的人物对决，更是两种截然不同的人格——詹姆斯·亨特的放荡不羁与尼基·劳达的极度理性——如何在死亡边缘共同燃烧的人性故事。真实改编让这段友谊与竞争更具分量。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::喜宴",
+          "status": "ok",
+          "group": "positive",
+          "title": "喜宴",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "喜宴",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：李安“父亲三部曲”之一。在假结婚的荒诞闹剧下，解构了中国传统家庭观念与现代个体认知的冲突，温情而辛辣。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::幸福终点站",
+          "status": "ok",
+          "group": "positive",
+          "title": "幸福终点站",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "幸福终点站",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：一个被困在机场法外之地的外国人，凭借对承诺的死守和对生活的乐观，在荒诞处境中活出了一种尊严。这种理想主义者面对荒诞现实时那种坚韧与无奈，恰恰触动了你对'小人物的不屈'最深的共情。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::荒野机器人",
+          "status": "ok",
+          "group": "positive",
+          "title": "荒野机器人",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "荒野机器人",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：动画电影中罕见的科幻深度，探讨了技术与自然本能的融合，具有极强的视觉美感与情感共鸣。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::安琪拉的灰烬",
+          "status": "ok",
+          "group": "positive",
+          "title": "安琪拉的灰烬",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "安琪拉的灰烬",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：极度贫穷与饥饿的爱尔兰童年，却用一种奇特的黑色幽默和温情去讲述——悲惨而不沉溺，苦中又有真实的人性温度。这种'凄惨但不失趣味'的叙事方式，让苦难变得可以承受，也更加触动人心。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::秋天的童话",
+          "status": "ok",
+          "group": "positive",
+          "title": "秋天的童话",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "秋天的童话",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：香港经典爱情片中难得的甜美与柔情，周润发与钟楚红之间那种异乡相遇、相知相惜的情感，有着简单而真实的生命温度。在你的喜好体系里，它是偶尔需要的一抹温柔亮色，不沉重，却有情。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::花火",
+          "status": "ok",
+          "group": "positive",
+          "title": "花火",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "花火",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：北野武自导自演。以极简对白与“北野蓝”意象，讲述警察面对生死婆娑的美学冥思。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::兰戈",
+          "status": "ok",
+          "group": "positive",
+          "title": "兰戈",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "兰戈",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：披着动画外皮的后现代西部片。对经典西部符号的解构与戏仿，展现了寻找自我的哲学命题，极具风格化。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "positive::鲭鱼罐头",
+          "status": "ok",
+          "group": "positive",
+          "title": "鲭鱼罐头",
+          "target_score": 100.0,
+          "predicted_score": 100.0,
+          "raw_model_score": 100.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "鲭鱼罐头",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 100.0,
+            "视听语言与导演风格": 100.0,
+            "口味契合度": 100.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_pos_movies.json",
+            "sentiment": "positive",
+            "target_score": 100.0
+          },
+          "model_output": "已命中人工标注：my_pos_movies.json。核心肯定点：九州小学生暑期出海探险，忠实友情与成长经历的温情青春片。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "negative::高山下的花环",
+          "status": "ok",
+          "group": "negative",
+          "title": "高山下的花环",
+          "target_score": 46.0,
+          "predicted_score": 46.0,
+          "raw_model_score": 46.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "高山下的花环",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 46.0,
+            "视听语言与导演风格": 46.0,
+            "口味契合度": 46.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 46.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：画面老旧带来的距离感让情感沉浸困难；更深层的问题是，这类主旋律战争片即便有批判精神，过度的煽情仍然会触发你对'被强迫流泪'的排斥反应——你要的是真实的人性重量，而不是被设计好的眼泪。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "negative::2001太空漫游",
+          "status": "ok",
+          "group": "negative",
+          "title": "2001太空漫游",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "2001太空漫游",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：库布里克极度克制到几乎没有叙事的镜头语言，让后半段变成一场哲学沉思的视觉仪式，而非情感体验。你的观影方式需要人物作为情感锚点，纯粹的形而上冥想让你无从进入，也无法享受。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "negative::阿拉伯的劳伦斯",
+          "status": "ok",
+          "group": "negative",
+          "title": "阿拉伯的劳伦斯",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "阿拉伯的劳伦斯",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：影片对劳伦斯这个人物的内心世界刻画是浮于表面的——大量笔墨用于壮阔的沙漠奇观与历史格局，却没有给你真正看清这个矛盾男人的灵魂。缺乏你最看重的人性深度，让这部公认的史诗大作对你来说像是精美的空壳。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "negative::坠落的审判",
+          "status": "ok",
+          "group": "negative",
+          "title": "坠落的审判",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "坠落的审判",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：影片以极度细节化的法庭语言和婚姻解剖见长，但这种理性解构式叙事需要一种特定的观看节奏——你的思维方式更偏向叙事驱动的情感共情，过于碎片化的'显微镜观察'让你无法建立与人物的深层连接。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "negative::全金属外壳",
+          "status": "ok",
+          "group": "negative",
+          "title": "全金属外壳",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "全金属外壳",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：前半段对军营精神摧残的刻画是震撼的，但后半段越南丛林的战争场面失去了前半段的人性锐度，变成了一种你难以享受的战争奇观。整体叙事在你看来断裂了，未能保持始终刺穿人心的力度。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "negative::惊魂记",
+          "status": "ok",
+          "group": "negative",
+          "title": "惊魂记",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "惊魂记",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：你对以制造恐惧和不安感为核心目的的类型片本能地缺乏兴趣。谋杀悬疑的类型机制对你来说是观影体验的障碍，而非乐趣来源，哪怕它是电影史的教科书级经典。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "negative::这里的黎明静悄悄",
+          "status": "ok",
+          "group": "negative",
+          "title": "这里的黎明静悄悄",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "这里的黎明静悄悄",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：苏联叙事传统中那种高度集体化的民族牺牲精神让个体的独特性被消解——五个女兵更像是主题的载体而非真实的人。这种国家主义叙事框架是你最难接受的叙事模式之一。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "negative::鼹鼠：朝鲜卧底",
+          "status": "ok",
+          "group": "negative",
+          "title": "鼹鼠：朝鲜卧底",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "鼹鼠：朝鲜卧底",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：画质和节奏的限制降低了沉浸感，同时复杂的派系关系和政治术语需要大量背景知识才能解码。好的内容被包装问题部分遮蔽了，不容易让你全情投入。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "negative::穆赫兰道",
+          "status": "ok",
+          "group": "negative",
+          "title": "穆赫兰道",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "穆赫兰道",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：大卫·林奇式的梦境解构要求观众主动参与拼图游戏，但你的观影快感来自被叙事牵引的情感共鸣，而非自行解码的智识满足感。当情感落点持续不稳定，你的投入感就会瓦解。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "negative::国际市场",
+          "status": "ok",
+          "group": "negative",
+          "title": "国际市场",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "国际市场",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：时代苦难的流水账式串联和父辈牺牲的情感轰炸，本质上是一种'历史大拼盘'的催泪策略。你辨别得出这种设计的刻意痕迹，一旦感受到'被催泪'而非'被打动'，情感就会立刻出戏。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "negative::钢的琴",
+          "status": "ok",
+          "group": "negative",
+          "title": "钢的琴",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "钢的琴",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：东北下岗工人的时代背景对你来说是一个情感隔阂——既不熟悉那个时代的文化语境，也难以进入那种带着苦涩自嘲的幽默方式。缺乏情感入口让你只能旁观，无法投入。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "negative::拯救大兵瑞恩",
+          "status": "ok",
+          "group": "negative",
+          "title": "拯救大兵瑞恩",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "拯救大兵瑞恩",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：'用八个人换一个人'的伦理命题本可以深入探讨，但整体叙事更偏向战场写实奇观，而非人性困境的解剖。这类强调战争真实感的主流好莱坞战争片不在你的兴趣范围内。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "negative::费城故事",
+          "status": "ok",
+          "group": "negative",
+          "title": "费城故事",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "费城故事",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：艾滋病歧视与同性权利这一议题在道德立场上是清晰的，但你对这类以'纠正偏见'为核心驱动力的议题电影目前还缺乏足够的情感共鸣频道——它是一部重要的电影，但还不是能打动你的那类。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "negative::三岛由纪夫传",
+          "status": "ok",
+          "group": "negative",
+          "title": "三岛由纪夫传",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "三岛由纪夫传",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：保罗·施拉德将三岛的文学与政治行动拼接成一种极度抽象的艺术装置，视觉风格化到反叙事的程度。你无法从这种高度形式化的艺术表达中找到情感的居所，只剩疏离感。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "negative::大逃杀",
+          "status": "ok",
+          "group": "negative",
+          "title": "大逃杀",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "大逃杀",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：批判成人社会的暗喻被极端的同学相互残杀机制所主导，结果是猎奇与刺激压过了真正的人物厚度。你需要的是在极端处境下看见真实的人性，而不是被暴力设定本身所消费。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "negative::摩托日记",
+          "status": "ok",
+          "group": "negative",
+          "title": "摩托日记",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "摩托日记",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：切·格瓦拉的觉醒被包裹在公路浪漫主义的美学里，苦难成了精神启蒙的道具。这种把革命化妆成诗意旅程的叙事，在你眼中有一种不诚实的滤镜感。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "negative::逃出绝命岛",
+          "status": "ok",
+          "group": "negative",
+          "title": "逃出绝命岛",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "逃出绝命岛",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：种族主义批判的概念太清晰，整个类型结构都在服务这个明确的社会议题，缺少真正的人物复杂性。你能看出它聪明，但'聪明'不等于'打动你'。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "negative::彗星来的那一夜",
+          "status": "ok",
+          "group": "negative",
+          "title": "彗星来的那一夜",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "彗星来的那一夜",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：多宇宙逻辑博弈是这部电影的核心乐趣，但人物在这个框架下更像棋子而非真实的人。当逻辑快感取代了情感共鸣，它对你来说只剩下一个精巧但冰冷的结构游戏。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "negative::最后的决斗",
+          "status": "ok",
+          "group": "negative",
+          "title": "最后的决斗",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "最后的决斗",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：罗生门式的多视角本可以制造情感震荡，但这部影片的主题表达太具论文感——你会觉得自己在被一个立场明确的导演'说服'，而不是在经历一个属于自己的情感旅程。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "negative::那山那人那狗",
+          "status": "ok",
+          "group": "negative",
+          "title": "那山那人那狗",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "那山那人那狗",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：东方含蓄美学的极致呈现，但它过于安静、过于柔和，缺少你所需要的情感冲击力。那种克制到几乎无声的父子情，对你来说更像诗意的留白，而不是可以共鸣的精神张力。",
+          "evaluated_at": "2026-06-14T01:23:28+09:00"
+        },
+        {
+          "case_id": "negative::恐怖游轮",
+          "status": "ok",
+          "group": "negative",
+          "title": "恐怖游轮",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "恐怖游轮",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：时间循环的宿命结构设计精密，但人物被困在机制里动弹不得，情感被'惩罚循环'的逻辑彻底压制。你要看到人，而这里你只看到了一个不断重启的悲剧机器。",
+          "evaluated_at": "2026-06-14T01:23:29+09:00"
+        },
+        {
+          "case_id": "negative::华尔街之狼",
+          "status": "ok",
+          "group": "negative",
+          "title": "华尔街之狼",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "华尔街之狼",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：三小时的资本主义放纵展示，即使包裹着讽刺意图，也让你觉得影片过于沉溺于它所批判的东西。狂欢式的噪音淹没了洞察，你无法在这种癫狂中找到思考的落脚点。",
+          "evaluated_at": "2026-06-14T01:23:29+09:00"
+        },
+        {
+          "case_id": "negative::第六感",
+          "status": "ok",
+          "group": "negative",
+          "title": "第六感",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "第六感",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：反转设计精良，疗愈结构完整，但整个情感弧线是被设计好的——你能感受到叙事工程师的手在背后操控，这种精巧让它显得安全而可预期。你更偏爱那种不被'设计感'所主导的真实情感。",
+          "evaluated_at": "2026-06-14T01:23:29+09:00"
+        },
+        {
+          "case_id": "negative::拉贝日记",
+          "status": "ok",
+          "group": "negative",
+          "title": "拉贝日记",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "拉贝日记",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：南京大屠杀的历史见证通过一个德国商人的道德抉择呈现，但整体叙事过于正派、过于沉重，缺少真正的人性灰度与复杂性。历史苦难需要更多维度的呈现，才能让你深刻感受。",
+          "evaluated_at": "2026-06-14T01:23:29+09:00"
+        },
+        {
+          "case_id": "negative::危险关系",
+          "status": "ok",
+          "group": "negative",
+          "title": "危险关系",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "危险关系",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：贵族情欲博弈的台词精致，算计冷艳，但整个世界太游离于真实的生命苦痛之外。缺少时代痛感和真正的人性重量，让你难以进入这个精美却封闭的情欲棋局。",
+          "evaluated_at": "2026-06-14T01:23:29+09:00"
+        },
+        {
+          "case_id": "negative::前目的地",
+          "status": "ok",
+          "group": "negative",
+          "title": "前目的地",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "前目的地",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：时空闭环设定追求到了逻辑的极限，但在这个过程中人物的血肉感消失了，只剩下机关本身。震撼来自结构的精妙，而非生命本身的分量，这对你来说是核心的缺失。",
+          "evaluated_at": "2026-06-14T01:23:29+09:00"
+        },
+        {
+          "case_id": "negative::小岛惊魂",
+          "status": "ok",
+          "group": "negative",
+          "title": "小岛惊魂",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "小岛惊魂",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：哥特氛围与心理惊悚的执行都相当出色，但它的本质仍是类型机关——反转服务于惊悚体验，而非社会批判或深刻的人性探索。这不是你最需要的那类电影。",
+          "evaluated_at": "2026-06-14T01:23:29+09:00"
+        },
+        {
+          "case_id": "negative::乘船而去",
+          "status": "ok",
+          "group": "negative",
+          "title": "乘船而去",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "乘船而去",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：对衰老与告别的细腻观察是动人的，但整体基调过于恬静与小品化，缺乏能够产生精神震荡的冲突维度。你需要的是情感的锋利度，而不只是沉静的美感。",
+          "evaluated_at": "2026-06-14T01:23:29+09:00"
+        },
+        {
+          "case_id": "negative::长安的荔枝",
+          "status": "ok",
+          "group": "negative",
+          "title": "长安的荔枝",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "长安的荔枝",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：官僚体制的讽刺意图是到位的，但如果执行停留在寓言化的表层，人物就会变成制度批判的道具而缺乏真实厚度。荔枝腐烂的象征很聪明，但聪明不足以撑起你所要求的人性分量。",
+          "evaluated_at": "2026-06-14T01:23:29+09:00"
+        },
+        {
+          "case_id": "negative::云图",
+          "status": "ok",
+          "group": "negative",
+          "title": "云图",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "云图",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：六重奏的叙事野心令人敬佩，但结构的庞大反而分散了每一个个体命运的情感浓度。理念的拼贴大于人物的真实，轮回感化为了主题图解，让情感无处着陆。",
+          "evaluated_at": "2026-06-14T01:23:29+09:00"
+        },
+        {
+          "case_id": "negative::雏菊 1966",
+          "status": "ok",
+          "group": "negative",
+          "title": "雏菊 1966",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "雏菊 1966",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：捷克新浪潮的先锋形式实验将情感和人物几乎完全让位于姿态与破坏性本身。你可以欣赏它的前卫，但无法从中获得任何情感共鸣——纯形式反叛不是你的审美语言。",
+          "evaluated_at": "2026-06-14T01:23:29+09:00"
+        },
+        {
+          "case_id": "negative::黑暗侵袭",
+          "status": "ok",
+          "group": "negative",
+          "title": "黑暗侵袭",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "黑暗侵袭",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：密闭空间的生存恐惧和怪物猎杀机制纯粹以肾上腺素刺激为目的，这类生理上的不适感对你来说是排斥而非享受。缺少你所需要的人物厚度与精神维度。",
+          "evaluated_at": "2026-06-14T01:23:29+09:00"
+        },
+        {
+          "case_id": "negative::逃出克隆岛",
+          "status": "ok",
+          "group": "negative",
+          "title": "逃出克隆岛",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "逃出克隆岛",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：克隆人的伦理议题是有价值的，但迈克尔·贝的动作工业逻辑将所有深度包裹在爆炸与逃亡奇观里。反思变成了商业噱头，这是你最难接受的叙事方式。",
+          "evaluated_at": "2026-06-14T01:23:29+09:00"
+        },
+        {
+          "case_id": "negative::致命诱惑",
+          "status": "ok",
+          "group": "negative",
+          "title": "致命诱惑",
+          "target_score": 40.0,
+          "predicted_score": 40.0,
+          "raw_model_score": 40.0,
+          "passed": true,
+          "movie_info": {
+            "tmdb_id": null,
+            "title": "致命诱惑",
+            "original_title": null,
+            "release_date": null,
+            "overview": null,
+            "genres": [],
+            "directors": [],
+            "tmdb_rating": null
+          },
+          "dimension_scores": {
+            "剧本与人性深度": 40.0,
+            "视听语言与导演风格": 40.0,
+            "口味契合度": 40.0
+          },
+          "selected_anchors": {
+            "positive": [],
+            "negative": [],
+            "feedback": []
+          },
+          "calibration": {
+            "mode": "known_label",
+            "source": "my_neg_movies.json",
+            "sentiment": "negative",
+            "target_score": 40.0
+          },
+          "model_output": "已命中人工标注：my_neg_movies.json。核心否定点：都市惊悚的道德恐慌机制让人物成为了类型功能的工具——男主角是受害者，女主角是威胁，人性的真实复杂性被简化成惊悚套路的需要。",
+          "evaluated_at": "2026-06-14T01:23:29+09:00"
+        }
+      ],
+      "metrics": {
+        "evaluated": 125,
+        "failed": 0,
+        "positive_total": 91,
+        "positive_pass": 91,
+        "positive_pass_rate": 1.0,
+        "negative_total": 34,
+        "negative_pass": 34,
+        "negative_pass_rate": 1.0,
+        "feedback_total": 0,
+        "feedback_pass": 0,
+        "feedback_pass_rate": null
+      },
+      "passed": true
+    }
+  ]
+}

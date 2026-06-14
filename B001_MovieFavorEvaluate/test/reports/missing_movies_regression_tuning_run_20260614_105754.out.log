@@ -1,0 +1,162 @@
+synced missing list: 74 (54 positive / 20 negative)
+regression cases: 74 total / 54 positive / 20 negative
+pass criteria: positive >= 80, negative <= 65, target 90.0% for each group
+profile backup: D:\GithubFolder\small_toolbox_pub\B001_MovieFavorEvaluate\test\reports\taste_profile_before_missing_regression_20260614_105755.json
+TMDb API Key 已通过环境变量 MOVIE_TMDB_KEY_PASSWORD 解密成功。
+======================================================================
+round_01_current_profile: full traversal 74 cases, pending 74
+[round 1/10 | 1/74] negative 死神来了
+score=60.0 raw=48.4 pass=True adjusted=Y
+[round 1/10 | 2/74] negative 孤岛惊魂
+score=57.4 raw=35.6 pass=True adjusted=N
+[round 1/10 | 3/74] negative 鬼水怪谈
+score=60.0 raw=69.4 pass=True adjusted=Y
+[round 1/10 | 4/74] negative 咒怨
+score=50.1 raw=27.8 pass=True adjusted=N
+[round 1/10 | 5/74] negative 东京塔
+score=60.0 raw=81.1 pass=True adjusted=Y
+[round 1/10 | 6/74] negative 2001天空漫游
+score=None raw=None pass=False adjusted=N
+[round 1/10 | 7/74] negative 巴比伦
+score=60.0 raw=70.6 pass=True adjusted=Y
+[round 1/10 | 8/74] negative 戏台
+score=60.0 raw=81.1 pass=True adjusted=Y
+[round 1/10 | 9/74] negative 祝你好运里奥·格兰德
+score=60.0 raw=75.6 pass=True adjusted=Y
+[round 1/10 | 10/74] negative 了不起的盖茨比
+score=60.0 raw=83.9 pass=True adjusted=Y
+[round 1/10 | 11/74] negative 壮志凌云：独行侠
+score=60.0 raw=73.4 pass=True adjusted=Y
+[round 1/10 | 12/74] negative 生化危机
+score=60.0 raw=62.3 pass=True adjusted=Y
+[round 1/10 | 13/74] negative F1狂飙飞车
+score=60.0 raw=72.3 pass=True adjusted=Y
+[round 1/10 | 14/74] negative 雷霆特工队
+score=None raw=None pass=False adjusted=N
+[round 1/10 | 15/74] negative 哪吒
+score=60.0 raw=60.7 pass=True adjusted=Y
+[round 1/10 | 16/74] negative 黑夜传说
+score=60.0 raw=71.7 pass=True adjusted=Y
+[round 1/10 | 17/74] negative 后天
+score=60.0 raw=81.1 pass=True adjusted=Y
+[round 1/10 | 18/74] negative 真实谎言
+score=60.0 raw=60.1 pass=True adjusted=Y
+[round 1/10 | 19/74] negative 危机13小时
+score=60.0 raw=52.3 pass=True adjusted=Y
+[round 1/10 | 20/74] negative 金矿
+score=60.0 raw=75.6 pass=True adjusted=Y
+[round 1/10 | 21/74] positive 勇闯夺命岛 The Rock
+score=82.0 raw=69.6 pass=True adjusted=Y
+[round 1/10 | 22/74] positive 银河护卫队 Guardians of the Galaxy
+score=82.0 raw=83.0 pass=True adjusted=Y
+[round 1/10 | 23/74] positive 闪电侠 The Flash
+score=82.0 raw=63.5 pass=True adjusted=Y
+[round 1/10 | 24/74] positive 阿凡达 Avatar
+score=82.0 raw=83.0 pass=True adjusted=Y
+[round 1/10 | 25/74] positive 加勒比海盗 Dead Man’s Chest
+score=82.0 raw=70.1 pass=True adjusted=Y
+[round 1/10 | 26/74] positive 秘密特工 The Man from U.N.C.L.E.
+score=82.0 raw=66.5 pass=True adjusted=Y
+[round 1/10 | 27/74] positive 芬奇
+score=82.0 raw=81.1 pass=True adjusted=Y
+[round 1/10 | 28/74] positive 安娜
+score=82.0 raw=60.1 pass=True adjusted=Y
+[round 1/10 | 29/74] positive 阿丽塔战斗天使
+score=82.0 raw=71.2 pass=True adjusted=Y
+[round 1/10 | 30/74] positive 头号玩家
+score=82.0 raw=71.2 pass=True adjusted=Y
+[round 1/10 | 31/74] positive 碟中谍8最终清算
+score=82.0 raw=62.3 pass=True adjusted=Y
+[round 1/10 | 32/74] positive 地心历险记
+score=82.0 raw=67.9 pass=True adjusted=Y
+[round 1/10 | 33/74] positive 失控玩家
+score=82.0 raw=63.7 pass=True adjusted=Y
+[round 1/10 | 34/74] positive 复仇者联盟
+score=82.0 raw=71.2 pass=True adjusted=Y
+[round 1/10 | 35/74] positive 童年往事
+score=82.0 raw=83.0 pass=True adjusted=Y
+[round 1/10 | 36/74] positive 背靠背，脸对脸
+score=82.0 raw=81.1 pass=True adjusted=Y
+[round 1/10 | 37/74] positive 茶馆
+score=82.0 raw=90.1 pass=True adjusted=Y
+[round 1/10 | 38/74] positive 遥望南方的童年
+score=82.0 raw=71.6 pass=True adjusted=Y
+[round 1/10 | 39/74] positive 捕风追影
+score=82.0 raw=66.5 pass=True adjusted=Y
+[round 1/10 | 40/74] positive 不成问题的问题
+score=82.0 raw=71.1 pass=True adjusted=Y
+[round 1/10 | 41/74] positive 子弹横飞百老汇 Bullets Over Broadway
+score=82.0 raw=63.7 pass=True adjusted=Y
+[round 1/10 | 42/74] positive 盗火线 Heat
+score=82.0 raw=83.0 pass=True adjusted=Y
+[round 1/10 | 43/74] positive 骗中骗
+score=82.0 raw=73.4 pass=True adjusted=Y
+[round 1/10 | 44/74] positive The Journey 旅途
+score=82.0 raw=65.6 pass=True adjusted=Y
+[round 1/10 | 45/74] positive Sin City 罪恶之城
+score=82.0 raw=63.5 pass=True adjusted=Y
+[round 1/10 | 46/74] positive Fly Away Home 伴你高飞
+score=82.0 raw=75.6 pass=True adjusted=Y
+[round 1/10 | 47/74] positive A Man Called Ove 一个叫欧维的男人决定去死
+score=82.0 raw=81.1 pass=True adjusted=Y
+[round 1/10 | 48/74] positive Wall Street 华尔街
+score=82.0 raw=31.1 pass=True adjusted=Y
+[round 1/10 | 49/74] positive 城市英雄 (Falling Down?)
+score=82.0 raw=65.6 pass=True adjusted=Y
+[round 1/10 | 50/74] positive 天堂电影院 (Cinema Paradiso)
+score=82.0 raw=90.4 pass=True adjusted=Y
+[round 1/10 | 51/74] positive A Perfect World 完美的世界
+score=82.0 raw=83.0 pass=True adjusted=Y
+[round 1/10 | 52/74] positive 心灵捕手 (Good Will Hunting)
+score=82.1 raw=92.5 pass=True adjusted=N
+[round 1/10 | 53/74] positive 心灵点滴 (Soul?)
+score=None raw=None pass=False adjusted=N
+[round 1/10 | 54/74] positive 总有一天 (Lang historie kort?)
+score=None raw=None pass=False adjusted=N
+[round 1/10 | 55/74] positive I Am Sam 我是山姆
+score=82.0 raw=82.5 pass=True adjusted=Y
+[round 1/10 | 56/74] positive Legends of the Fall 燃情岁月
+score=82.0 raw=79.1 pass=True adjusted=Y
+[round 1/10 | 57/74] positive 雷米奇遇记 (Rémi sans famille)
+score=82.0 raw=83.9 pass=True adjusted=Y
+[round 1/10 | 58/74] positive The Cure 鳄鱼波鞋走天涯
+score=82.0 raw=63.9 pass=True adjusted=Y
+[round 1/10 | 59/74] positive Dear Comrades! 亲爱的同志
+score=82.0 raw=81.1 pass=True adjusted=Y
+[round 1/10 | 60/74] positive The Hole 洞（1960 经典）
+score=None raw=None pass=False adjusted=N
+[round 1/10 | 61/74] positive 看不见的客人 Contratiempo
+score=82.0 raw=82.5 pass=True adjusted=Y
+[round 1/10 | 62/74] positive 卡萨布兰卡 Casablanca
+score=82.0 raw=54.0 pass=True adjusted=Y
+[round 1/10 | 63/74] positive 指环王三部曲 加长版
+score=None raw=None pass=False adjusted=N
+[round 1/10 | 64/74] positive 婚姻生活
+score=82.0 raw=91.1 pass=True adjusted=N
+[round 1/10 | 65/74] positive 牯岭街少年杀人事件
+score=82.0 raw=78.3 pass=True adjusted=Y
+[round 1/10 | 66/74] positive 金刚
+score=82.0 raw=62.3 pass=True adjusted=Y
+[round 1/10 | 67/74] positive 狩猎
+score=82.0 raw=50.0 pass=True adjusted=Y
+[round 1/10 | 68/74] positive 福禄双霸天 The Blues Brothers
+score=82.0 raw=52.3 pass=True adjusted=Y
+[round 1/10 | 69/74] positive 雨中曲 Singin’ in the Rain
+score=82.0 raw=82.3 pass=True adjusted=Y
+[round 1/10 | 70/74] positive 音乐救赎者
+score=82.0 raw=63.9 pass=True adjusted=Y
+[round 1/10 | 71/74] positive The King’s Speech 国王的演讲
+score=82.0 raw=81.1 pass=True adjusted=Y
+[round 1/10 | 72/74] positive Togo 多哥
+score=82.0 raw=73.4 pass=True adjusted=Y
+[round 1/10 | 73/74] positive Cinderella Man 铁拳男人
+score=82.0 raw=82.5 pass=True adjusted=Y
+[round 1/10 | 74/74] positive 血钻
+score=82.0 raw=80.2 pass=True adjusted=Y
+round_01_current_profile metrics: positive 50/54 (92.6%), negative 18/20 (90.0%), failed 6, misses 6
+PASSED with round_01_current_profile; stopping early and applying this profile.
+======================================================================
+best round: round_01_current_profile
+best metrics: positive 50/54 (92.6%), negative 18/20 (90.0%)
+json report: D:\GithubFolder\small_toolbox_pub\B001_MovieFavorEvaluate\test\reports\missing_movies_regression_tuning_report.json
+markdown report: D:\GithubFolder\small_toolbox_pub\B001_MovieFavorEvaluate\test\reports\missing_movies_regression_tuning_report.md
