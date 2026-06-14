@@ -3,7 +3,10 @@ import math
 import os
 import re
 import sys
-from datetime import datetime
+import ctypes
+from base64 import b64decode, b64encode
+from ctypes import wintypes
+from datetime import UTC, datetime, timedelta
 from getpass import getpass
 from pathlib import Path
 
@@ -42,6 +45,8 @@ TMDB_KEY_PASSWORD_ENV_NAMES = (
     "TMDB_API_KEY_PASSWORD",
     "TMDB_KEY_PASSWORD",
 )
+TMDB_KEY_SESSION_FILE = ".tmdb_api_key_session.json"
+TMDB_KEY_SESSION_DAYS = 3
 # ===============================================
 
 ROOT = Path(__file__).resolve().parent
@@ -184,6 +189,108 @@ def read_json_file(file_name, default=None, create_if_missing=False):
         return default
 
 
+def utc_now():
+    return datetime.now(UTC).replace(tzinfo=None)
+
+
+def parse_session_time(value):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", ""))
+    except ValueError:
+        return None
+
+
+class DATA_BLOB(ctypes.Structure):
+    _fields_ = [
+        ("cbData", wintypes.DWORD),
+        ("pbData", ctypes.POINTER(ctypes.c_ubyte)),
+    ]
+
+
+crypt32 = ctypes.WinDLL("crypt32.dll")
+kernel32 = ctypes.WinDLL("kernel32.dll")
+
+
+def _blob_from_bytes(data):
+    if not data:
+        return DATA_BLOB(0, None), None
+    buffer = (ctypes.c_ubyte * len(data)).from_buffer_copy(data)
+    return DATA_BLOB(len(data), buffer), buffer
+
+
+def dpapi_protect(text):
+    data_blob, _ = _blob_from_bytes(text.encode("utf-8"))
+    out_blob = DATA_BLOB()
+    ok = crypt32.CryptProtectData(
+        ctypes.byref(data_blob),
+        None,
+        None,
+        None,
+        None,
+        0,
+        ctypes.byref(out_blob),
+    )
+    if not ok:
+        raise RuntimeError("CryptProtectData failed.")
+    try:
+        protected = ctypes.string_at(out_blob.pbData, out_blob.cbData)
+        return b64encode(protected).decode("ascii")
+    finally:
+        kernel32.LocalFree(out_blob.pbData)
+
+
+def dpapi_unprotect(protected_text):
+    encrypted = b64decode(protected_text)
+    data_blob, _ = _blob_from_bytes(encrypted)
+    out_blob = DATA_BLOB()
+    ok = crypt32.CryptUnprotectData(
+        ctypes.byref(data_blob),
+        None,
+        None,
+        None,
+        None,
+        0,
+        ctypes.byref(out_blob),
+    )
+    if not ok:
+        raise RuntimeError("CryptUnprotectData failed.")
+    try:
+        plaintext = ctypes.string_at(out_blob.pbData, out_blob.cbData)
+        return plaintext.decode("utf-8")
+    finally:
+        kernel32.LocalFree(out_blob.pbData)
+
+
+def load_tmdb_key_session():
+    session = read_json_file(TMDB_KEY_SESSION_FILE, None, create_if_missing=False)
+    if not isinstance(session, dict):
+        return None
+    expires_at = parse_session_time(session.get("expires_at"))
+    if not expires_at or utc_now() >= expires_at:
+        return None
+    try:
+        key = dpapi_unprotect(session["key_dpapi"])
+    except Exception:
+        return None
+    return key or None
+
+
+def save_tmdb_key_session(key):
+    expires_at = utc_now() + timedelta(days=TMDB_KEY_SESSION_DAYS)
+    write_json_file(
+        TMDB_KEY_SESSION_FILE,
+        {
+            "version": 1,
+            "created_at": utc_now().isoformat(timespec="seconds") + "Z",
+            "expires_at": expires_at.isoformat(timespec="seconds") + "Z",
+            "protection": "Windows DPAPI current user",
+            "key_dpapi": dpapi_protect(key),
+        },
+    )
+
+
 def merge_dict(default, override):
     merged = dict(default)
     if not isinstance(override, dict):
@@ -259,6 +366,11 @@ def load_anchor_movies(file_name, sentiment, default_target_score, excluded_alia
 
 
 def load_tmdb_api_key():
+    session_key = load_tmdb_key_session()
+    if session_key:
+        print(f"TMDb API Key 已从 {TMDB_KEY_SESSION_DAYS} 天 session 加载。")
+        return session_key
+
     payload = read_json_file(TMDB_API_KEY_FILE, None, create_if_missing=False)
     if not payload:
         print(f"缺少 {TMDB_API_KEY_FILE}，无法请求 TMDb。")
@@ -274,6 +386,7 @@ def load_tmdb_api_key():
             print(f"环境变量 {env_name} 中的口令无法解密 TMDb API Key。")
             continue
         if key:
+            save_tmdb_key_session(key)
             print(f"TMDb API Key 已通过环境变量 {env_name} 解密成功。")
             return key
 
@@ -285,6 +398,7 @@ def load_tmdb_api_key():
             print("解密失败，请确认口令。")
             continue
         if key:
+            save_tmdb_key_session(key)
             print("TMDb API Key 解密成功。")
             return key
 

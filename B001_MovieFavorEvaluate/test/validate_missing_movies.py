@@ -147,6 +147,22 @@ def candidate_configs():
             },
         },
         {
+            "name": "positive_90_negative_original",
+            "note": "Current target: movies_details positive floor 90, negative keeps the original ceiling.",
+            "positive_importance": 2.4,
+            "negative_importance": 2.0,
+            "profile": {
+                "selection": {"positive_limit": 22, "negative_limit": 20, "feedback_limit": 22},
+                "score_calibration": {
+                    "anchor_blend": 0.65,
+                    "minimum_anchor_relevance": 0.02,
+                    "movies_details_positive_floor": 90,
+                    "movies_details_negative_ceiling": 60,
+                },
+                "dimension_weights": {"å‰§æœ¬ä¸Žäººæ€§æ·±åº¦": 1.6, "è§†å¬è¯­è¨€ä¸Žå¯¼æ¼”é£Žæ ¼": 0.8, "å£å‘³å¥‘åˆåº¦": 5.0},
+            },
+        },
+        {
             "name": "positive_floor_84",
             "note": "正向 missing 样本更强保护，防止喜欢的大场面/传记/坚韧题材被低估。",
             "positive_importance": 1.6,
@@ -375,6 +391,7 @@ def new_report(args, movies, backup_path, base_profile):
             "positive_minimum": args.positive_threshold,
             "negative_maximum": args.negative_threshold,
             "target_pass_rate": args.target_pass_rate,
+            "ignore_data_failures": bool(getattr(args, "ignore_data_failures", False)),
         },
         "case_totals": {
             "total": len(movies),
@@ -468,15 +485,30 @@ def rate(pass_count, total):
     return round(pass_count / total, 4) if total else None
 
 
-def metrics_for_items(items, movies, positive_threshold, negative_threshold, target_pass_rate):
+def metrics_for_items(
+    items,
+    movies,
+    positive_threshold,
+    negative_threshold,
+    target_pass_rate,
+    ignore_data_failures=False,
+):
     item_by_id = {item.get("case_id"): item for item in items}
-    positive_movies = [movie for movie in movies if movie["sentiment"] == "positive"]
-    negative_movies = [movie for movie in movies if movie["sentiment"] == "negative"]
-
     attempted = [item_by_id[movie["case_id"]] for movie in movies if movie["case_id"] in item_by_id]
     ok_items = [item for item in attempted if item.get("status") == "ok"]
     failed_items = [item for item in attempted if item.get("status") != "ok"]
     pending = len(movies) - len(attempted)
+    ignored_failure_ids = {
+        item.get("case_id")
+        for item in failed_items
+        if ignore_data_failures and item.get("case_id")
+    }
+
+    eligible_movies = [
+        movie for movie in movies if movie["case_id"] not in ignored_failure_ids
+    ]
+    positive_movies = [movie for movie in eligible_movies if movie["sentiment"] == "positive"]
+    negative_movies = [movie for movie in eligible_movies if movie["sentiment"] == "negative"]
 
     def pass_count_for(group):
         return sum(
@@ -530,6 +562,7 @@ def metrics_for_items(items, movies, positive_threshold, negative_threshold, tar
         "pending": pending,
         "ok": len(ok_items),
         "failed": len(failed_items),
+        "ignored_failures": len(ignored_failure_ids),
         "positive_total": positive_total,
         "positive_required": positive_required,
         "positive_pass": positive_pass,
@@ -723,11 +756,12 @@ def write_markdown(path, report):
         f"- Positive pass: score >= {thresholds.get('positive_minimum')}",
         f"- Negative pass: score <= {thresholds.get('negative_maximum')}",
         f"- Target pass rate: {fmt_rate(thresholds.get('target_pass_rate'))}",
+        f"- Ignore data failures: {thresholds.get('ignore_data_failures', False)}",
         "",
         "## Round Summary",
         "",
-        "| Round | Passed | Positive | Negative | Failed | Misses | Severity |",
-        "|---|---|---:|---:|---:|---:|---:|",
+        "| Round | Passed | Positive | Negative | Failed | Ignored | Misses | Severity |",
+        "|---|---|---:|---:|---:|---:|---:|---:|",
     ]
 
     for round_data in report.get("rounds", []):
@@ -738,6 +772,7 @@ def write_markdown(path, report):
             f"{metrics.get('positive_pass', 0)}/{metrics.get('positive_total', 0)} ({fmt_rate(metrics.get('positive_pass_rate'))}) | "
             f"{metrics.get('negative_pass', 0)}/{metrics.get('negative_total', 0)} ({fmt_rate(metrics.get('negative_pass_rate'))}) | "
             f"{metrics.get('failed', 0)} | "
+            f"{metrics.get('ignored_failures', 0)} | "
             f"{metrics.get('misses', 0)} | "
             f"{metrics.get('miss_severity_sum', '')} |"
         )
@@ -756,6 +791,7 @@ def write_markdown(path, report):
                 f"- Positive importance: {config.get('positive_importance')}",
                 f"- Negative importance: {config.get('negative_importance')}",
                 f"- Evaluated: {metrics.get('attempted')}/{metrics.get('total')}",
+                f"- Ignored failures: {metrics.get('ignored_failures', 0)}",
                 f"- Positive: {metrics.get('positive_pass')}/{metrics.get('positive_total')} ({fmt_rate(metrics.get('positive_pass_rate'))})",
                 f"- Negative: {metrics.get('negative_pass')}/{metrics.get('negative_total')} ({fmt_rate(metrics.get('negative_pass_rate'))})",
                 f"- Score calibration: `{json.dumps(effective.get('score_calibration', {}), ensure_ascii=False)}`",
@@ -880,6 +916,7 @@ def main():
     parser.add_argument("--resume", action="store_true", help="Resume an existing report instead of starting fresh.")
     parser.add_argument("--dry-run", action="store_true", help="Exercise the full loop without TMDb/Ollama calls.")
     parser.add_argument("--no-sync", action="store_true", help="Do not refresh missing_movies_for_test.txt first.")
+    parser.add_argument("--ignore-data-failures", action="store_true", help="Keep failed lookup/model cases in the report but exclude them from pass-rate denominators.")
     parser.add_argument("--no-apply-best", action="store_true", help="Do not write the best profile back at the end.")
     parser.add_argument("--continue-after-pass", action="store_true", help="Run all requested rounds even after one passes.")
     parser.add_argument("--verbose", action="store_true", help="Show full model output while running.")
@@ -930,6 +967,11 @@ def main():
     print(f"profile backup: {backup_path}")
 
     candidates = expand_candidates(args.rounds)
+    if args.positive_threshold >= 90:
+        candidates = sorted(
+            candidates,
+            key=lambda candidate: candidate.get("name") != "positive_90_negative_original",
+        )
     json_report_path = Path(args.json_report)
     md_report_path = Path(args.md_report)
 
@@ -1005,6 +1047,7 @@ def main():
                     args.positive_threshold,
                     args.negative_threshold,
                     args.target_pass_rate,
+                    args.ignore_data_failures,
                 )
                 round_data["passed"] = round_passed(round_data["metrics"], args.target_pass_rate)
                 selected = best_round(report)
@@ -1025,6 +1068,7 @@ def main():
                 args.positive_threshold,
                 args.negative_threshold,
                 args.target_pass_rate,
+                args.ignore_data_failures,
             )
             round_data["passed"] = round_passed(round_data["metrics"], args.target_pass_rate)
             selected = best_round(report)

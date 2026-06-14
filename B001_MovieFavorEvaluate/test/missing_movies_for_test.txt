@@ -38,7 +38,6 @@ positive	01 动作科幻无脑.md	复仇者联盟
 positive	02 华语.md	童年往事
 positive	02 华语.md	背靠背，脸对脸
 positive	02 华语.md	茶馆
-positive	02 华语.md	遥望南方的童年
 positive	02 华语.md	捕风追影
 positive	02 华语.md	不成问题的问题
 positive	03 帮派犯罪.md	子弹横飞百老汇 Bullets Over Broadway
@@ -71,7 +70,6 @@ positive	10 韩国高分.md	狩猎
 positive	11 音乐.md	福禄双霸天 The Blues Brothers
 positive	11 音乐.md	雨中曲 Singin’ in the Rain
 positive	11 音乐.md	音乐救赎者
-positive	12 人物传记真实改编.md	The King’s Speech 国王的演讲
 positive	12 人物传记真实改编.md	Togo 多哥
 positive	12 人物传记真实改编.md	Cinderella Man 铁拳男人
 positive	12 人物传记真实改编.md	血钻

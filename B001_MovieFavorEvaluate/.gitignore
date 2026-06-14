@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+
+data/.movie_favor_db_session.json
+data/.tmdb_api_key_session.json
+data/movie_favor_secure.db
+data/movie_favor_secure.db-*
+
+inition/tmdb_key.txt
+
+test/reports/

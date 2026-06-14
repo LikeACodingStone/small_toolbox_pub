@@ -43,6 +43,10 @@
       {
         "name": "已验证导演和类型表达",
         "signal": "斯皮尔伯格、斯科塞斯、李安、诺兰、昆汀、盖里奇、伊斯特伍德、奉俊昊、是枝裕和等已在高分样本中出现的表达方式，可作为辅助加分。"
+      },
+      {
+        "name": "Initialization Rules",
+        "signal": "﻿Preference rules for automatic taste_profile generation:\n\nPositive anchors:\n- Movies in my_pos_movies.json are trusted 100-point anchors.\n- Fantasy, large-scale sci-fi, disaster, magic, and large action movies can receive a natural bonus when they are satisfying and well executed.\n- True stories, biographies, historical adaptations, and documentary-like historical stories receive a natural bonus.\n- Stories about resilience, courage, human dignity, freedom, professional faith, or deep emotional relationship analysis receive a natural bonus.\n- Directors already appearing in positive anchors or high-score feedback can receive a moderate auxiliary bonus.\n\nNegative anchors:\n- Movies in my_neg_movies.json are below 50-point anchors and contain clear rejection reasons.\n- Horror, pure commercial formula movies, puzzle-like suspense, war spectacle, and abstract art films should receive moderate penalties unless they have strong human depth, historical texture, or emotional grounding.\n- Pure formal experiments, cold anti-narrative structures, forced sentimentality, issue-first persuasion, and mechanism-first suspense are risk signals.\n\nScoring defaults:\n- Positive pass threshold: 80.\n- Negative pass threshold: 65.\n- Regression target pass rate: 90% for both groups.\n- Use low Ollama temperature for repeatable regression tests."
       }
     ],
     "negative": [
@@ -77,20 +81,23 @@
     ]
   },
   "score_calibration": {
-    "anchor_blend": 0.55,
-    "minimum_anchor_relevance": 0.08,
-    "movies_details_positive_floor": 82,
+    "anchor_blend": 0.65,
+    "minimum_anchor_relevance": 0.02,
+    "movies_details_positive_floor": 90,
     "movies_details_negative_ceiling": 60
   },
   "selection": {
-    "positive_limit": 12,
-    "negative_limit": 14,
-    "feedback_limit": 10
+    "positive_limit": 22,
+    "negative_limit": 20,
+    "feedback_limit": 22
   },
   "dimension_weights": {
     "剧本与人性深度": 2.0,
     "视听语言与导演风格": 0.7,
-    "口味契合度": 3.4
+    "口味契合度": 3.4,
+    "å‰§æœ¬ä¸Žäººæ€§æ·±åº¦": 1.6,
+    "è§†å¬è¯­è¨€ä¸Žå¯¼æ¼”é£Žæ ¼": 0.8,
+    "å£å‘³å¥‘åˆåº¦": 5.0
   },
   "taste_dimensions": [
     {
@@ -159,5 +166,6 @@
       "high_score_signal": "如果导演已经出现在正向片单或高分反馈电影中，说明该导演的表达方式可能符合你的口味，应适当加分。",
       "low_score_signal": "导演加分只能作为辅助信号；如果新片本身剧本薄、套路重或触发反向锚点，不能因为导演熟悉而给高分。"
     }
-  ]
+  ],
+  "template_rules_text": "﻿Preference rules for automatic taste_profile generation:\n\nPositive anchors:\n- Movies in my_pos_movies.json are trusted 100-point anchors.\n- Fantasy, large-scale sci-fi, disaster, magic, and large action movies can receive a natural bonus when they are satisfying and well executed.\n- True stories, biographies, historical adaptations, and documentary-like historical stories receive a natural bonus.\n- Stories about resilience, courage, human dignity, freedom, professional faith, or deep emotional relationship analysis receive a natural bonus.\n- Directors already appearing in positive anchors or high-score feedback can receive a moderate auxiliary bonus.\n\nNegative anchors:\n- Movies in my_neg_movies.json are below 50-point anchors and contain clear rejection reasons.\n- Horror, pure commercial formula movies, puzzle-like suspense, war spectacle, and abstract art films should receive moderate penalties unless they have strong human depth, historical texture, or emotional grounding.\n- Pure formal experiments, cold anti-narrative structures, forced sentimentality, issue-first persuasion, and mechanism-first suspense are risk signals.\n\nScoring defaults:\n- Positive pass threshold: 80.\n- Negative pass threshold: 65.\n- Regression target pass rate: 90% for both groups.\n- Use low Ollama temperature for repeatable regression tests."
 }

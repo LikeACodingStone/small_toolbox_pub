@@ -1,0 +1,19 @@
+﻿Preference rules for automatic taste_profile generation:
+
+Positive anchors:
+- Movies in my_pos_movies.json are trusted 100-point anchors.
+- Fantasy, large-scale sci-fi, disaster, magic, and large action movies can receive a natural bonus when they are satisfying and well executed.
+- True stories, biographies, historical adaptations, and documentary-like historical stories receive a natural bonus.
+- Stories about resilience, courage, human dignity, freedom, professional faith, or deep emotional relationship analysis receive a natural bonus.
+- Directors already appearing in positive anchors or high-score feedback can receive a moderate auxiliary bonus.
+
+Negative anchors:
+- Movies in my_neg_movies.json are below 50-point anchors and contain clear rejection reasons.
+- Horror, pure commercial formula movies, puzzle-like suspense, war spectacle, and abstract art films should receive moderate penalties unless they have strong human depth, historical texture, or emotional grounding.
+- Pure formal experiments, cold anti-narrative structures, forced sentimentality, issue-first persuasion, and mechanism-first suspense are risk signals.
+
+Scoring defaults:
+- Positive pass threshold: 80.
+- Negative pass threshold: 65.
+- Regression target pass rate: 90% for both groups.
+- Use low Ollama temperature for repeatable regression tests.
