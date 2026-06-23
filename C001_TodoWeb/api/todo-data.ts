@@ -3,6 +3,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_REPO = process.env.GITHUB_REPO || "glownight/ToDo";
 const FILE_PATH = "src/pages/Todo/todo-data.json";
+const DEBUG_API_VERSION = "2026-06-23-env-debug-v1";
 
 interface TodoTask {
   id: string;
@@ -24,6 +25,31 @@ interface GitHubFileResponse {
   content: string;
   sha: string;
 }
+
+const hasEnv = (key: string) =>
+  typeof process.env[key] === "string" && Boolean(process.env[key]?.trim());
+
+const getDebugInfo = () => ({
+  debugApiVersion: DEBUG_API_VERSION,
+  timestamp: new Date().toISOString(),
+  env: {
+    GITHUB_TOKEN: hasEnv("GITHUB_TOKEN"),
+    GITHUB_REPO: hasEnv("GITHUB_REPO"),
+    LOCK_SCREEN_PASSWORD: hasEnv("LOCK_SCREEN_PASSWORD"),
+    LOCK_SCREEN_SESSION_SECRET: hasEnv("LOCK_SCREEN_SESSION_SECRET"),
+    VITE_ENCRYPTION_KEY: hasEnv("VITE_ENCRYPTION_KEY"),
+  },
+  vercel: {
+    env: process.env.VERCEL_ENV || "",
+    region: process.env.VERCEL_REGION || "",
+    gitCommitSha: process.env.VERCEL_GIT_COMMIT_SHA || "",
+    gitCommitRef: process.env.VERCEL_GIT_COMMIT_REF || "",
+  },
+  todoApi: {
+    githubRepo: GITHUB_REPO,
+    filePath: FILE_PATH,
+  },
+});
 
 const isEncryptedPayload = (payload: unknown): payload is EncryptedTodoPayload => {
   if (!payload || typeof payload !== "object") return false;
@@ -66,6 +92,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("X-Todo-Debug-Version", DEBUG_API_VERSION);
 
   if (req.method === "OPTIONS") {
     return res.status(200).end();
@@ -75,6 +103,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({
       error: "GitHub token not configured",
       message: "Configure GITHUB_TOKEN in Vercel environment variables.",
+      debug: getDebugInfo(),
     });
   }
 
@@ -173,6 +202,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({
       error: "Internal server error",
       message: error instanceof Error ? error.message : "Unknown error",
+      debug: getDebugInfo(),
     });
   }
 }

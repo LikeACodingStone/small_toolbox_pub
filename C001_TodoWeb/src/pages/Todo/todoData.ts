@@ -68,6 +68,8 @@ type EncryptedTodoPayload = {
     payload: string;
 };
 
+export const TODO_WEB_DEBUG_VERSION = "2026-06-23-env-debug-v1";
+
 export const defaultData: TodoData = {
     tasks: [],
 };
@@ -447,7 +449,12 @@ export const hasLocalTodoData = () => {
 export const serializeTodoData = (data: TodoData) => {
     const normalized = normalizeV3(data);
     return JSON.stringify({
-        tasks: normalized.tasks.map(({ createdAt: _c, updatedAt: _u, ...rest }) => rest),
+        tasks: normalized.tasks.map((task) => {
+            const { createdAt, updatedAt, ...rest } = task;
+            void createdAt;
+            void updatedAt;
+            return rest;
+        }),
         viewOrders: normalized.viewOrders,
     });
 };
@@ -485,11 +492,35 @@ export const saveRemoteSnapshot = (data: TodoData): RemoteSnapshot | null => {
 const resolveTodoApiUrl = () =>
     import.meta.env.DEV ? "/dev-api/todo-data" : "/api/todo-data";
 
+const readApiError = async (response: Response) => {
+    const rawText = await response.text().catch(() => "");
+    const trimmed = rawText.trim();
+    if (!trimmed) {
+        return `API request failed: ${response.status}`;
+    }
+
+    try {
+        const payload = JSON.parse(trimmed) as {
+            error?: unknown;
+            message?: unknown;
+        };
+        const message =
+            typeof payload.message === "string" && payload.message.trim()
+                ? payload.message.trim()
+                : typeof payload.error === "string" && payload.error.trim()
+                  ? payload.error.trim()
+                  : "";
+        return message || `API request failed: ${response.status}`;
+    } catch {
+        return trimmed;
+    }
+};
+
 export const fetchTodoData = async (): Promise<TodoData> => {
     const apiUrl = resolveTodoApiUrl();
     const response = await fetch(apiUrl);
     if (!response.ok) {
-        throw new Error(`API load failed: ${response.status}`);
+        throw new Error(await readApiError(response));
     }
     const rawText = await response.text();
     const trimmed = rawText.trim();

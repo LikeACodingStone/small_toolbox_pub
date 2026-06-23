@@ -90,6 +90,14 @@ A `200` response means the repository path is valid.
 
 If deployment returns `GitHub token not configured`, add or fix `GITHUB_TOKEN` in Vercel project settings.
 
+If `/api/lock/session` returns `Lock screen password is not configured.`, add
+`LOCK_SCREEN_PASSWORD` in Vercel project settings. Production intentionally
+refuses access when the lock password is missing.
+
+Open `/api/debug/env` on the deployed site to confirm Vercel can see the
+required variables. The endpoint returns booleans only for secret variables,
+plus a `debugApiVersion` marker for confirming the newest code is deployed.
+
 ## References
 
 - [Managing your personal access tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)

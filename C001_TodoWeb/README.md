@@ -67,12 +67,24 @@ Required or recommended variables:
 3. Add the environment variables listed above in Vercel project settings.
 4. Deploy.
 
+If `/todo` shows a sync error after deployment, open `/api/todo-data`.
+`GitHub token not configured` means `GITHUB_TOKEN` is missing in Vercel. If
+the app stays on the lock screen and reports that the password is not
+configured, add `LOCK_SCREEN_PASSWORD` in Vercel and redeploy.
+
+For a safe deployment diagnostic that does not expose secret values, open
+`/api/debug/env`. It reports whether each required environment variable is
+present and includes a `debugApiVersion` marker so you can confirm Vercel is
+running the latest code.
+
 ## API
 
 - `GET/POST /api/todo-data`
   - Reads and writes `src/pages/Todo/todo-data.json` through the GitHub Contents API in production.
 - `GET/POST/DELETE /api/lock/session`
   - Checks the lock session, signs in, and signs out.
+- `GET /api/debug/env`
+  - Reports deployment diagnostics without printing secret values.
 
 ## Build
 

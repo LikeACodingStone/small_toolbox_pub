@@ -19,6 +19,7 @@ import {
   pushTodoData,
   saveRemoteSnapshot,
   saveTodoData,
+  TODO_WEB_DEBUG_VERSION,
   uid,
   type Priority,
   type TaskBadge,
@@ -1010,6 +1011,10 @@ export const TodoSyncBar: React.FC<TodoSyncBarProps> = ({ onLock }) => {
     setConfirmMode("discard");
   };
 
+  const handleDebug = () => {
+    window.open("/api/debug/env", "_blank", "noopener,noreferrer");
+  };
+
   const handleConfirm = async () => {
     if (isSyncing) return;
     const mode = confirmMode;
@@ -1063,6 +1068,9 @@ export const TodoSyncBar: React.FC<TodoSyncBarProps> = ({ onLock }) => {
           {syncError && (
             <span className="sync-error">Sync failed: {syncError}</span>
           )}
+          <span className="sync-debug-version" title={TODO_WEB_DEBUG_VERSION}>
+            debug {TODO_WEB_DEBUG_VERSION}
+          </span>
         </div>
         <div className="sync-actions">
           <button
@@ -1113,6 +1121,14 @@ export const TodoSyncBar: React.FC<TodoSyncBarProps> = ({ onLock }) => {
             disabled={isSyncing}
           >
             {"All"}
+          </button>
+          <button
+            type="button"
+            className="sync-btn debug"
+            onClick={handleDebug}
+            title="Open deployment diagnostics"
+          >
+            Debug
           </button>
         </div>
       </div>
