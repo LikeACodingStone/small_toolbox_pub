@@ -23,7 +23,7 @@ type EncryptedTodoPayload = {
 
 const todoDataPath = path.resolve(__dirname, "src/pages/Todo/todo-data.json");
 const lockCookieName = "todo_lock_screen_session";
-const lockSessionMaxAge = 60 * 60 * 12;
+const lockSessionMaxAge = 60 * 60 * 24 * 3;
 const defaultDevHttpsKeyPath = "certs/dev-key.pem";
 const defaultDevHttpsCertPath = "certs/dev-cert.pem";
 

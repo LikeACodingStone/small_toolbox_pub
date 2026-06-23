@@ -27,20 +27,16 @@
   const redirectTarget = form.dataset.redirect || '/'
 
   const circumference = 270
-  const totalHoldTime = 1500
   const revealTapCount = 5
   const revealTapGapMs = 1200
 
   let busy = false
-  let holding = false
-  let holdStartAt = 0
-  let holdRafId = 0
   let revealTapStreak = 0
   let lastRevealTapAt = 0
   let uiRevealed = form.dataset.revealed === 'true'
 
   const defaultUnlockText =
-    unlockText instanceof HTMLElement ? unlockText.textContent?.trim() || 'Hold to verify' : 'Hold to verify'
+    unlockText instanceof HTMLElement ? unlockText.textContent?.trim() || 'Click to verify' : 'Click to verify'
 
   const updateStatus = (message, state = 'idle') => {
     status.textContent = message
@@ -114,13 +110,12 @@
     }
   }
 
-  const setProgress = (elapsedMs) => {
+  const setProgress = (ratio) => {
     if (!(progressCircle instanceof SVGElement)) {
       return
     }
 
-    const ratio = Math.max(0, Math.min(1, elapsedMs / totalHoldTime))
-    const offset = circumference - ratio * circumference
+    const offset = circumference - Math.max(0, Math.min(1, ratio)) * circumference
     progressCircle.style.strokeDashoffset = String(offset)
   }
 
@@ -162,6 +157,7 @@
     try {
       const response = await fetch('/api/lock/session', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         },
@@ -187,6 +183,7 @@
       if (unlockBtn instanceof HTMLElement) {
         unlockBtn.classList.add('active')
       }
+      setProgress(1)
 
       window.dispatchEvent(new CustomEvent('aegis:unlock'))
       window.setTimeout(() => {
@@ -200,9 +197,6 @@
       passwordInput.select()
       setBusy(false)
 
-      holding = false
-      window.cancelAnimationFrame(holdRafId)
-      holdRafId = 0
       setProgress(0)
 
       if (unlockBtn instanceof HTMLElement) {
@@ -257,66 +251,11 @@
     progressCircle.style.strokeDashoffset = String(circumference)
   }
 
-  const holdTick = (now) => {
-    if (!holding) {
-      return
-    }
-
-    const elapsed = now - holdStartAt
-    setProgress(elapsed)
-
-    if (elapsed >= totalHoldTime) {
-      holding = false
-      setProgress(totalHoldTime)
-      void authorize()
-      return
-    }
-
-    holdRafId = window.requestAnimationFrame(holdTick)
-  }
-
-  const startHold = () => {
-    if (busy || holding) {
-      return
-    }
-
-    if (!passwordInput.value.trim()) {
-      updateStatus('Please enter the access password.', 'error')
-      setUnlockLabel('Password required', { blinking: false })
-      passwordInput.focus()
-      return
-    }
-
-    holding = true
-    holdStartAt = performance.now()
-    updateStatus('Hold to complete verification...', 'pending')
-    setUnlockLabel('Verifying...', { blinking: false })
-
-    holdRafId = window.requestAnimationFrame(holdTick)
-  }
-
-  const endHold = () => {
-    if (!holding) {
-      return
-    }
-
-    holding = false
-    window.cancelAnimationFrame(holdRafId)
-    holdRafId = 0
-    setProgress(0)
-
-    if (!busy) {
-      updateStatus(defaultStatus)
-      setUnlockLabel(defaultUnlockText, { blinking: true })
-    }
-  }
-
   const cancelUnlock = () => {
     if (busy || !uiRevealed) {
       return
     }
 
-    endHold()
     passwordInput.value = ''
     passwordInput.blur()
     updateStatus(defaultStatus)
@@ -333,50 +272,23 @@
 
   if (unlockBtn instanceof HTMLElement) {
     unlockBtn.addEventListener(
-      'pointerdown',
+      'click',
       (event) => {
         if (busy) {
           return
         }
 
-        // Only react to the primary button for mouse pointers.
-        if (event.pointerType === 'mouse' && event.button !== 0) {
-          return
-        }
-
-        try {
-          unlockBtn.setPointerCapture(event.pointerId)
-        } catch {
-          // Ignore browsers that don't support pointer capture here.
-        }
-
-        startHold()
-      },
-      { passive: true }
-    )
-
-    unlockBtn.addEventListener('pointerup', endHold, { passive: true })
-    unlockBtn.addEventListener('pointercancel', endHold, { passive: true })
-    unlockBtn.addEventListener('pointerleave', endHold, { passive: true })
-
-    // Keyboard accessibility: Space behaves like a hold, Enter submits instantly.
-    unlockBtn.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
         event.preventDefault()
         void authorize()
-        return
-      }
+      },
+      false
+    )
 
-      if (event.key === ' ') {
+    // Keyboard accessibility: Enter and Space both verify instantly.
+    unlockBtn.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault()
-        startHold()
-      }
-    })
-
-    unlockBtn.addEventListener('keyup', (event) => {
-      if (event.key === ' ') {
-        event.preventDefault()
-        endHold()
+        void authorize()
       }
     })
   }

@@ -147,7 +147,7 @@ const LockScreen = ({
               </svg>
 
               <div className="unlock-label mono-label blink-cursor" id="unlock-text">
-                Hold to verify
+                Click to verify
               </div>
             </div>
 
@@ -174,7 +174,7 @@ const LockScreen = ({
               role="status"
               aria-live="polite"
             >
-              Enter the password, then hold to verify.
+              Enter the password, then press Enter or click verify.
             </p>
 
             <div className="auth-actions">

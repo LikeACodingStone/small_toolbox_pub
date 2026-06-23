@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 const LOCK_COOKIE_NAME = "todo_lock_screen_session";
-const LOCK_SESSION_MAX_AGE = 60 * 60 * 12;
+const LOCK_SESSION_MAX_AGE = 60 * 60 * 24 * 3;
 const DEBUG_API_VERSION = "2026-06-23-env-debug-v1";
 
 const json = (res: VercelResponse, status: number, data: unknown) => {
