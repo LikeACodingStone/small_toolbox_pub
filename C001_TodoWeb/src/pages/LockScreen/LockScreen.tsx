@@ -3,7 +3,9 @@ import "./WenzhaiLockScreen.css";
 
 declare global {
   interface Window {
-    __todoLockScriptsLoaded?: boolean;
+    __todoLockInteractionLoaded?: boolean;
+    __todoLockVisualLoaded?: boolean;
+    __initTodoLockScreen?: () => void;
   }
 }
 
@@ -66,17 +68,31 @@ const LockScreen = ({
     document.body.classList.add("lock-screen-page");
 
     const load = async () => {
-      if (window.__todoLockScriptsLoaded) {
+      try {
+        if (!window.__todoLockInteractionLoaded) {
+          await ensureScript("todo-lock-interaction", LOCK_INTERACTION_SCRIPT);
+          window.__todoLockInteractionLoaded = true;
+        }
+        window.__initTodoLockScreen?.();
+      } catch (error) {
+        console.error("Failed to load lock screen interaction:", error);
+      }
+
+      if (window.__todoLockVisualLoaded) {
         return;
       }
 
       try {
-        await ensureScript("todo-lock-three", THREE_CDN);
-        await ensureScript("todo-lock-visual", LOCK_VISUAL_SCRIPT);
-        await ensureScript("todo-lock-interaction", LOCK_INTERACTION_SCRIPT);
-        window.__todoLockScriptsLoaded = true;
+        void ensureScript("todo-lock-three", THREE_CDN)
+          .then(() => ensureScript("todo-lock-visual", LOCK_VISUAL_SCRIPT))
+          .then(() => {
+            window.__todoLockVisualLoaded = true;
+          })
+          .catch((error) => {
+            console.error("Failed to load lock screen visuals:", error);
+          });
       } catch (error) {
-        console.error("Failed to load lock screen scripts:", error);
+        console.error("Failed to start lock screen visuals:", error);
       }
     };
 
@@ -102,8 +118,8 @@ const LockScreen = ({
           <div
             className="clock-container"
             id="lock-screen-clock"
-            data-revealed="false"
-            aria-hidden="true"
+            data-revealed="true"
+            aria-hidden="false"
           >
             <div className="time" id="clock-display">
               <span id="clock-hm">00:00</span>
@@ -122,15 +138,15 @@ const LockScreen = ({
             className="auth-panel"
             id="lock-screen-form"
             data-redirect={redirectTarget}
-            data-revealed="false"
-            aria-hidden="true"
+            data-revealed="true"
+            aria-hidden="false"
             noValidate
           >
             <div
               className="unlock-wrapper"
               id="unlock-btn"
               role="button"
-              tabIndex={-1}
+              tabIndex={0}
               aria-label={`Verify password and enter ${siteTitle}`}
             >
               <div className="unlock-ring-outer" aria-hidden="true"></div>
@@ -163,7 +179,6 @@ const LockScreen = ({
                 autoComplete="current-password"
                 enterKeyHint="go"
                 placeholder="Enter access password"
-                tabIndex={-1}
                 required
               />
             </div>

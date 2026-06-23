@@ -1,9 +1,9 @@
 ;(() => {
+  const init = () => {
   const form = document.getElementById('lock-screen-form')
   const passwordInput = document.getElementById('lock-password')
   const status = document.getElementById('lock-screen-status')
   const clockContainer = document.getElementById('lock-screen-clock')
-  const particleTrigger = document.getElementById('webgl-container') ?? form?.closest('.aegis-lockscreen')
 
   const unlockBtn = document.getElementById('unlock-btn')
   const progressCircle = document.getElementById('progress-circle')
@@ -22,17 +22,17 @@
   if (!(submitButton instanceof HTMLButtonElement)) {
     return
   }
+  if (form.dataset.lockScreenBound === 'true') {
+    return
+  }
+  form.dataset.lockScreenBound = 'true'
 
   const defaultStatus = status.textContent?.trim() || ''
   const redirectTarget = form.dataset.redirect || '/'
 
   const circumference = 270
-  const revealTapCount = 5
-  const revealTapGapMs = 1200
 
   let busy = false
-  let revealTapStreak = 0
-  let lastRevealTapAt = 0
   let uiRevealed = form.dataset.revealed === 'true'
 
   const defaultUnlockText =
@@ -223,28 +223,7 @@
     void authorize()
   })
 
-  setUiRevealed(uiRevealed)
-
-  if (particleTrigger instanceof HTMLElement) {
-    particleTrigger.addEventListener(
-      'click',
-      () => {
-        if (uiRevealed) {
-          return
-        }
-
-        const now = performance.now()
-        revealTapStreak = now - lastRevealTapAt <= revealTapGapMs ? revealTapStreak + 1 : 1
-        lastRevealTapAt = now
-
-        if (revealTapStreak >= revealTapCount) {
-          revealTapStreak = 0
-          setUiRevealed(true)
-        }
-      },
-      { passive: true }
-    )
-  }
+  setUiRevealed(true)
 
   if (progressCircle instanceof SVGElement) {
     progressCircle.style.strokeDasharray = String(circumference)
@@ -264,10 +243,6 @@
     if (unlockBtn instanceof HTMLElement) {
       unlockBtn.classList.remove('active')
     }
-
-    revealTapStreak = 0
-    lastRevealTapAt = 0
-    setUiRevealed(false)
   }
 
   if (unlockBtn instanceof HTMLElement) {
@@ -309,4 +284,8 @@
     event.preventDefault()
     cancelUnlock()
   })
+  }
+
+  window.__initTodoLockScreen = init
+  init()
 })()

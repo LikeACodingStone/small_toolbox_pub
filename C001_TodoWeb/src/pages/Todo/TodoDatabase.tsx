@@ -329,6 +329,14 @@ const countUrgentImportant = (tasks: Task[]) => {
   return { urgent, important };
 };
 
+const isMissingGitHubTokenError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return (
+    message.includes("GITHUB_TOKEN") ||
+    message.includes("GitHub token not configured")
+  );
+};
+
 export const TodoDatabaseProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
@@ -356,6 +364,8 @@ export const TodoDatabaseProvider: React.FC<{ children: ReactNode }> = ({
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(
     initialSnapshot?.savedAt ?? null,
   );
+  const [syncAvailable, setSyncAvailable] = useState(syncEnabled);
+  const effectiveSyncEnabled = syncEnabled && syncAvailable;
   const [isLoadingRemote, setIsLoadingRemote] = useState(syncEnabled);
 
   useEffect(() => {
@@ -369,16 +379,16 @@ export const TodoDatabaseProvider: React.FC<{ children: ReactNode }> = ({
   }, [remoteSnapshot]);
 
   useEffect(() => {
-    if (!syncEnabled) return;
+    if (!effectiveSyncEnabled) return;
     if (!remoteSnapshot) {
       setHasPendingChanges(true);
       return;
     }
     setHasPendingChanges(!isTodoDataEqual(data, remoteSnapshot.data));
-  }, [data, remoteSnapshot, syncEnabled]);
+  }, [data, remoteSnapshot, effectiveSyncEnabled]);
 
   useEffect(() => {
-    if (!syncEnabled) return;
+    if (!effectiveSyncEnabled) return;
     let cancelled = false;
 
     const loadRemote = async () => {
@@ -401,6 +411,12 @@ export const TodoDatabaseProvider: React.FC<{ children: ReactNode }> = ({
         }
       } catch (error) {
         if (!cancelled) {
+          if (isMissingGitHubTokenError(error)) {
+            setSyncAvailable(false);
+            setSyncError(null);
+            setHasPendingChanges(false);
+            return;
+          }
           setSyncError(
             error instanceof Error ? error.message : "Unable to load Todo data",
           );
@@ -417,7 +433,7 @@ export const TodoDatabaseProvider: React.FC<{ children: ReactNode }> = ({
     return () => {
       cancelled = true;
     };
-  }, [syncEnabled]);
+  }, [effectiveSyncEnabled]);
 
   const setTasks = (updater: (prev: Task[]) => Task[]) =>
     setData((prev) => ({ ...prev, tasks: updater(prev.tasks) }));
@@ -719,7 +735,7 @@ export const TodoDatabaseProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const pushChanges = async () => {
-    if (!syncEnabled || isSyncing) return;
+    if (!effectiveSyncEnabled || isSyncing) return;
     setIsSyncing(true);
     setSyncError(null);
 
@@ -733,6 +749,12 @@ export const TodoDatabaseProvider: React.FC<{ children: ReactNode }> = ({
       setHasPendingChanges(false);
       initialDirtyRef.current = false;
     } catch (error) {
+      if (isMissingGitHubTokenError(error)) {
+        setSyncAvailable(false);
+        setSyncError(null);
+        setHasPendingChanges(false);
+        return;
+      }
       const message = error instanceof Error ? error.message : "Push failed";
       setSyncError(message);
       throw error;
@@ -742,7 +764,7 @@ export const TodoDatabaseProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const pullChanges = async () => {
-    if (!syncEnabled || isSyncing) return;
+    if (!effectiveSyncEnabled || isSyncing) return;
     setIsSyncing(true);
     setSyncError(null);
 
@@ -758,6 +780,12 @@ export const TodoDatabaseProvider: React.FC<{ children: ReactNode }> = ({
       setHasPendingChanges(false);
       initialDirtyRef.current = false;
     } catch (error) {
+      if (isMissingGitHubTokenError(error)) {
+        setSyncAvailable(false);
+        setSyncError(null);
+        setHasPendingChanges(false);
+        return;
+      }
       const message = error instanceof Error ? error.message : "Pull failed";
       setSyncError(message);
       throw error;
@@ -799,9 +827,9 @@ export const TodoDatabaseProvider: React.FC<{ children: ReactNode }> = ({
     updateTask,
     deleteTask,
     setViewOrder,
-    syncEnabled,
+    syncEnabled: effectiveSyncEnabled,
     hasPendingChanges,
-    isSyncing: isSyncing || isLoadingRemote,
+    isSyncing: isSyncing || (effectiveSyncEnabled && isLoadingRemote),
     syncError,
     lastSyncedAt,
     pushChanges,
@@ -886,9 +914,9 @@ export const TodoSyncBar: React.FC<TodoSyncBarProps> = ({ onLock }) => {
     return () => window.removeEventListener("click", onGlobalClick, true);
   }, [showAllModal]);
 
-  if (!syncEnabled) return null;
-
-  const statusText = isSyncing
+  const statusText = !syncEnabled
+    ? "Local mode"
+    : isSyncing
     ? "Syncing..."
     : hasPendingChanges
       ? "Unpushed changes"
@@ -1055,17 +1083,17 @@ export const TodoSyncBar: React.FC<TodoSyncBarProps> = ({ onLock }) => {
       <div className="todo-sync-bar">
         <div className="todo-sync-status">
           <span
-            className={`sync-dot ${hasPendingChanges ? "dirty" : "clean"}`}
+            className={`sync-dot ${syncEnabled && hasPendingChanges ? "dirty" : "clean"}`}
             aria-hidden="true"
           />
           <span className="sync-text">{statusText}</span>
-          {lastSyncedAt && (
+          {syncEnabled && lastSyncedAt && (
             <span className="sync-time">
               Last sync: {formatSyncTime(lastSyncedAt)}
             </span>
           )}
           {notice && <span className="sync-notice">OK {notice}</span>}
-          {syncError && (
+          {syncEnabled && syncError && (
             <span className="sync-error">Sync failed: {syncError}</span>
           )}
           <span className="sync-debug-version" title={TODO_WEB_DEBUG_VERSION}>
@@ -1090,30 +1118,34 @@ export const TodoSyncBar: React.FC<TodoSyncBarProps> = ({ onLock }) => {
               <rect x="7" y="10" width="10" height="10" rx="2" />
             </svg>
           </button>
-          <button
-            type="button"
-            className="sync-btn ghost"
-            onClick={handleDiscard}
-            disabled={!hasPendingChanges || isSyncing}
-          >
-            Discard changes
-          </button>
-          <button
-            type="button"
-            className="sync-btn ghost"
-            onClick={handlePull}
-            disabled={isSyncing}
-          >
-            {isSyncing ? "Pulling..." : "Pull"}
-          </button>
-          <button
-            type="button"
-            className="sync-btn"
-            onClick={handlePush}
-            disabled={!hasPendingChanges || isSyncing}
-          >
-            {isSyncing ? "Pushing..." : "Push"}
-          </button>
+          {syncEnabled ? (
+            <>
+              <button
+                type="button"
+                className="sync-btn ghost"
+                onClick={handleDiscard}
+                disabled={!hasPendingChanges || isSyncing}
+              >
+                Discard changes
+              </button>
+              <button
+                type="button"
+                className="sync-btn ghost"
+                onClick={handlePull}
+                disabled={isSyncing}
+              >
+                {isSyncing ? "Pulling..." : "Pull"}
+              </button>
+              <button
+                type="button"
+                className="sync-btn"
+                onClick={handlePush}
+                disabled={!hasPendingChanges || isSyncing}
+              >
+                {isSyncing ? "Pushing..." : "Push"}
+              </button>
+            </>
+          ) : null}
           <button
             type="button"
             className="sync-btn cute"
