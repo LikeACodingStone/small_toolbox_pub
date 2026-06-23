@@ -1,0 +1,91 @@
+/* CSS variable definitions */
+:root {
+  /* Color variables */
+  --bg: #0a0a0a;
+  --bg-soft: #0f0f0f;
+  --panel: #111111;
+  --panel-2: #0d0d0d;
+  --primary: #1a1515;
+  --text: #b3b3b3;
+  --text-weak: #666666;
+  --line: #1a1a1a;
+  --accent: #8a8a8a;
+  --pink: #8a6d8b;
+  --yellow: #8a8a6d;
+
+  /* Spacing variables */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Radius variables */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* Shadow variables */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2);
+
+  /* Transition variables */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+
+  /* Font variables */
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 24px;
+
+  /* Z-index layers */
+  --z-index-base: 1;
+  --z-index-dropdown: 10;
+  --z-index-sticky: 100;
+  --z-index-fixed: 1000;
+  --z-index-modal: 10000;
+  --z-index-toast: 100000;
+
+  /* Ebook reader variables */
+  --reader-bg-dark: #1a1612;
+  --reader-text-dark: #c8b8a0;
+  --reader-accent-dark: #d4a574;
+  --reader-bg-light: #ffffff;
+  --reader-text-light: #2d2d2d;
+  --reader-accent-light: #4a90e2;
+  --reader-bg-sepia: #f4f1e8;
+  --reader-text-sepia: #5c4b37;
+  --reader-accent-sepia: #8b7355;
+  --reader-bg-eyecare: #cce8cf;
+  --reader-text-eyecare: #2d3a2d;
+  --reader-accent-eyecare: #4a7c4f;
+
+  /* Bookshelf variables */
+  --shelf-bg: #1a1a1d;
+  --shelf-text: #e8d5c4;
+  --shelf-accent: #d4a574;
+  --shelf-card-bg: rgba(45, 45, 48, 0.6);
+  --shelf-card-hover: rgba(212, 165, 116, 0.08);
+
+  /* Reader typography variables */
+  --reader-font-size-min: 12px;
+  --reader-font-size-max: 48px;
+  --reader-font-size-default: 16px;
+  --reader-line-height-min: 1.2;
+  --reader-line-height-max: 3.0;
+  --reader-line-height-default: 1.9;
+  --reader-margin-min: 0px;
+  --reader-margin-max: 200px;
+
+  /* E-ink variables */
+  --eink-bg: #ffffff;
+  --eink-text: #1a1a1a;
+  --eink-border: #333333;
+}

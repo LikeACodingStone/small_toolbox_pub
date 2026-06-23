@@ -1,0 +1,372 @@
+/* App mobile-only styles */
+/* This file only contains mobile optimizations and does not affect desktop */
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Replace link hover effects with active states */
+  a:hover {
+    color: #c6d3d0;
+  }
+  a:active {
+    color: #fff;
+  }
+
+  /* Remove tap highlights */
+  a,
+  button,
+  .touch-target {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Tablet optimizations (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .container {
+    width: 100%;
+    padding: 0 1.5rem;
+  }
+
+  .columns {
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .sidebar-right {
+    flex: 0.45;
+  }
+
+  .site-title {
+    font-size: 20px;
+  }
+}
+
+/* Mobile global optimizations (<=860px) */
+@media (max-width: 860px) {
+  /* Container optimizations */
+  .container {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 1rem;
+    margin: 0;
+  }
+
+  /* Hide decorative elements on mobile for better performance */
+  .header-decorations {
+    display: none;
+  }
+
+  /* Keep the sidebar visible */
+  .sidebar-right {
+    opacity: 1;
+    transition: none;
+  }
+
+  /* Page header optimizations */
+  .page-header {
+    min-height: 100px;
+    padding: 0;
+  }
+
+  .header-inner {
+    padding: 2% 3%;
+    gap: 8px;
+    min-height: 90px;
+  }
+
+  .header-left {
+    flex: 1;
+    min-width: 150px;
+  }
+
+  .header-right {
+    flex: none;
+  }
+
+  /* Sub-navigation optimizations */
+  .subnav {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .subnav a {
+    margin-right: 8px;
+    font-size: 11px;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+  }
+
+  .subnav-back {
+    font-size: 16px;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+  }
+
+  /* Heading optimizations */
+  .site-title {
+    font-size: 18px;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Column layout optimizations */
+  .columns {
+    flex-direction: column;
+    gap: 16px;
+    padding: 12px 1.5rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .main-left {
+    flex: none;
+    width: 100%;
+    max-height: none;
+    order: 1;
+  }
+
+  .main-left.full-width {
+    width: 100%;
+    max-height: none;
+  }
+
+  .columns.columns--mindmap {
+    padding: 0;
+    gap: 0;
+  }
+
+  .main-left.main-left--mindmap {
+    min-height: 100vh;
+  }
+
+  .sidebar-right {
+    flex: none;
+    width: 100%;
+    order: 2;
+    opacity: 1;
+  }
+
+  /* Card optimizations */
+  .tab-card,
+  .card {
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+
+  /* Button touch target optimizations */
+  button,
+  .touch-target,
+  .tab-btn {
+    min-height: 44px;
+    min-width: 44px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Remove hover effects */
+  .track-row:hover {
+    background: rgba(0, 0, 0, 0.3);
+    transform: none;
+  }
+
+  .track-row:active {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* Medium phone optimizations (<=600px) */
+@media (max-width: 600px) {
+  .page-header {
+    min-height: 80px;
+    padding: 0 1rem;
+  }
+
+  .header-inner {
+    padding: 2% 0;
+    gap: 6px;
+    min-height: 70px;
+  }
+
+  .columns {
+    padding: 12px 1rem;
+  }
+
+  .site-title {
+    font-size: 16px;
+  }
+
+  .header-datetime {
+    font-size: 10px;
+    gap: 4px;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Card optimizations */
+  .card {
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+
+  /* Button touch optimizations */
+  button,
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 10px 16px;
+  }
+
+  /* Lock button mobile styles */
+  .lock-btn.mobile {
+    top: 12px;
+    right: 12px;
+    padding: 8px 12px;
+    font-size: 12px;
+    border-radius: 20px;
+  }
+
+  .app-actions {
+    top: 12px;
+    right: 12px;
+    gap: 6px;
+  }
+}
+
+/* Small phone optimizations (<=480px) */
+@media (max-width: 480px) {
+  /* Reduce base font size */
+  html {
+    font-size: 14px;
+  }
+
+  body {
+    font-size: 10px;
+  }
+
+  /* Container optimizations */
+  .container {
+    width: 100%;
+    padding: 0 0.75rem;
+  }
+
+  /* Page header */
+  .page-header {
+    min-height: 60px;
+    padding: 0 0.75rem;
+  }
+
+  .header-inner {
+    min-height: 50px;
+    gap: 4px;
+    padding: 0;
+  }
+
+  .columns {
+    padding: 8px 0.75rem;
+  }
+
+  /* Headings and navigation */
+  .site-title {
+    font-size: 14px;
+    min-height: 20px;
+  }
+
+  .subnav {
+    gap: 4px;
+  }
+
+  .subnav a {
+    margin-right: 4px;
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+
+  .subnav-back {
+    font-size: 14px;
+    padding: 3px 6px;
+  }
+
+  /* Date and time */
+  .header-datetime {
+    font-size: 10px;
+    gap: 2px;
+    padding: 4px 6px;
+  }
+
+  /* Column layout */
+  .columns {
+    padding: 8px;
+    gap: 10px;
+  }
+
+  /* Cute toggle button */
+  .kawaii-toggle {
+    left: 8px;
+    bottom: 8px;
+    padding: 6px;
+  }
+}
+
+/* Pagination mobile optimizations */
+@media (max-width: 768px) {
+  .pagination {
+    gap: 12px;
+    padding: 12px 0;
+    flex-wrap: wrap;
+  }
+
+  .pagination-btn {
+    padding: 10px 20px;
+    font-size: 13px;
+    min-height: 48px;
+    min-width: 80px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .pagination-info {
+    font-size: 13px;
+    width: 100%;
+    order: -1;
+    margin-bottom: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pagination {
+    gap: 10px;
+  }
+
+  .pagination-btn {
+    padding: 8px 16px;
+    font-size: 12px;
+    flex: 1;
+    max-width: 120px;
+  }
+
+  .pagination-info {
+    font-size: 12px;
+  }
+}
+
+/* Search input mobile optimizations */
+@media (max-width: 768px) {
+  .search-input {
+    font-size: 16px; /* Prevent iOS automatic zoom */
+    padding: 12px 40px 12px 14px;
+    min-height: 44px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+}
+
+/* Hide lock button on mobile */
+@media (max-width: 768px) {
+  .lock-btn {
+    display: none !important;
+  }
+}

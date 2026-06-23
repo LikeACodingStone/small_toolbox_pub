@@ -1,0 +1,504 @@
+  @font-face {
+    font-family: 'Lockscreen Inter';
+    font-style: normal;
+    font-weight: 300 700;
+    font-display: swap;
+    src: url('/fonts/lockscreen/inter-latin.woff2') format('woff2');
+  }
+
+  @font-face {
+    font-family: 'Lockscreen Mono';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/fonts/lockscreen/space-mono-latin.woff2') format('woff2');
+  }
+
+  .aegis-lockscreen {
+    --bg: #000000;
+    --text-main: #ffffff;
+    --text-dim: #777777;
+    --border: rgba(255, 255, 255, 0.15);
+    --font-sans:
+      'Lockscreen Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', -apple-system,
+      BlinkMacSystemFont, sans-serif;
+    --font-mono:
+      'Lockscreen Mono', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', ui-monospace,
+      monospace;
+    --pad-edge: 48px;
+
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background-color: var(--bg);
+    color: var(--text-main);
+    font-family: var(--font-sans);
+  }
+  .aegis-lockscreen * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body.lock-screen-page {
+    margin: 0;
+    background-color: #000000;
+    color: #ffffff;
+    font-family:
+      'Lockscreen Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', -apple-system,
+      BlinkMacSystemFont, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    width: 100vw;
+    height: 100vh;
+    user-select: none;
+  }
+
+  #webgl-container {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: radial-gradient(circle at center, #0a0a0a 0%, #000000 100%);
+  }
+
+  #webgl-container canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .hud {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    padding: var(--pad-edge);
+    pointer-events: none;
+  }
+
+  .mono-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    color: var(--text-dim);
+  }
+
+  .mono-value {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--text-main);
+  }
+
+  .center-cluster {
+    position: relative;
+    display: flex;
+    min-height: calc(100vh - (var(--pad-edge) * 2));
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .clock-container {
+    position: relative;
+    overflow: hidden;
+    max-height: 420px;
+    margin-bottom: 4vh;
+    opacity: 1;
+    text-align: center;
+    transform: translateY(0);
+    transition:
+      max-height 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+      margin-bottom 0.28s ease,
+      opacity 0.28s ease,
+      transform 0.28s ease;
+  }
+
+  .clock-container[data-revealed='false'] {
+    max-height: 0;
+    margin-bottom: 0;
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  .time {
+    display: inline-flex;
+    align-items: baseline;
+    justify-content: center;
+    margin-left: -0.04em;
+    color: var(--text-main);
+    font-family: var(--font-sans);
+    font-size: 14vw;
+    font-weight: 300;
+    line-height: 0.8;
+    letter-spacing: -0.04em;
+    white-space: nowrap;
+    -webkit-user-select: none;
+    user-select: none;
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
+  }
+
+  .time .sec {
+    flex: 0 0 2ch;
+    width: 2ch;
+    min-width: 2ch;
+    margin-left: 12px;
+    text-align: left;
+    line-height: 1;
+    color: var(--text-dim);
+    font-size: 3vw;
+    font-weight: 300;
+    letter-spacing: 0;
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
+  }
+
+  .date-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 24px;
+  }
+
+  .date-container::before,
+  .date-container::after {
+    width: 40px;
+    height: 1px;
+    background: var(--border);
+    content: '';
+  }
+
+  .auth-panel {
+    display: grid;
+    width: min(460px, calc(100vw - (var(--pad-edge) * 2)));
+    justify-items: center;
+    gap: 18px;
+    overflow: hidden;
+    pointer-events: auto;
+    max-height: 520px;
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      max-height 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 0.28s ease,
+      transform 0.28s ease;
+  }
+
+  .auth-panel[data-revealed='false'] {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-12px);
+    pointer-events: none;
+  }
+
+  .auth-input-row {
+    display: grid;
+    width: 100%;
+    gap: 10px;
+    pointer-events: auto;
+  }
+
+  .auth-input {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    outline: none;
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--text-main);
+    letter-spacing: 0.12em;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+    user-select: text;
+    cursor: text;
+  }
+
+  .auth-input::placeholder {
+    color: rgba(255, 255, 255, 0.28);
+  }
+
+  .auth-input:focus-visible {
+    border-color: rgba(255, 255, 255, 0.35);
+    background: rgba(0, 0, 0, 0.28);
+  }
+
+  .auth-status {
+    text-align: center;
+    letter-spacing: 0.2em;
+    line-height: 1.6;
+    opacity: 0.75;
+  }
+
+  .auth-actions {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    margin-top: -4px;
+  }
+
+  .auth-cancel {
+    min-width: 96px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.44);
+    cursor: pointer;
+    transition:
+      color 0.2s ease,
+      opacity 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .auth-cancel:hover {
+    color: rgba(255, 255, 255, 0.82);
+    transform: translateY(-1px);
+  }
+
+  .auth-cancel:focus-visible {
+    color: rgba(255, 255, 255, 0.92);
+    outline: 1px solid rgba(255, 255, 255, 0.22);
+    outline-offset: 8px;
+  }
+
+  .auth-cancel:disabled {
+    opacity: 0.28;
+    cursor: default;
+    transform: none;
+  }
+
+  .auth-panel[data-state='error'] .auth-status {
+    color: rgba(255, 255, 255, 0.95);
+    opacity: 1;
+  }
+
+  .auth-panel[data-state='error'] .auth-input {
+    border-color: rgba(255, 255, 255, 0.32);
+  }
+
+  .unlock-wrapper {
+    position: relative;
+    z-index: 20;
+    display: flex;
+    width: 120px;
+    height: 120px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 4vh;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    pointer-events: auto;
+    touch-action: none;
+  }
+
+  .unlock-wrapper:focus-visible {
+    outline: 1px solid rgba(255, 255, 255, 0.35);
+    outline-offset: 10px;
+  }
+
+  .unlock-ring-outer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 1px dashed var(--text-dim);
+    border-radius: 50%;
+    opacity: 0.3;
+    transition: opacity 0.3s ease;
+    animation: rotateSlow 20s linear infinite;
+  }
+
+  .unlock-core {
+    width: 12px;
+    height: 12px;
+    border-radius: 0;
+    background: var(--text-dim);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .unlock-label {
+    position: absolute;
+    bottom: -32px;
+    width: 220px;
+    text-align: center;
+    opacity: 0.5;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .unlock-wrapper:hover .unlock-ring-outer {
+    opacity: 0.8;
+  }
+
+  .unlock-wrapper:hover .unlock-core {
+    transform: scale(1.5);
+    background: var(--text-main);
+  }
+
+  .unlock-wrapper:hover .unlock-label {
+    opacity: 1;
+  }
+
+  .unlock-wrapper.active .unlock-core {
+    transform: scale(2) rotate(45deg);
+    background: var(--text-main);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+  }
+
+  .progress-svg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 90px;
+    height: 90px;
+    transform: translate(-50%, -50%) rotate(-90deg);
+    pointer-events: none;
+  }
+
+  .progress-circle {
+    fill: none;
+    stroke: var(--text-main);
+    stroke-width: 2;
+    stroke-dasharray: 270;
+    stroke-dashoffset: 270;
+    transition: stroke-dashoffset 0.1s linear;
+  }
+
+  .crosshair {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+  }
+
+  .crosshair::before,
+  .crosshair::after {
+    position: absolute;
+    background: var(--border);
+    content: '';
+  }
+
+  .crosshair::before {
+    top: 10px;
+    left: 0;
+    width: 20px;
+    height: 1px;
+  }
+
+  .crosshair::after {
+    top: 0;
+    left: 10px;
+    width: 1px;
+    height: 20px;
+  }
+
+  .ch-tl {
+    top: 40px;
+    left: 200px;
+  }
+
+  .ch-tr {
+    top: 40px;
+    right: 200px;
+  }
+
+  .ch-bl {
+    bottom: 40px;
+    left: 200px;
+  }
+
+  .ch-br {
+    bottom: 40px;
+    right: 200px;
+  }
+
+  .scanlines {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 0) 50%,
+      rgba(0, 0, 0, 0.1) 50%,
+      rgba(0, 0, 0, 0.1)
+    );
+    background-size: 100% 4px;
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .blink-cursor::after {
+    margin-left: 4px;
+    color: var(--text-dim);
+    content: '|';
+    animation: blink 1s step-end infinite;
+  }
+
+  .sr-only {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  @keyframes rotateSlow {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes blink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .aegis-lockscreen {
+      --pad-edge: 22px;
+    }
+
+    .ch-tl,
+    .ch-tr {
+      top: 22px;
+    }
+
+    .ch-bl,
+    .ch-br {
+      bottom: 22px;
+    }
+
+    .ch-tl,
+    .ch-bl {
+      left: 22px;
+    }
+
+    .ch-tr,
+    .ch-br {
+      right: 22px;
+    }
+
+    .time {
+      font-size: 18vw;
+    }
+
+    .time .sec {
+      font-size: 5.2vw;
+    }
+  }

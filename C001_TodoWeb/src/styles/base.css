@@ -1,0 +1,138 @@
+/* Base styles and reset */
+
+/* Box-sizing reset */
+* {
+  box-sizing: border-box;
+}
+
+/* Remove global outline and focus borders */
+*,
+*::before,
+*::after,
+*:focus,
+*:active,
+*:focus-visible,
+*:focus-within {
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-style: none !important;
+  outline-color: transparent !important;
+}
+
+/* Remove default borders and outlines from interactive elements */
+button,
+a,
+input,
+select,
+textarea,
+[role="button"],
+[tabindex],
+[contenteditable],
+[type="button"],
+[type="submit"],
+[type="reset"],
+.btn,
+.button {
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-style: none !important;
+  outline-color: transparent !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Remove outlines in all states */
+button:hover,
+button:focus,
+button:active,
+button:focus-visible,
+a:hover,
+a:focus,
+a:active,
+a:focus-visible,
+input:hover,
+input:focus,
+input:active,
+input:focus-visible,
+select:hover,
+select:focus,
+select:active,
+select:focus-visible,
+textarea:hover,
+textarea:focus,
+textarea:active,
+textarea:focus-visible,
+[role="button"]:hover,
+[role="button"]:focus,
+[role="button"]:active,
+[role="button"]:focus-visible,
+[tabindex]:hover,
+[tabindex]:focus,
+[tabindex]:active,
+[tabindex]:focus-visible,
+[contenteditable]:hover,
+[contenteditable]:focus,
+[contenteditable]:active,
+[contenteditable]:focus-visible {
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-style: none !important;
+  outline-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Remove default button borders */
+button {
+  border: none;
+}
+
+/* Remove dotted link borders */
+a {
+  text-decoration: none;
+}
+
+/* Keep input and select borders where needed */
+input,
+select,
+textarea {
+  border: 1px solid var(--line);
+}
+
+/* Remove webkit focus rings */
+*::-webkit-focus-ring-color {
+  outline-color: transparent !important;
+}
+
+*::-moz-focus-inner {
+  border: 0 !important;
+}
+
+/* Body styles */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family);
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-soft);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-weak);
+}

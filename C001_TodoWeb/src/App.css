@@ -1,0 +1,24 @@
+/* Main style entry */
+/* Import modular style files */
+
+/* 1. CSS variables */
+@import "./styles/variables.css";
+
+/* 2. Base styles */
+@import "./styles/base.css";
+
+/* 3. Full legacy styles, kept temporarily while migrating */
+@import "./styles/app-legacy.css";
+
+/* 4. Mobile styles */
+@import "./styles/mobile.css";
+
+/* 5. Critical styles */
+@import "./styles/critical.css";
+
+/* 
+  TODO: future cleanup
+  - Split app-legacy.css into smaller modules
+  - Move component-specific styles into component folders
+  - Remove unused style rules
+*/

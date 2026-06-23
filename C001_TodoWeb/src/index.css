@@ -1,0 +1,13 @@
+@import "./styles/index.css";
+
+.app-loading {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: 0.08em;
+  font-size: 13px;
+  background: radial-gradient(circle at center, #0d0f12 0%, #000 65%);
+}
