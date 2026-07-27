@@ -1,0 +1,10 @@
+1. fix the number sequence chaos, having the number prefix 10_ file will be processed before with the prefix 2_. After fix, all the file will be processing by account sequence.
+2. remove "joerogan" keyword from everywhere involved.
+3. distinguish the platform is CPU and GPU, then set environment automatically. rename the setup.sh file.
+4. Fix bug, while pydub ment file size over 4GB will crash.
+5. Segment setting to 2
+6. input new module, controls the people name and Location without translation
+7. if the translation vocabulary length is over 8. just use the first translation, if the length is over 20. Then quit this translation.
+8. add configuration for continously not translate, for example 120 seconds, means 2 minutes the same vocabulary only translate once.
+9. support opus translation
+
