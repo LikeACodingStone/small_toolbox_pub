@@ -1,0 +1,4 @@
+# The converter currently uses only the Python standard library.
+# Keep this file for pip-based Ubuntu setup:
+#   python3 -m pip install -r requirement.txt
+
