@@ -1,14 +1,8 @@
 #!/usr/bin/env python3
-"""Convert a 2D video to 4K Half-SBS 3D and encode with AV1.
+"""Stream a 2D video through depth estimation into a 4K Half-SBS AV1 file.
 
-This is a practical trial pipeline:
-  1. ffmpeg extracts frames.
-  2. Depth Anything estimates depth on GPU when available.
-  3. OpenCV warps each frame into left/right views.
-  4. ffmpeg encodes 3840x2160 Half-SBS with CPU SVT-AV1.
-
-It is not a magic Hollywood stereo conversion tool, but it is a solid
-one-command baseline for testing depth, parallax, compression, and throughput.
+Decoded and generated frames stay in memory. Only the encoded output is written
+to disk, so temporary storage does not grow with the input video's duration.
 """
 
 from __future__ import annotations
@@ -17,20 +11,14 @@ import argparse
 import json
 import math
 import os
-import shutil
 import subprocess
-import sys
 from pathlib import Path
+from typing import BinaryIO
 
 import cv2
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
-
-
-def run(cmd: list[str], *, cwd: Path | None = None) -> None:
-    print("+", " ".join(cmd), flush=True)
-    subprocess.run(cmd, cwd=str(cwd) if cwd else None, check=True)
 
 
 def capture(cmd: list[str]) -> str:
@@ -49,7 +37,7 @@ def ffprobe_json(input_path: Path) -> dict:
     return json.loads(raw)
 
 
-def video_info(input_path: Path) -> tuple[float, str, bool]:
+def video_info(input_path: Path) -> tuple[float, float, str, bool]:
     data = ffprobe_json(input_path)
     video_stream = next(s for s in data["streams"] if s["codec_type"] == "video")
     fps_expr = video_stream.get("avg_frame_rate") or video_stream.get("r_frame_rate") or "24000/1001"
@@ -60,11 +48,7 @@ def video_info(input_path: Path) -> tuple[float, str, bool]:
         fps = float(fps_expr)
     duration = float(video_stream.get("duration") or data.get("format", {}).get("duration") or 0)
     has_audio = any(s["codec_type"] == "audio" for s in data["streams"])
-    return duration, fps_expr, has_audio
-
-
-def list_frames(frame_dir: Path, ext: str) -> list[Path]:
-    return sorted(frame_dir.glob(f"*.{ext}"))
+    return duration, fps, fps_expr, has_audio
 
 
 def normalize_depth(depth: Image.Image, width: int, height: int, gamma: float) -> np.ndarray:
@@ -100,11 +84,9 @@ def make_stereo_half_sbs(
 
     left_map_x = x + disparity / 2.0
     right_map_x = x - disparity / 2.0
-    map_y = y
-
-    left = cv2.remap(src, left_map_x, map_y, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
-    right = cv2.remap(src, right_map_x, map_y, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
-    return np.concatenate([left, right], axis=1)
+    left = cv2.remap(src, left_map_x, y, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+    right = cv2.remap(src, right_map_x, y, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+    return np.ascontiguousarray(np.concatenate([left, right], axis=1))
 
 
 def load_depth_pipeline(model_name: str, device: str):
@@ -123,33 +105,135 @@ def load_depth_pipeline(model_name: str, device: str):
     return pipeline("depth-estimation", model=model_name, device=device_arg, torch_dtype=dtype)
 
 
-def encode_av1(
-    hsbs_dir: Path,
+def directory_size(path: Path) -> int:
+    total = 0
+    for item in path.rglob("*"):
+        try:
+            if item.is_file():
+                total += item.stat().st_size
+        except OSError:
+            # A concurrently removed temporary file is harmless here.
+            continue
+    return total
+
+
+def enforce_work_limit(work_dir: Path, max_work_bytes: int) -> None:
+    if max_work_bytes <= 0:
+        return
+    used = directory_size(work_dir)
+    if used > max_work_bytes:
+        raise RuntimeError(
+            f"Work directory exceeded its limit: {used / 1024**3:.2f} GiB "
+            f"> {max_work_bytes / 1024**3:.2f} GiB"
+        )
+
+
+def read_exact_frame(stream: BinaryIO, buffer: bytearray) -> bool:
+    view = memoryview(buffer)
+    offset = 0
+    while offset < len(buffer):
+        count = stream.readinto(view[offset:])
+        if not count:
+            break
+        offset += count
+    if offset == 0:
+        return False
+    if offset != len(buffer):
+        raise RuntimeError(f"Decoder returned an incomplete frame: {offset}/{len(buffer)} bytes")
+    return True
+
+
+def write_all(stream: BinaryIO, data: memoryview) -> None:
+    offset = 0
+    while offset < len(data):
+        count = stream.write(data[offset:])
+        if not count:
+            raise BrokenPipeError("Encoder accepted zero bytes")
+        offset += count
+
+
+def close_pipe(stream: BinaryIO | None) -> None:
+    if stream is None or stream.closed:
+        return
+    try:
+        stream.close()
+    except OSError:
+        # The original encoder/decoder error is more useful than a close error.
+        pass
+
+
+def stop_process(process: subprocess.Popen | None) -> None:
+    if process is None or process.poll() is not None:
+        return
+    process.terminate()
+    try:
+        process.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait()
+
+
+def stream_convert(
+    *,
     input_video: Path,
-    output_video: Path,
+    partial_output: Path,
+    work_dir: Path,
+    depth_pipe,
+    duration: float,
+    fps: float,
     fps_expr: str,
     has_audio: bool,
+    output_width: int,
+    output_height: int,
+    max_disparity: float,
+    depth_gamma: float,
+    convergence: float,
+    test_seconds: str,
     crf: int,
     preset: int,
     audio_codec: str,
     audio_bitrate: str,
     audio_channels: int,
     threads: int,
-    frame_ext: str,
-) -> None:
-    output_video.parent.mkdir(parents=True, exist_ok=True)
-    input_pattern = str(hsbs_dir / f"%08d.{frame_ext}")
-    cmd = [
+    max_work_bytes: int,
+) -> int:
+    eye_width = output_width // 2
+    frame_bytes = eye_width * output_height * 3
+    partial_output.parent.mkdir(parents=True, exist_ok=True)
+
+    decoder_cmd = [
+        "ffmpeg", "-v", "warning",
+        "-i", str(input_video),
+    ]
+    if test_seconds:
+        decoder_cmd += ["-t", test_seconds]
+    decoder_cmd += [
+        "-map", "0:v:0",
+        "-an", "-sn", "-dn",
+        "-vf", f"scale={eye_width}:{output_height}:flags=lanczos",
+        "-r", fps_expr,
+        "-fps_mode", "cfr",
+        "-f", "rawvideo",
+        "-pix_fmt", "bgr24",
+        "pipe:1",
+    ]
+
+    encoder_cmd = [
         "ffmpeg", "-y",
+        "-f", "rawvideo",
+        "-pix_fmt", "bgr24",
+        "-s:v", f"{output_width}x{output_height}",
         "-framerate", fps_expr,
-        "-i", input_pattern,
+        "-i", "pipe:0",
     ]
     if has_audio:
-        cmd += ["-i", str(input_video), "-map", "0:v:0", "-map", "1:a:0?"]
+        if test_seconds:
+            encoder_cmd += ["-t", test_seconds]
+        encoder_cmd += ["-i", str(input_video), "-map", "0:v:0", "-map", "1:a:0?"]
     else:
-        cmd += ["-map", "0:v:0"]
+        encoder_cmd += ["-map", "0:v:0"]
 
-    cmd += [
+    encoder_cmd += [
         "-c:v", "libsvtav1",
         "-pix_fmt", "yuv420p10le",
         "-crf", str(crf),
@@ -157,32 +241,96 @@ def encode_av1(
         "-svtav1-params", "tune=0:film-grain=6",
     ]
     if threads > 0:
-        cmd += ["-threads", str(threads)]
+        encoder_cmd += ["-threads", str(threads)]
     if has_audio:
         if audio_codec.lower() == "copy":
-            cmd += ["-c:a", "copy"]
+            encoder_cmd += ["-c:a", "copy"]
         else:
-            cmd += ["-c:a", audio_codec]
+            encoder_cmd += ["-c:a", audio_codec]
             if audio_bitrate:
-                cmd += ["-b:a", audio_bitrate]
+                encoder_cmd += ["-b:a", audio_bitrate]
             if audio_channels > 0:
-                cmd += ["-ac", str(audio_channels)]
-    cmd += ["-progress", "pipe:1", "-nostats", str(output_video)]
+                encoder_cmd += ["-ac", str(audio_channels)]
+        encoder_cmd += ["-shortest"]
+    encoder_cmd += ["-progress", "pipe:2", "-nostats", str(partial_output)]
 
-    print("+", " ".join(cmd), flush=True)
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-    assert process.stdout is not None
-    for line in process.stdout:
-        line = line.strip()
-        if line.startswith("frame=") or line.startswith("fps=") or line.startswith("out_time=") or line.startswith("speed="):
-            print("[ENCODE]", line, flush=True)
-        elif line.startswith("progress="):
-            print("[ENCODE]", line, flush=True)
-        elif line:
-            print("[FFMPEG]", line, flush=True)
-    code = process.wait()
-    if code != 0:
-        raise subprocess.CalledProcessError(code, cmd)
+    print("[STEP] Start streaming decoder", flush=True)
+    print("+", " ".join(decoder_cmd), flush=True)
+    print("[STEP] Start streaming AV1 encoder", flush=True)
+    print("+", " ".join(encoder_cmd), flush=True)
+
+    decoder: subprocess.Popen | None = None
+    encoder: subprocess.Popen | None = None
+    progress = None
+    completed = False
+    frame_count = 0
+    try:
+        encoder = subprocess.Popen(encoder_cmd, stdin=subprocess.PIPE)
+        decoder = subprocess.Popen(decoder_cmd, stdout=subprocess.PIPE)
+        assert decoder.stdout is not None
+        assert encoder.stdin is not None
+
+        effective_duration = min(duration, float(test_seconds)) if test_seconds else duration
+        expected_frames = math.ceil(effective_duration * fps) if effective_duration > 0 else None
+        progress = tqdm(total=expected_frames, desc="2D->3D->AV1", unit="frame")
+        frame_buffer = bytearray(frame_bytes)
+
+        while read_exact_frame(decoder.stdout, frame_buffer):
+            if encoder.poll() is not None:
+                raise RuntimeError(f"AV1 encoder exited early with code {encoder.returncode}")
+
+            frame_bgr = np.frombuffer(frame_buffer, dtype=np.uint8).reshape(output_height, eye_width, 3)
+            frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+            result = depth_pipe(Image.fromarray(frame_rgb))
+            depth01 = normalize_depth(result["depth"], eye_width, output_height, depth_gamma)
+            hsbs = make_stereo_half_sbs(
+                frame_bgr,
+                depth01,
+                output_width,
+                output_height,
+                max_disparity,
+                convergence,
+            )
+            try:
+                write_all(encoder.stdin, memoryview(hsbs).cast("B"))
+            except BrokenPipeError as exc:
+                code = encoder.wait()
+                raise RuntimeError(f"AV1 encoder closed its input early with code {code}") from exc
+
+            frame_count += 1
+            progress.update(1)
+            if frame_count % 100 == 0:
+                enforce_work_limit(work_dir, max_work_bytes)
+
+        decoder.stdout.close()
+        decoder_code = decoder.wait()
+        if decoder_code != 0:
+            raise subprocess.CalledProcessError(decoder_code, decoder_cmd)
+        if frame_count == 0:
+            raise RuntimeError("Decoder produced no video frames")
+
+        try:
+            encoder.stdin.close()
+        except BrokenPipeError as exc:
+            code = encoder.wait()
+            raise RuntimeError(f"AV1 encoder failed while finalizing with code {code}") from exc
+        encoder_code = encoder.wait()
+        if encoder_code != 0:
+            raise subprocess.CalledProcessError(encoder_code, encoder_cmd)
+        enforce_work_limit(work_dir, max_work_bytes)
+        completed = True
+        return frame_count
+    finally:
+        if progress is not None:
+            progress.close()
+        if decoder is not None:
+            close_pipe(decoder.stdout)
+        if encoder is not None:
+            close_pipe(encoder.stdin)
+        stop_process(decoder)
+        stop_process(encoder)
+        if not completed and partial_output.exists():
+            partial_output.unlink()
 
 
 def main() -> int:
@@ -204,89 +352,66 @@ def main() -> int:
     parser.add_argument("--audio-bitrate", default="192k")
     parser.add_argument("--audio-channels", type=int, default=2, help="Audio channel count for re-encoding; 0 preserves source layout")
     parser.add_argument("--ffmpeg-threads", type=int, default=0)
-    parser.add_argument("--frame-ext", default="png", choices=["png", "jpg"])
+    parser.add_argument("--max-work-gb", type=float, default=200.0, help="Maximum files allowed in the work directory; 0 disables the guard")
+    parser.add_argument("--frame-ext", default="png", help=argparse.SUPPRESS)
     args = parser.parse_args()
 
     input_video = Path(args.input).expanduser().resolve()
     output_video = Path(args.output).expanduser().resolve()
     work_dir = Path(args.work_dir).expanduser().resolve()
-    raw_dir = work_dir / "frames_2d"
-    hsbs_dir = work_dir / "frames_hsbs"
 
-    if args.output_width != 3840 or args.output_height != 2160:
-        print(f"[WARN] Requested output is {args.output_width}x{args.output_height}, not standard 4K Half-SBS.", flush=True)
+    if not input_video.is_file():
+        raise FileNotFoundError(f"Input video not found: {input_video}")
     if args.output_width % 2 != 0:
         raise ValueError("output-width must be even")
+    if args.output_width != 3840 or args.output_height != 2160:
+        print(f"[WARN] Requested output is {args.output_width}x{args.output_height}, not standard 4K Half-SBS.", flush=True)
+    if args.max_work_gb < 0:
+        raise ValueError("max-work-gb cannot be negative")
 
-    duration, fps_expr, has_audio = video_info(input_video)
-    print(f"[INFO] Duration: {duration:.2f}s")
-    print(f"[INFO] FPS     : {fps_expr}")
-    print(f"[INFO] Audio   : {has_audio}")
+    duration, fps, fps_expr, has_audio = video_info(input_video)
+    max_work_bytes = int(args.max_work_gb * 1024**3)
+    print(f"[INFO] Duration       : {duration:.2f}s")
+    print(f"[INFO] FPS            : {fps_expr}")
+    print(f"[INFO] Audio          : {has_audio}")
+    print("[INFO] Frame storage  : streaming (no extracted frame files)")
+    print(f"[INFO] Work dir limit : {args.max_work_gb:.2f} GiB" if max_work_bytes else "[INFO] Work dir limit : disabled")
 
-    if work_dir.exists():
-        shutil.rmtree(work_dir)
-    raw_dir.mkdir(parents=True)
-    hsbs_dir.mkdir(parents=True)
-
-    print("[STEP] Extract frames", flush=True)
-    extract_cmd = ["ffmpeg", "-y"]
-    if args.test_seconds:
-        extract_cmd += ["-t", str(args.test_seconds)]
-    extract_cmd += [
-        "-i", str(input_video),
-        "-vf", f"scale={args.output_width // 2}:{args.output_height}:flags=lanczos",
-        str(raw_dir / f"%08d.{args.frame_ext}"),
-    ]
-    run(extract_cmd)
-
-    frames = list_frames(raw_dir, args.frame_ext)
-    if not frames:
-        raise RuntimeError("No frames extracted")
-    print(f"[INFO] Extracted frames: {len(frames)}")
+    work_dir.mkdir(parents=True, exist_ok=True)
+    enforce_work_limit(work_dir, max_work_bytes)
 
     print("[STEP] Load depth model", flush=True)
     depth_pipe = load_depth_pipeline(args.depth_model, args.device)
 
-    print("[STEP] Generate Half-SBS frames", flush=True)
-    for idx, frame_path in enumerate(tqdm(frames, desc="2D->3D", unit="frame"), start=1):
-        pil = Image.open(frame_path).convert("RGB")
-        result = depth_pipe(pil)
-        depth_img = result["depth"]
-        depth01 = normalize_depth(depth_img, args.output_width // 2, args.output_height, args.depth_gamma)
-        frame_bgr = cv2.imread(str(frame_path), cv2.IMREAD_COLOR)
-        hsbs = make_stereo_half_sbs(
-            frame_bgr,
-            depth01,
-            args.output_width,
-            args.output_height,
-            args.max_disparity,
-            args.convergence,
-        )
-        cv2.imwrite(str(hsbs_dir / f"{idx:08d}.{args.frame_ext}"), hsbs)
-
-    print("[STEP] Encode AV1", flush=True)
-    encode_input = input_video
-    if args.test_seconds:
-        # Keep audio length aligned in preview mode.
-        preview_audio = work_dir / "preview_audio_source.mkv"
-        run(["ffmpeg", "-y", "-t", str(args.test_seconds), "-i", str(input_video), "-c", "copy", str(preview_audio)])
-        encode_input = preview_audio
-    encode_av1(
-        hsbs_dir=hsbs_dir,
-        input_video=encode_input,
-        output_video=output_video,
+    output_suffix = output_video.suffix or ".mkv"
+    partial_output = output_video.with_name(f"{output_video.stem}.part{output_suffix}")
+    frame_count = stream_convert(
+        input_video=input_video,
+        partial_output=partial_output,
+        work_dir=work_dir,
+        depth_pipe=depth_pipe,
+        duration=duration,
+        fps=fps,
         fps_expr=fps_expr,
         has_audio=has_audio,
+        output_width=args.output_width,
+        output_height=args.output_height,
+        max_disparity=args.max_disparity,
+        depth_gamma=args.depth_gamma,
+        convergence=args.convergence,
+        test_seconds=args.test_seconds,
         crf=args.crf,
         preset=args.preset,
         audio_codec=args.audio_codec,
         audio_bitrate=args.audio_bitrate,
         audio_channels=args.audio_channels,
         threads=args.ffmpeg_threads,
-        frame_ext=args.frame_ext,
+        max_work_bytes=max_work_bytes,
     )
 
+    os.replace(partial_output, output_video)
     print(f"[DONE] {output_video}", flush=True)
+    print(f"[INFO] Encoded frames: {frame_count}", flush=True)
     return 0
 
 
