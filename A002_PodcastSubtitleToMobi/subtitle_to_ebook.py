@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import html
+import json
 import os
 import re
 import shutil
@@ -15,8 +16,9 @@ import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Callable, Iterable
 
 
 SOURCE_EXTENSIONS = {".md", ".txt", ".srt", ".vtt"}
@@ -36,6 +38,59 @@ TIMESTAMP_RE = re.compile(
     r"^\s*(?:\d{1,2}:)?\d{1,2}:\d{2}[,.]\d{2,3}\s*-->\s*"
     r"(?:\d{1,2}:)?\d{1,2}:\d{2}[,.]\d{2,3}"
 )
+CMU_TO_IPA = {
+    "AA": "\u0251",
+    "AE": "\u00e6",
+    "AH": "\u028c",
+    "AO": "\u0254",
+    "AW": "a\u028a",
+    "AY": "a\u026a",
+    "B": "b",
+    "CH": "t\u0283",
+    "D": "d",
+    "DH": "\u00f0",
+    "EH": "e",
+    "ER": "\u025d",
+    "EY": "e\u026a",
+    "F": "f",
+    "G": "g",
+    "HH": "h",
+    "IH": "\u026a",
+    "IY": "i",
+    "JH": "d\u0292",
+    "K": "k",
+    "L": "l",
+    "M": "m",
+    "N": "n",
+    "NG": "\u014b",
+    "OW": "o\u028a",
+    "OY": "\u0254\u026a",
+    "P": "p",
+    "R": "r",
+    "S": "s",
+    "SH": "\u0283",
+    "T": "t",
+    "TH": "\u03b8",
+    "UH": "\u028a",
+    "UW": "u",
+    "V": "v",
+    "W": "w",
+    "Y": "j",
+    "Z": "z",
+    "ZH": "\u0292",
+}
+BUILTIN_IPA = {
+    "soundtrack": "/\u02c8sa\u028andtr\u00e6k/",
+    "timeless": "/\u02c8ta\u026aml\u0259s/",
+    "swedish": "/\u02c8swi\u02d0d\u026a\u0283/",
+    "remunerated": "/r\u026a\u02c8mju\u02d0n\u0259re\u026at\u026ad/",
+    "iconic": "/a\u026a\u02c8k\u0251\u02d0n\u026ak/",
+    "legacy": "/\u02c8leg\u0259si/",
+    "creator": "/kri\u02c8e\u026at\u0259r/",
+    "generation": "/\u02ccd\u0292en\u0259\u02c8re\u026a\u0283\u0259n/",
+    "guitar": "/g\u026a\u02c8t\u0251\u02d0r/",
+    "interview": "/\u02c8\u026ant\u0259rvju\u02d0/",
+}
 
 
 @dataclass
@@ -51,6 +106,40 @@ class Chapter:
     paragraphs: list[str]
 
 
+@dataclass
+class PhoneticOptions:
+    enabled: bool = False
+    dictionary_path: Path | None = None
+    style: str = "word_phonetic_meaning"
+    fallback: str = "omit"
+
+
+@dataclass
+class ConversionOptions:
+    folder: Path
+    output_dir: Path | None = None
+    title: str | None = None
+    author: str = "Subtitle Notes"
+    language: str = "en"
+    recursive: bool = False
+    segments_per_paragraph: int = 8
+    annotate_all: bool = False
+    workers: int = 0
+    converter: str | None = None
+    yes: bool = False
+    phonetics: PhoneticOptions | None = None
+
+
+@dataclass
+class ConversionResult:
+    preview_path: Path
+    epub_path: Path
+    mobi_path: Path
+    mobi_note: str
+    file_count: int
+    chapter_count: int
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
@@ -58,7 +147,8 @@ def parse_args() -> argparse.Namespace:
             "then an EPUB and MOBI ebook."
         )
     )
-    parser.add_argument("folder", help="Folder containing .md/.txt/.srt/.vtt files.")
+    parser.add_argument("folder", nargs="?", help="Folder containing .md/.txt/.srt/.vtt files.")
+    parser.add_argument("--config", help="Path to a JSON/YAML config file.")
     parser.add_argument(
         "-o",
         "--output-dir",
@@ -106,6 +196,21 @@ def parse_args() -> argparse.Namespace:
         help="Path to ebook-convert or kindlegen. If omitted, the script searches common locations.",
     )
     parser.add_argument(
+        "--phonetics",
+        action="store_true",
+        help="Add phonetic transcription after annotated vocabulary words.",
+    )
+    parser.add_argument(
+        "--phonetic-dictionary",
+        help="Path to a local CMUdict-style pronunciation dictionary.",
+    )
+    parser.add_argument(
+        "--phonetic-style",
+        choices=("word_phonetic_meaning", "bracket_phonetic_meaning", "bracket_meaning_phonetic"),
+        default=None,
+        help="How to display phonetics next to vocabulary meanings.",
+    )
+    parser.add_argument(
         "-y",
         "--yes",
         action="store_true",
@@ -116,64 +221,177 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    input_dir = Path(args.folder).expanduser().resolve()
+    try:
+        options = options_from_args(args)
+        convert_from_options(options, interactive=not options.yes)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    return 0
+
+
+def options_from_args(args: argparse.Namespace) -> ConversionOptions:
+    config = load_config_file(Path(args.config).expanduser()) if args.config else {}
+    paths_config = config.get("paths", {})
+    book_config = config.get("book", {})
+    phonetics_config = config.get("phonetics", {})
+
+    folder_value = args.folder or paths_config.get("input_dir") or config.get("folder")
+    if not folder_value:
+        raise ValueError("Input folder is required. Pass it as an argument or set paths.input_dir in the config.")
+
+    output_value = args.output_dir or paths_config.get("output_dir")
+    converter_value = args.converter or paths_config.get("converter")
+    phonetic_dictionary = args.phonetic_dictionary or phonetics_config.get("dictionary_path")
+    phonetics_enabled = bool(args.phonetics or phonetics_config.get("enabled", False))
+    phonetic_style = args.phonetic_style or phonetics_config.get("style", "word_phonetic_meaning")
+
+    return ConversionOptions(
+        folder=Path(folder_value).expanduser(),
+        output_dir=Path(output_value).expanduser() if output_value else None,
+        title=args.title if args.title is not None else book_config.get("title"),
+        author=args.author if args.author != "Subtitle Notes" else book_config.get("author", "Subtitle Notes"),
+        language=args.language if args.language != "en" else book_config.get("language", "en"),
+        recursive=bool(args.recursive or book_config.get("recursive", False)),
+        segments_per_paragraph=(
+            args.segments_per_paragraph
+            if args.segments_per_paragraph != 8
+            else int(book_config.get("segments_per_paragraph", 8))
+        ),
+        annotate_all=bool(args.annotate_all or book_config.get("annotate_all", False)),
+        workers=args.workers if args.workers != 0 else int(book_config.get("workers", 0)),
+        converter=converter_value,
+        yes=bool(args.yes or config.get("yes", False)),
+        phonetics=PhoneticOptions(
+            enabled=phonetics_enabled,
+            dictionary_path=Path(phonetic_dictionary).expanduser() if phonetic_dictionary else None,
+            style=phonetic_style,
+            fallback=phonetics_config.get("fallback", "omit"),
+        ),
+    )
+
+
+def load_config_file(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        raise ValueError(f"Config file does not exist: {path}")
+    text = path.read_text(encoding="utf-8")
+    if path.suffix.lower() == ".json":
+        return json.loads(text)
+    try:
+        import yaml  # type: ignore[import-not-found]
+    except ImportError as exc:
+        raise ValueError("YAML config requires PyYAML. Use .json or install PyYAML.") from exc
+    data = yaml.safe_load(text) or {}
+    if not isinstance(data, dict):
+        raise ValueError("Config file must contain an object at the top level.")
+    return data
+
+
+def convert_from_options(
+    options: ConversionOptions,
+    interactive: bool = True,
+    progress_callback: Callable[[float, str], None] | None = None,
+    log_callback: Callable[[str], None] | None = None,
+) -> ConversionResult:
+    def report_progress(value: float, message: str) -> None:
+        if progress_callback is not None:
+            progress_callback(max(0.0, min(1.0, value)), message)
+
+    def report_log(message: str) -> None:
+        print(message)
+        if log_callback is not None:
+            log_callback(message)
+
+    report_progress(0.01, "Validating input folder")
+    input_dir = options.folder.expanduser().resolve()
     if not input_dir.is_dir():
-        print(f"Input folder does not exist: {input_dir}", file=sys.stderr)
-        return 2
+        raise ValueError(f"Input folder does not exist: {input_dir}")
+    report_log(f"Input folder: {input_dir}")
 
-    files = discover_source_files(input_dir, recursive=args.recursive)
+    files = discover_source_files(input_dir, recursive=options.recursive)
     if not files:
-        hint = " Try --recursive if the files are inside subfolders." if not args.recursive else ""
-        print(f"No supported subtitle text files found in: {input_dir}.{hint}", file=sys.stderr)
-        return 2
+        hint = " Try --recursive if the files are inside subfolders." if not options.recursive else ""
+        raise ValueError(f"No supported subtitle text files found in: {input_dir}.{hint}")
+    report_progress(0.04, f"Found {len(files)} source file(s)")
+    report_log(f"Found {len(files)} supported source file(s).")
 
-    title = args.title or default_book_title(input_dir, files)
-    output_dir = Path(args.output_dir).expanduser().resolve() if args.output_dir else input_dir / "_ebook_output"
+    title = options.title or default_book_title(input_dir, files)
+    output_dir = options.output_dir.expanduser().resolve() if options.output_dir else input_dir / "_ebook_output"
     output_dir.mkdir(parents=True, exist_ok=True)
+    report_log(f"Output folder: {output_dir}")
+    report_log(f"Book title: {title}")
 
-    workers = resolve_worker_count(args.workers, file_count=len(files))
-    print(f"Processing {len(files)} file(s) with {workers} worker(s)...")
+    report_progress(0.07, "Loading phonetic dictionary")
+    phonetic_lookup = build_phonetic_lookup(options.phonetics)
+    if options.phonetics and options.phonetics.enabled:
+        report_log(f"Phonetic dictionary ready: {len(phonetic_lookup):,} entries.")
+        if options.phonetics.dictionary_path and not options.phonetics.dictionary_path.is_file():
+            report_log(
+                f"Custom phonetic dictionary was not found: {options.phonetics.dictionary_path}. "
+                "Using the packaged CMU dictionary."
+            )
+        if len(phonetic_lookup) <= len(BUILTIN_IPA):
+            report_log(
+                "WARNING: Full CMUdict package is unavailable; phonetics are limited "
+                "to the small built-in fallback."
+            )
+    workers = resolve_worker_count(options.workers, file_count=len(files))
+    report_log(f"Processing {len(files)} file(s) with {workers} worker(s)...")
+
+    def report_chapter_progress(completed: int, total: int, source_path: Path) -> None:
+        value = 0.08 + (0.62 * completed / max(total, 1))
+        message = f"Processed {completed}/{total}: {source_path.name}"
+        report_progress(value, message)
+        report_log(message)
 
     chapters = build_chapters(
         files=files,
-        segments_per_paragraph=args.segments_per_paragraph,
-        annotate_all=args.annotate_all,
+        segments_per_paragraph=options.segments_per_paragraph,
+        annotate_all=options.annotate_all,
         workers=workers,
+        phonetics=options.phonetics,
+        phonetic_lookup=phonetic_lookup,
+        progress_callback=report_chapter_progress,
     )
     if not chapters:
-        print("No usable English subtitle content was found.", file=sys.stderr)
-        return 2
+        raise ValueError("No usable English subtitle content was found.")
+    report_log(f"Created {len(chapters)} chapter(s) from the source files.")
 
     base_name = sanitize_filename(title)
     preview_path = output_dir / f"{base_name}_preview.txt"
     epub_path = output_dir / f"{base_name}.epub"
     mobi_path = output_dir / f"{base_name}.mobi"
 
+    report_progress(0.76, "Writing TXT preview")
     write_preview_txt(preview_path, title, chapters)
-    print(f"TXT proofread file created: {preview_path}")
+    report_log(f"TXT proofread file created: {preview_path}")
 
-    if not args.yes:
+    if interactive:
         answer = input("Open the TXT to proofread. Generate EPUB/MOBI now? Type y to continue: ").strip()
         if answer.lower() != "y":
-            print("Stopped. No ebook was generated.")
-            return 0
+            report_log("Stopped. No ebook was generated.")
+            report_progress(1.0, "TXT preview created")
+            return ConversionResult(preview_path, epub_path, mobi_path, "", len(files), len(chapters))
 
-    write_epub(epub_path, title, chapters, author=args.author, language=args.language)
+    report_progress(0.84, "Writing EPUB")
+    write_epub(epub_path, title, chapters, author=options.author, language=options.language)
+    report_progress(0.92, "Writing MOBI")
     mobi_note = write_mobi(
         mobi_path=mobi_path,
         epub_path=epub_path,
         title=title,
         chapters=chapters,
-        author=args.author,
-        language=args.language,
-        converter=args.converter,
+        author=options.author,
+        language=options.language,
+        converter=options.converter,
     )
 
-    print(f"EPUB created: {epub_path}")
-    print(f"MOBI created: {mobi_path}")
+    report_log(f"EPUB created: {epub_path}")
+    report_log(f"MOBI created: {mobi_path}")
     if mobi_note:
-        print(mobi_note)
-    return 0
+        report_log(mobi_note)
+    report_progress(1.0, "Conversion complete")
+    return ConversionResult(preview_path, epub_path, mobi_path, mobi_note, len(files), len(chapters))
 
 
 def discover_source_files(input_dir: Path, recursive: bool = False) -> list[Path]:
@@ -238,22 +456,39 @@ def build_chapters(
     segments_per_paragraph: int,
     annotate_all: bool,
     workers: int = 1,
+    phonetics: PhoneticOptions | None = None,
+    phonetic_lookup: dict[str, str] | None = None,
+    progress_callback: Callable[[int, int, Path], None] | None = None,
 ) -> list[Chapter]:
     file_list = list(files)
     if workers <= 1 or len(file_list) <= 1:
-        return [
-            chapter
-            for chapter in (
-                build_chapter(source_path, segments_per_paragraph, annotate_all)
-                for source_path in file_list
+        results: list[Chapter] = []
+        for completed, source_path in enumerate(file_list, start=1):
+            chapter = build_chapter(
+                source_path,
+                segments_per_paragraph,
+                annotate_all,
+                phonetics,
+                phonetic_lookup,
             )
-            if chapter is not None
-        ]
+            if chapter is not None:
+                results.append(chapter)
+            if progress_callback is not None:
+                progress_callback(completed, len(file_list), source_path)
+        return results
 
     results: list[Chapter | None] = [None] * len(file_list)
+    completed = 0
     with ThreadPoolExecutor(max_workers=workers) as executor:
         future_to_file = {
-            executor.submit(build_chapter, source_path, segments_per_paragraph, annotate_all): (index, source_path)
+            executor.submit(
+                build_chapter,
+                source_path,
+                segments_per_paragraph,
+                annotate_all,
+                phonetics,
+                phonetic_lookup,
+            ): (index, source_path)
             for index, source_path in enumerate(file_list)
         }
         for future in as_completed(future_to_file):
@@ -262,6 +497,9 @@ def build_chapters(
                 results[index] = future.result()
             except Exception as exc:  # noqa: BLE001
                 raise RuntimeError(f"Failed to process source file: {source_path}") from exc
+            completed += 1
+            if progress_callback is not None:
+                progress_callback(completed, len(file_list), source_path)
 
     return [chapter for chapter in results if chapter is not None]
 
@@ -270,10 +508,12 @@ def build_chapter(
     source_path: Path,
     segments_per_paragraph: int,
     annotate_all: bool,
+    phonetics: PhoneticOptions | None = None,
+    phonetic_lookup: dict[str, str] | None = None,
 ) -> Chapter | None:
     raw_text = read_text_flexibly(source_path)
     segments = parse_note_segments(raw_text)
-    paragraphs = make_paragraphs(segments, segments_per_paragraph, annotate_all)
+    paragraphs = make_paragraphs(segments, segments_per_paragraph, annotate_all, phonetics, phonetic_lookup)
     if not paragraphs:
         return None
     return Chapter(title=source_path.stem, source_path=source_path, paragraphs=paragraphs)
@@ -404,10 +644,18 @@ def make_paragraphs(
     segments: list[CaptionSegment],
     segments_per_paragraph: int,
     annotate_all: bool,
+    phonetics: PhoneticOptions | None = None,
+    phonetic_lookup: dict[str, str] | None = None,
 ) -> list[str]:
     lines = [segment.text for segment in segments if segment.text]
     chapter_vocab = unique_vocab_pair(pair for segment in segments for pair in segment.vocab)
-    lines = annotate_lines(lines, chapter_vocab, annotate_all=annotate_all)
+    lines = annotate_lines(
+        lines,
+        chapter_vocab,
+        annotate_all=annotate_all,
+        phonetics=phonetics,
+        phonetic_lookup=phonetic_lookup,
+    )
     if not lines:
         return []
     if segments_per_paragraph <= 0:
@@ -460,6 +708,8 @@ def annotate_lines(
     lines: list[str],
     vocab: list[tuple[str, str]],
     annotate_all: bool = False,
+    phonetics: PhoneticOptions | None = None,
+    phonetic_lookup: dict[str, str] | None = None,
 ) -> list[str]:
     if not vocab:
         return lines
@@ -467,6 +717,8 @@ def annotate_lines(
         lines,
         sorted(vocab, key=lambda item: len(item[0]), reverse=True),
         annotate_all=annotate_all,
+        phonetics=phonetics,
+        phonetic_lookup=phonetic_lookup,
     )
 
 
@@ -474,10 +726,12 @@ def annotate_lines_by_index(
     lines: list[str],
     vocab: list[tuple[str, str]],
     annotate_all: bool = False,
+    phonetics: PhoneticOptions | None = None,
+    phonetic_lookup: dict[str, str] | None = None,
 ) -> list[str]:
     joined = "\n".join(lines)
     lower_joined = joined.lower()
-    occurrences: list[tuple[int, int, int, int, str, str]] = []
+    occurrences: list[tuple[int, int, int, int, str, str, str]] = []
 
     for order, (term, meaning) in enumerate(vocab):
         lower_term = term.lower()
@@ -488,7 +742,7 @@ def annotate_lines_by_index(
                 break
             end = position + len(term)
             if is_valid_term_match(joined, position, end, term):
-                occurrences.append((position, end, -len(term), order, term.casefold(), meaning))
+                occurrences.append((position, end, -len(term), order, term.casefold(), term, meaning))
                 if not annotate_all:
                     break
             start = position + max(1, len(lower_term))
@@ -497,16 +751,16 @@ def annotate_lines_by_index(
         return lines
 
     occurrences.sort()
-    selected: list[tuple[int, int, str]] = []
+    selected: list[tuple[int, int, str, str]] = []
     used_terms: set[str] = set()
     covered_until = -1
 
-    for position, end, _negative_length, _order, key, meaning in occurrences:
+    for position, end, _negative_length, _order, key, term, meaning in occurrences:
         if not annotate_all and key in used_terms:
             continue
         if position < covered_until:
             continue
-        selected.append((position, end, meaning))
+        selected.append((position, end, term, meaning))
         used_terms.add(key)
         covered_until = end
 
@@ -515,9 +769,9 @@ def annotate_lines_by_index(
 
     output_parts: list[str] = []
     cursor = 0
-    for position, end, meaning in selected:
+    for position, end, term, meaning in selected:
         output_parts.append(joined[cursor:end])
-        output_parts.append(f"[{meaning}]")
+        output_parts.append(format_annotation(term, meaning, phonetics, phonetic_lookup))
         cursor = end
     output_parts.append(joined[cursor:])
     return "".join(output_parts).split("\n")
@@ -531,6 +785,125 @@ def is_valid_term_match(text: str, position: int, end: int, term: str) -> bool:
     if term and is_word_edge(term[-1]) and end < len(text) and is_ascii_word_char(text[end]):
         return False
     return True
+
+
+def build_phonetic_lookup(options: PhoneticOptions | None) -> dict[str, str]:
+    if not options or not options.enabled:
+        return {}
+
+    lookup = dict(load_packaged_cmudict_ipa())
+    lookup.update(BUILTIN_IPA)
+    if options.dictionary_path and options.dictionary_path.is_file():
+        lookup.update(load_cmudict_ipa(options.dictionary_path))
+    return lookup
+
+
+@lru_cache(maxsize=1)
+def load_packaged_cmudict_ipa() -> dict[str, str]:
+    try:
+        import cmudict  # type: ignore[import-not-found]
+    except ImportError:
+        return {}
+
+    lookup: dict[str, str] = {}
+    for raw_word, pronunciations in cmudict.dict().items():
+        word = raw_word.casefold()
+        if not re.fullmatch(r"[a-z][a-z'-]*", word) or not pronunciations:
+            continue
+        lookup[word] = cmu_pronunciation_to_ipa(pronunciations[0])
+    return lookup
+
+
+def load_cmudict_ipa(path: Path) -> dict[str, str]:
+    lookup: dict[str, str] = {}
+    for raw_line in read_text_flexibly(path).splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith(";;;"):
+            continue
+        parts = line.split()
+        if len(parts) < 2:
+            continue
+        word = re.sub(r"\(\d+\)$", "", parts[0]).casefold()
+        if not re.fullmatch(r"[a-z][a-z'-]*", word):
+            continue
+        lookup.setdefault(word, cmu_pronunciation_to_ipa(parts[1:]))
+    return lookup
+
+
+def cmu_pronunciation_to_ipa(phones: list[str]) -> str:
+    pieces: list[str] = []
+    primary_index: int | None = None
+    for phone in phones:
+        stress = re.search(r"([012])$", phone)
+        base = re.sub(r"[012]$", "", phone)
+        ipa = CMU_TO_IPA.get(base, base.lower())
+        if stress and stress.group(1) == "1" and primary_index is None:
+            primary_index = len(pieces)
+        pieces.append(ipa)
+    if primary_index is not None:
+        pieces.insert(primary_index, "\u02c8")
+    return "/" + "".join(pieces) + "/"
+
+
+def format_annotation(
+    term: str,
+    meaning: str,
+    phonetics: PhoneticOptions | None,
+    phonetic_lookup: dict[str, str] | None,
+) -> str:
+    phonetic = lookup_phonetic(term, phonetics, phonetic_lookup)
+    if not phonetic:
+        return f"[{meaning}]"
+    style = phonetics.style if phonetics else "word_phonetic_meaning"
+    if style == "bracket_phonetic_meaning":
+        return f"[{phonetic}; {meaning}]"
+    if style == "bracket_meaning_phonetic":
+        return f"[{meaning}; {phonetic}]"
+    return f" {phonetic}[{meaning}]"
+
+
+def lookup_phonetic(
+    term: str,
+    phonetics: PhoneticOptions | None,
+    phonetic_lookup: dict[str, str] | None,
+) -> str:
+    if not phonetics or not phonetics.enabled:
+        return ""
+    key = normalize_lookup_term(term)
+    if not key:
+        return ""
+    lookup = phonetic_lookup or {}
+    found = lookup.get(key)
+    if found:
+        return found
+
+    word_phonetics: list[str] = []
+    for word in re.findall(r"[A-Za-z]+(?:['-][A-Za-z]+)*", key):
+        pronunciation = lookup.get(word)
+        if not pronunciation and "-" in word:
+            hyphenated_parts = [lookup.get(part) for part in word.split("-") if part]
+            if hyphenated_parts and all(hyphenated_parts):
+                pronunciation = combine_ipa(hyphenated_parts)
+        if not pronunciation:
+            word_phonetics = []
+            break
+        word_phonetics.append(pronunciation)
+    if word_phonetics:
+        return combine_ipa(word_phonetics)
+
+    if phonetics.fallback == "mark_missing":
+        return "/?/"
+    return ""
+
+
+def combine_ipa(pronunciations: Iterable[str]) -> str:
+    pieces = [pronunciation.strip().strip("/") for pronunciation in pronunciations]
+    return "/" + " ".join(piece for piece in pieces if piece) + "/"
+
+
+def normalize_lookup_term(term: str) -> str:
+    cleaned = re.sub(r"[^A-Za-z'-]+", " ", term).strip().casefold()
+    return cleaned
 
 
 def is_ascii_word_char(char: str) -> bool:

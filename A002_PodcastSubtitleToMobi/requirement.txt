@@ -1,4 +1,4 @@
-# The converter currently uses only the Python standard library.
-# Keep this file for pip-based Ubuntu setup:
-#   python3 -m pip install -r requirement.txt
+PyYAML>=6.0
+gradio>=6.0,<7.0
+cmudict==1.1.3
 
