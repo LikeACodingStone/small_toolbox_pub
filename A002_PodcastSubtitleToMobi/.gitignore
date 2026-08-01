@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+app_ui_debug.log
+start_windows_debug.log
+app_ui_state.json
+app_ui_state.json.tmp

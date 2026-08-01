@@ -1,0 +1,22 @@
+platform: auto
+yes: true
+
+paths:
+  input_dir: /data/input
+  output_dir: /data/output
+  converter: ""
+
+book:
+  title: Rick_Beato
+  author: Subtitle Notes
+  language: en
+  recursive: false
+  segments_per_paragraph: 8
+  annotate_all: false
+  workers: 0
+
+phonetics:
+  enabled: true
+  dictionary_path: ""
+  style: word_phonetic_meaning
+  fallback: omit
