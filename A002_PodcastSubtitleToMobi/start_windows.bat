@@ -16,12 +16,15 @@ for /f "delims=" %%T in ('powershell.exe -NoProfile -Command "Get-Date -Format y
 >>"%LAUNCH_LOG%" echo [%LAUNCH_TIME%] Launcher started.
 >>"%LAUNCH_LOG%" echo Working directory: %CD%
 
-set "PYTHONW_PATH="
-for /f "delims=" %%P in ('where pythonw.exe 2^>nul') do if not defined PYTHONW_PATH set "PYTHONW_PATH=%%P"
+set "PYTHONW_PATH=%~dp0.venv\Scripts\pythonw.exe"
+if not exist "%PYTHONW_PATH%" (
+    set "PYTHONW_PATH="
+    for /f "delims=" %%P in ('where pythonw.exe 2^>nul') do if not defined PYTHONW_PATH set "PYTHONW_PATH=%%P"
+)
 
 if not defined PYTHONW_PATH (
-    >>"%LAUNCH_LOG%" echo ERROR: pythonw.exe was not found on PATH.
-    >>"%LAUNCH_LOG%" echo Run: python -m pip install -r requirement.txt
+    >>"%LAUNCH_LOG%" echo ERROR: pythonw.exe was not found.
+    >>"%LAUNCH_LOG%" echo Run: EnvSetup\install_windows.bat
     exit /b 1
 )
 

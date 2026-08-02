@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY requirement.txt requirements.txt ./
+COPY EnvSetup/requirements.txt ./
 RUN python -m pip install --no-cache-dir -r requirements.txt
 
 COPY subtitle_to_ebook.py app_ui.py config.example.yaml ./
