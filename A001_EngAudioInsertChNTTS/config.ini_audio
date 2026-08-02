@@ -16,15 +16,15 @@ AdvancedLevels=C1,C2
 # Minimum word length before a word can be considered for difficulty checks.
 MinCandidateLength=5
 # Minimum length for B1 words before frequency filtering can mark them as difficult.
-B1MinLength=6
+B1MinLength=8
 # Maximum word frequency for B1 words to be treated as difficult.
-B1FrequencyThreshold=0.000005
+B1FrequencyThreshold=0.000003
 # Minimum length for B2 words before frequency filtering can mark them as difficult.
-B2MinLength=6
+B2MinLength=8
 # Maximum word frequency for B2 words to be treated as difficult.
-B2FrequencyThreshold=0.00002
+B2FrequencyThreshold=0.000012
 # Minimum length for words with unknown CEFR level before frequency filtering can mark them as difficult.
-UnknownMinLength=7
+UnknownMinLength=8
 # Maximum word frequency for unknown-level words to be treated as difficult.
 UnknownFrequencyThreshold=0.000003
 
@@ -34,7 +34,7 @@ SegmentsPerTranslation=2
 # Use the current segment group as context to choose one best Chinese meaning per word.
 UseContextMeaning=1
 # Maximum number of characters allowed for each Chinese meaning.
-MaxMeaningChars=15
+MaxMeaningChars=8
 # Retry once when the model returns a verbose or invalid meaning.
 RetryOnVerboseMeaning=1
 # Policy for unclear meanings; skip means the word is omitted from the output.
@@ -42,7 +42,7 @@ AmbiguousMeaningPolicy=skip
 # Ollama sampling temperature for deterministic vocabulary meanings.
 OllamaTemperature=0
 # Do not translate the same word again within this many seconds.
-TranslationRepeatWindowSeconds=80
+TranslationRepeatWindowSeconds=120
 
 [ProperNounConfig]
 # Enable spaCy NER filtering so person/place/organization names are not translated.
