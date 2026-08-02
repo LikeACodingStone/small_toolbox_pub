@@ -41,6 +41,7 @@ from PyQt5.QtWidgets import (
 
 
 APP_NAME = "AV1 3D Video Batch Converter"
+APP_DIR = Path(__file__).resolve().parent
 REPORTS_DIR_NAME = "transfer_reports"
 LANGUAGES = {
     "zh": "中文",
@@ -84,6 +85,7 @@ TRANSLATIONS = {
         "size_mode": "尺寸模式",
         "custom_width": "自定义宽",
         "crf": "CRF",
+        "preserve_bitrate": "保留源视频码率",
         "preset": "Preset",
         "audio": "音频",
         "overwrite": "允许覆盖同名输出文件",
@@ -224,6 +226,7 @@ TRANSLATIONS = {
         "size_mode": "サイズ設定",
         "custom_width": "カスタム幅",
         "crf": "CRF",
+        "preserve_bitrate": "元動画ビットレートを保持",
         "preset": "Preset",
         "audio": "音声",
         "overwrite": "同名出力ファイルを上書き",
@@ -364,6 +367,7 @@ TRANSLATIONS = {
         "size_mode": "Size Mode",
         "custom_width": "Custom Width",
         "crf": "CRF",
+        "preserve_bitrate": "Preserve source bitrate",
         "preset": "Preset",
         "audio": "Audio",
         "overwrite": "Overwrite existing output files",
@@ -515,6 +519,7 @@ class VideoInfo:
 class ConvertSettings:
     output_dir: Path
     encoder: str
+    preserve_bitrate: bool
     resolution_mode: str
     custom_width: int
     custom_height: int
@@ -522,6 +527,31 @@ class ConvertSettings:
     preset: int
     audio_mode: str
     overwrite: bool
+
+
+def _is_windows_system_dir(path: Path) -> bool:
+    if os.name != "nt":
+        return False
+    system_root = Path(os.environ.get("SystemRoot", r"C:\Windows"))
+    normalized = str(path).rstrip("\\/").casefold()
+    return normalized in {
+        str(system_root).rstrip("\\/").casefold(),
+        str(system_root / "System32").rstrip("\\/").casefold(),
+    }
+
+
+def launch_base_dir() -> Path:
+    try:
+        cwd = Path.cwd()
+    except OSError:
+        return APP_DIR
+    if _is_windows_system_dir(cwd):
+        return APP_DIR
+    return cwd
+
+
+def default_output_dir() -> Path:
+    return (launch_base_dir() / "converted").resolve()
 
 
 def find_executable(name: str) -> str:
@@ -616,7 +646,7 @@ def report_path_for(output_path: Path) -> Path:
 
 def conversion_setting_label(settings: ConvertSettings) -> str:
     return (
-        f"encoder={settings.encoder}, crf={settings.crf}, preset={settings.preset}, "
+        f"encoder={settings.encoder}, preserve_bitrate={settings.preserve_bitrate}, crf={settings.crf}, preset={settings.preset}, "
         f"resolution_mode={report_resolution_mode(settings.resolution_mode)}, "
         f"audio={report_audio_mode(settings.audio_mode)}"
     )
@@ -678,6 +708,7 @@ def write_transfer_markdown(
         "| 参数 | 值 |",
         "|---|---:|",
         f"| 编码器 | {markdown_escape(settings.encoder)} |",
+        f"| 保留源视频码率 | {markdown_escape(settings.preserve_bitrate)} |",
         f"| CRF/QP | {markdown_escape(settings.crf)} |",
         f"| Preset | {markdown_escape(settings.preset)} |",
         f"| 尺寸模式 | {markdown_escape(report_resolution_mode(settings.resolution_mode))} |",
@@ -1119,9 +1150,18 @@ def detect_3d_type(path: Path, video: dict[str, Any]) -> str:
 
 def av1_pix_fmt(source_pix_fmt: str | None) -> str:
     pix_fmt = (source_pix_fmt or "").lower()
+    if "12" in pix_fmt:
+        return "yuv420p12le"
     if "10" in pix_fmt or pix_fmt in {"p010le", "p010be"}:
         return "yuv420p10le"
     return "yuv420p"
+
+
+def source_video_bitrate(info: VideoInfo) -> int | None:
+    bitrate = info.analysis.get("bitrate_bps")
+    if isinstance(bitrate, (int, float)) and bitrate > 0:
+        return int(bitrate)
+    return None
 
 
 def output_path_for(input_path: Path, output_dir: Path, overwrite: bool) -> Path:
@@ -1190,7 +1230,11 @@ def build_ffmpeg_command(
         "0",
         "-map_chapters",
         "0",
-        "-c",
+        "-c:s",
+        "copy",
+        "-c:d",
+        "copy",
+        "-c:t",
         "copy",
     ]
 
@@ -1200,7 +1244,18 @@ def build_ffmpeg_command(
 
     encoder = settings.encoder
     cmd.extend(["-c:v:0", encoder, "-pix_fmt", av1_pix_fmt(info.video.get("pix_fmt"))])
-    if encoder == "libsvtav1":
+
+    target_bitrate = source_video_bitrate(info) if settings.preserve_bitrate else None
+    if target_bitrate:
+        cmd.extend(["-b:v:0", str(target_bitrate)])
+        if encoder == "libsvtav1":
+            cmd.extend(["-preset", str(settings.preset)])
+        elif encoder == "libaom-av1":
+            cpu_used = min(8, max(0, settings.preset))
+            cmd.extend(["-cpu-used", str(cpu_used), "-row-mt", "1"])
+        elif encoder == "librav1e":
+            cmd.extend(["-speed", str(settings.preset)])
+    elif encoder == "libsvtav1":
         cmd.extend(["-crf", str(settings.crf), "-preset", str(settings.preset)])
     elif encoder == "libaom-av1":
         cpu_used = min(8, max(0, settings.preset))
@@ -1215,7 +1270,7 @@ def build_ffmpeg_command(
     elif settings.audio_mode == "aac":
         cmd.extend(["-c:a", "aac", "-b:a", "192k"])
 
-    cmd.extend(["-progress", "pipe:1", "-nostats", str(output_path)])
+    cmd.extend(["-stats_period", "1", "-progress", "pipe:1", str(output_path)])
     return cmd
 
 
@@ -1344,7 +1399,7 @@ class ConvertWorker(QThread):
             return None
         key, value = line.split("=", 1)
         if key not in {"out_time_ms", "out_time_us", "out_time", "progress"}:
-            return None
+            return ConvertWorker._parse_stats_time(line, duration)
         if key == "progress" and value == "end":
             return 100
         if key in {"out_time_ms", "out_time_us"}:
@@ -1354,15 +1409,27 @@ class ConvertWorker(QThread):
             except ValueError:
                 return None
         if key == "out_time":
-            parts = value.split(":")
-            if len(parts) != 3:
-                return None
-            try:
-                seconds = int(parts[0]) * 3600 + int(parts[1]) * 60 + float(parts[2])
-                return min(99, max(0, int(seconds / duration * 100)))
-            except ValueError:
-                return None
-        return None
+            parsed = ConvertWorker._percent_from_timestamp(value, duration)
+            return parsed
+        return ConvertWorker._parse_stats_time(line, duration)
+
+    @staticmethod
+    def _percent_from_timestamp(value: str, duration: float) -> int | None:
+        parts = value.split(":")
+        if len(parts) != 3:
+            return None
+        try:
+            seconds = int(parts[0]) * 3600 + int(parts[1]) * 60 + float(parts[2])
+            return min(99, max(0, int(seconds / duration * 100)))
+        except ValueError:
+            return None
+
+    @staticmethod
+    def _parse_stats_time(line: str, duration: float) -> int | None:
+        match = re.search(r"\btime=\s*([0-9]+:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?)", line)
+        if not match:
+            return None
+        return ConvertWorker._percent_from_timestamp(match.group(1), duration)
 
 
 class MainWindow(QMainWindow):
@@ -1489,7 +1556,7 @@ class MainWindow(QMainWindow):
         self.output_dir_title.setObjectName("sectionTitle")
         layout.addWidget(self.output_dir_title)
 
-        self.output_dir_edit = QLineEdit(str((Path.cwd() / "converted").resolve()))
+        self.output_dir_edit = QLineEdit(str(default_output_dir()))
         self.output_dir_edit.setReadOnly(True)
         layout.addWidget(self.output_dir_edit)
 
@@ -1622,6 +1689,10 @@ class MainWindow(QMainWindow):
         grid.addWidget(self.custom_width_spin, 2, 1)
         grid.addWidget(self.custom_height_spin, 2, 2)
 
+        self.preserve_bitrate_checkbox = QCheckBox()
+        self.preserve_bitrate_checkbox.setChecked(True)
+        grid.addWidget(self.preserve_bitrate_checkbox, 3, 0, 1, 3)
+
         self.crf_slider = QSlider(Qt.Horizontal)
         self.crf_slider.setRange(0, 63)
         self.crf_slider.setValue(20)
@@ -1629,9 +1700,9 @@ class MainWindow(QMainWindow):
         self.crf_spin.setRange(0, 63)
         self.crf_spin.setValue(20)
         self.crf_label = QLabel()
-        grid.addWidget(self.crf_label, 3, 0)
-        grid.addWidget(self.crf_slider, 3, 1)
-        grid.addWidget(self.crf_spin, 3, 2)
+        grid.addWidget(self.crf_label, 4, 0)
+        grid.addWidget(self.crf_slider, 4, 1)
+        grid.addWidget(self.crf_spin, 4, 2)
 
         self.preset_slider = QSlider(Qt.Horizontal)
         self.preset_slider.setRange(0, 13)
@@ -1640,21 +1711,21 @@ class MainWindow(QMainWindow):
         self.preset_spin.setRange(0, 13)
         self.preset_spin.setValue(5)
         self.preset_label = QLabel()
-        grid.addWidget(self.preset_label, 4, 0)
-        grid.addWidget(self.preset_slider, 4, 1)
-        grid.addWidget(self.preset_spin, 4, 2)
+        grid.addWidget(self.preset_label, 5, 0)
+        grid.addWidget(self.preset_slider, 5, 1)
+        grid.addWidget(self.preset_spin, 5, 2)
 
         self.audio_combo = QComboBox()
         self.audio_combo.addItem("", "copy")
         self.audio_combo.addItem("", "opus")
         self.audio_combo.addItem("", "aac")
         self.audio_label_widget = QLabel()
-        grid.addWidget(self.audio_label_widget, 5, 0)
-        grid.addWidget(self.audio_combo, 5, 1, 1, 2)
+        grid.addWidget(self.audio_label_widget, 6, 0)
+        grid.addWidget(self.audio_combo, 6, 1, 1, 2)
 
         self.overwrite_checkbox = QCheckBox()
         self.overwrite_checkbox.setChecked(False)
-        grid.addWidget(self.overwrite_checkbox, 6, 0, 1, 3)
+        grid.addWidget(self.overwrite_checkbox, 7, 0, 1, 3)
 
         layout.addWidget(self.settings_group)
         layout.addStretch(1)
@@ -1676,7 +1747,15 @@ class MainWindow(QMainWindow):
         self.preset_slider.valueChanged.connect(self.preset_spin.setValue)
         self.preset_spin.valueChanged.connect(self.preset_slider.setValue)
         self.resolution_combo.currentIndexChanged.connect(self.update_custom_size_enabled)
+        self.preserve_bitrate_checkbox.toggled.connect(self.update_bitrate_mode_enabled)
         self.update_custom_size_enabled()
+        self.update_bitrate_mode_enabled()
+
+    def update_bitrate_mode_enabled(self) -> None:
+        use_crf = not self.preserve_bitrate_checkbox.isChecked()
+        self.crf_label.setEnabled(use_crf)
+        self.crf_slider.setEnabled(use_crf)
+        self.crf_spin.setEnabled(use_crf)
 
     def _populate_encoders(self) -> None:
         self.encoder_combo.clear()
@@ -1733,6 +1812,7 @@ class MainWindow(QMainWindow):
         self.apply_3d_button.setText(self.text("apply_selected"))
         self.settings_group.setTitle(self.text("av1_settings"))
         self.encoder_label.setText(self.text("encoder"))
+        self.preserve_bitrate_checkbox.setText(self.text("preserve_bitrate"))
         self.resolution_label.setText(self.text("size_mode"))
         self.custom_width_label.setText(self.text("custom_width"))
         self.crf_label.setText(self.text("crf"))
@@ -1793,13 +1873,13 @@ class MainWindow(QMainWindow):
         paths, _ = QFileDialog.getOpenFileNames(
             self,
             self.text("select_video_files"),
-            str(Path.cwd()),
+            str(launch_base_dir()),
             "Video Files (*.mkv *.mp4 *.webm *.mov *.avi *.m4v *.ts *.m2ts *.wmv);;All Files (*)",
         )
         self.add_paths([Path(path) for path in paths])
 
     def add_folder(self) -> None:
-        folder = QFileDialog.getExistingDirectory(self, self.text("select_video_folder"), str(Path.cwd()))
+        folder = QFileDialog.getExistingDirectory(self, self.text("select_video_folder"), str(launch_base_dir()))
         if not folder:
             return
         paths = collect_video_files(Path(folder), self.recursive_checkbox.isChecked())
@@ -2065,6 +2145,7 @@ class MainWindow(QMainWindow):
         return ConvertSettings(
             output_dir=Path(self.output_dir_edit.text()),
             encoder=self.encoder_combo.currentData() or "",
+            preserve_bitrate=self.preserve_bitrate_checkbox.isChecked(),
             resolution_mode=self.resolution_combo.currentData() or "keep",
             custom_width=self.custom_width_spin.value(),
             custom_height=self.custom_height_spin.value(),
