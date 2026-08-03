@@ -346,11 +346,21 @@ class MainWindow(QMainWindow):
         table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
     def scan_diff(self) -> None:
         try:
-            self.set_status("Scanning folders for differences...")
-            self.a_storage, a_records = scan_storage(self.path_a.text())
-            self.b_storage, b_records = scan_storage(self.path_b.text())
-            self.a_only, self.b_only = diff_records(a_records, b_records)
+            a_uri = self.path_a.text()
+            b_uri = self.path_b.text()
+            LOGGER.info("Scan Differences clicked: A=%s, B=%s", a_uri, b_uri)
             self.diff_table.setRowCount(0)
+
+            self.set_status(f"Scanning Folder A: {a_uri}")
+            self.a_storage, a_records = scan_storage(a_uri, self.set_status)
+            self.set_status(f"Folder A scan complete: {len(a_records)} audio files")
+
+            self.set_status(f"Scanning Folder B: {b_uri}")
+            self.b_storage, b_records = scan_storage(b_uri, self.set_status)
+            self.set_status(f"Folder B scan complete: {len(b_records)} audio files")
+
+            self.set_status("Comparing song keys...")
+            self.a_only, self.b_only = diff_records(a_records, b_records)
             for side, records in [("A only", self.a_only), ("B only", self.b_only)]:
                 for record in records:
                     self._append_diff_row(side, record)
@@ -577,6 +587,7 @@ Mode B - Single Folder Cleanup
         LOGGER.info(message)
         self.status.setText(message)
         self.log_view.append(message)
+        QApplication.processEvents()
 
     def show_error(self, title: str, exc: Exception) -> None:
         LOGGER.exception(title)

@@ -1,15 +1,18 @@
-﻿import logging
+import logging
 import os
 import posixpath
 import shlex
 import shutil
 import subprocess
+import time
 from pathlib import Path, PurePosixPath
 from typing import Iterable, List, Optional, Tuple
 
 from .config import SUPPORTED_EXTENSIONS
 
 LOGGER = logging.getLogger(__name__)
+ADB_COMMAND_TIMEOUT_SECONDS = 120
+ADB_STATE_TIMEOUT_SECONDS = 15
 
 
 class StorageError(RuntimeError):
@@ -54,10 +57,25 @@ class LocalStorage(BaseStorage):
     def list_audio_files(self) -> List[str]:
         if not self.root.exists():
             raise StorageError(f"Folder does not exist: {self.root}")
+        started = time.monotonic()
+        LOGGER.info("Scanning local folder: %s", self.root)
         files = []
-        for path in self.root.rglob("*"):
-            if path.is_file() and path.suffix.casefold() in SUPPORTED_EXTENSIONS:
-                files.append(str(path))
+        visited = 0
+        for dirpath, _, filenames in os.walk(self.root):
+            visited += len(filenames)
+            for file_name in filenames:
+                if Path(file_name).suffix.casefold() in SUPPORTED_EXTENSIONS:
+                    files.append(os.path.join(dirpath, file_name))
+                    if len(files) % 1000 == 0:
+                        LOGGER.info("Local scan progress: %s audio files found under %s", len(files), self.root)
+            if visited and visited % 10000 == 0:
+                LOGGER.debug("Local scan progress: %s filesystem entries visited under %s", visited, self.root)
+        LOGGER.info(
+            "Local scan complete: %s audio files found under %s in %.2fs",
+            len(files),
+            self.root,
+            time.monotonic() - started,
+        )
         return files
 
     def remove_file(self, path: str) -> None:
@@ -94,7 +112,7 @@ class LocalStorage(BaseStorage):
         return str(self.root / Path(relative_path))
 
     def relative_for_path(self, path: str) -> str:
-        return Path(path).resolve().relative_to(self.root).as_posix()
+        return os.path.relpath(path, self.root).replace(os.sep, "/")
 
 
 class AdbStorage(BaseStorage):
@@ -111,6 +129,7 @@ class AdbStorage(BaseStorage):
         else:
             self.root = body
         self.root = self.root.rstrip("/") or "/"
+        LOGGER.debug("Initialized ADB storage: serial=%s root=%s", self.serial, self.root)
 
     def _adb_cmd(self, *args: str) -> List[str]:
         cmd = ["adb"]
@@ -119,22 +138,52 @@ class AdbStorage(BaseStorage):
         cmd.extend(args)
         return cmd
 
-    def _run(self, *args: str) -> str:
+    def _run(self, *args: str, timeout: int = ADB_COMMAND_TIMEOUT_SECONDS) -> str:
         cmd = self._adb_cmd(*args)
         LOGGER.debug("Running ADB command: %s", cmd)
-        completed = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        started = time.monotonic()
+        try:
+            completed = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=timeout,
+            )
+        except FileNotFoundError as exc:
+            raise StorageError("ADB was not found. Install adb and add it to PATH.") from exc
+        except subprocess.TimeoutExpired as exc:
+            LOGGER.error("ADB command timed out after %ss: %s", timeout, cmd)
+            raise StorageError(
+                f"ADB command timed out after {timeout}s. Check USB debugging, phone authorization, and the folder path."
+            ) from exc
+        LOGGER.debug("ADB command finished in %.2fs: %s", time.monotonic() - started, cmd)
         if completed.returncode != 0:
+            LOGGER.error("ADB command failed with code %s: %s", completed.returncode, cmd)
+            LOGGER.error("ADB stderr: %s", completed.stderr.strip())
             raise StorageError(completed.stderr.strip() or f"ADB command failed: {' '.join(cmd)}")
         return completed.stdout
 
     def list_audio_files(self) -> List[str]:
+        LOGGER.info("Scanning ADB folder: %s", self.root)
+        state = self._run("get-state", timeout=ADB_STATE_TIMEOUT_SECONDS).strip()
+        LOGGER.info("ADB device state: %s", state)
         name_parts = []
         for ext in sorted(SUPPORTED_EXTENSIONS):
             name_parts.extend(["-iname", f"*{ext}", "-o"])
         name_expr = " ".join(shlex.quote(part) for part in name_parts[:-1])
         command = f"find {shlex.quote(self.root)} -type f \\( {name_expr} \\)"
-        output = self._run("shell", command)
-        return [line.strip() for line in output.splitlines() if line.strip()]
+        started = time.monotonic()
+        output = self._run("shell", command, timeout=ADB_COMMAND_TIMEOUT_SECONDS)
+        files = [line.strip() for line in output.splitlines() if line.strip()]
+        LOGGER.info(
+            "ADB scan complete: %s audio files found under %s in %.2fs",
+            len(files),
+            self.root,
+            time.monotonic() - started,
+        )
+        return files
 
     def remove_file(self, path: str) -> None:
         LOGGER.info("Deleting ADB file: %s", path)
