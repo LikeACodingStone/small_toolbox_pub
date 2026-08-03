@@ -23,6 +23,6 @@ On Windows, the virtual environment is stored in `%LOCALAPPDATA%\ClassifyMusic\w
 Choose a source folder and an output folder in the window, then select either or both formats. The output folder defaults to the folder containing this application:
 
 - `File names only (extract)` creates `<source-folder>_extract_<YYYY-MM-DD>.txt`.
-- `Relative file paths from the selected folder (recurse)` creates `<source-folder>_recurse_<YYYY-MM-DD>.txt`.
+- `Relative file paths from the selected folder (recurse)` creates `<source-folder>_recurse_<YYYY-MM-DD>.txt`, including empty subfolders with a trailing `/`.
 
 The path entries start at the selected source folder, matching the supplied recurse example. Output files are saved in this `ClassifyMusic` directory. Running the same format for the same folder again on the same date replaces that format's previous file, matching the original scripts' daily-output convention.

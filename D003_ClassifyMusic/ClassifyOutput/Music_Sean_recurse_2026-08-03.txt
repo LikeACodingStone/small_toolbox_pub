@@ -1,4 +1,5 @@
 Blues&Reggae&Funky&Jazz/51st Anniversary.opus
+Blues&Reggae&Funky&Jazz/Acoustic & Country Blues/
 Blues&Reggae&Funky&Jazz/Al Green - Tired of Being Alone.opus
 Blues&Reggae&Funky&Jazz/B. B. KING - All Over Again - Live Tokyo 1989.opus
 Blues&Reggae&Funky&Jazz/B.B King - I like to Live the Love.opus
@@ -20,6 +21,7 @@ Blues&Reggae&Funky&Jazz/BB King - There Must Be A Better World Somewhere.opus
 Blues&Reggae&Funky&Jazz/BB King Never Make Your Move Too Soon.opus
 Blues&Reggae&Funky&Jazz/Barrett Strong - Money (That's What I want).opus
 Blues&Reggae&Funky&Jazz/Bettye LaVette - Serves Him Right.opus
+Blues&Reggae&Funky&Jazz/Blues Fusion & Modern Blues/
 Blues&Reggae&Funky&Jazz/Bob Dylan - Highway 61 Revisited.opus
 Blues&Reggae&Funky&Jazz/Bob Dylan - Just Like Tom Thumb's Blues.opus
 Blues&Reggae&Funky&Jazz/Bob Dylan - Mississippi.opus
@@ -38,6 +40,7 @@ Blues&Reggae&Funky&Jazz/Canned Heat - I Can't Hold On.opus
 Blues&Reggae&Funky&Jazz/Eagles - One Of These Nights.opus
 Blues&Reggae&Funky&Jazz/Eagles - The Long Run.opus
 Blues&Reggae&Funky&Jazz/Ed Bruce - Good Jelly Jones.opus
+Blues&Reggae&Funky&Jazz/Electric & Urban Blues/
 Blues&Reggae&Funky&Jazz/Elvis Presley - Jailhouse Rock.opus
 Blues&Reggae&Funky&Jazz/Eric Clapton - Before you accuse me (take a look at yourself).opus
 Blues&Reggae&Funky&Jazz/Fats Domino - Blueberry Hill.opus
@@ -96,6 +99,7 @@ Blues&Reggae&Funky&Jazz/New York Dolls - Personality Crisis.opus
 Blues&Reggae&Funky&Jazz/Ray Charles - Hit the Road Jack.opus
 Blues&Reggae&Funky&Jazz/Ray Charles - What'd i say.opus
 Blues&Reggae&Funky&Jazz/Ray Charles,Diana Ross - Big Bad Love.opus
+Blues&Reggae&Funky&Jazz/Reggae & Funky & Jazz/
 Blues&Reggae&Funky&Jazz/Roy Orbison - Dance.opus
 Blues&Reggae&Funky&Jazz/Savoy Brown,Kim Simmonds - Nuthin' Like the Blues.opus
 Blues&Reggae&Funky&Jazz/Sha_Na_Na-Mr._Bass_Man.opus
@@ -420,6 +424,7 @@ Classic-Rock&&Popular/Pink_Floyd-Another_Brick_in_the_Wall,_Pt._2.opus
 Classic-Rock&&Popular/Pink_Floyd-The_Thin_Ice.opus
 Classic-Rock&&Popular/Poison - Fallen Angel.opus
 Classic-Rock&&Popular/Poison - Something To Believe In.opus
+Classic-Rock&&Popular/Popular/
 Classic-Rock&&Popular/Pretenders - 2000 Miles.opus
 Classic-Rock&&Popular/Pretenders - A Love.opus
 Classic-Rock&&Popular/Pretenders - I'll Stand by You.opus
@@ -475,6 +480,7 @@ Classic-Rock&&Popular/Red hot Chili Peppers -Venice Queen.wma
 Classic-Rock&&Popular/Red hot Chili Peppers -Warm Tape.wma
 Classic-Rock&&Popular/Ride - Howard Hughes.opus
 Classic-Rock&&Popular/Ringo_Starr-Octopus's_Garden.opus
+Classic-Rock&&Popular/RockRoll/
 Classic-Rock&&Popular/Roxette - Listen To Your Heart.opus
 Classic-Rock&&Popular/Sex Gang Children - Arms of Cicero.opus
 Classic-Rock&&Popular/Soul_Asylum-Cartoon.opus
@@ -811,6 +817,8 @@ Country&Original-Sound/Mark Knopfler - So Far From The Clyde.opus
 Country&Original-Sound/Mark Knopfler - The Ragpicker's Dream.opus
 Country&Original-Sound/Mike_Ness-You_Win_Again.opus
 Country&Original-Sound/Mike_Ness-_____Fiend_Blues.opus
+Country&Original-Sound/Modern & Fusion Country/
+Country&Original-Sound/Nashville Sound & Classic Country/
 Country&Original-Sound/Neil Young - From Hank to Hendrix.opus
 Country&Original-Sound/Neil Young - Unknown Legend.opus
 Country&Original-Sound/Neil_Young-Homegrown.opus
@@ -834,6 +842,7 @@ Country&Original-Sound/Rod Stewart - Sailing.opus
 Country&Original-Sound/Roger McGuinn - Bag Full of Money.opus
 Country&Original-Sound/Roger McGuinn - Circle Song.opus
 Country&Original-Sound/Roger_Waters_Sinéad_O'Connor_The_Band-Mother_(Live_Version).opus
+Country&Original-Sound/Roots & Traditional Country/
 Country&Original-Sound/Roy Orbison - A Love So Beautiful.opus
 Country&Original-Sound/Roy Orbison - California Blue.opus
 Country&Original-Sound/Roy Orbison - Crying.opus
@@ -1291,6 +1300,7 @@ Metal/Children Of Bodom - kissing the shadows.opus
 Metal/Children Of Bodom - mask of sanity.opus
 Metal/Children Of Bodom - taste of my scythe.opus
 Metal/Chris Impellitteri 17th Century Chicken Pickin'.opus
+Metal/Classic & Traditional Metal/
 Metal/Cradle of Filth - Hallowed Be Thy Name.opus
 Metal/Cradle of Filth - The Death of Love (Album Version).opus
 Metal/Cradle_of_Filth-Nymphetamine_Fix.opus
@@ -1335,6 +1345,7 @@ Metal/Epica - Cry For The Moon.opus
 Metal/Epica - Pirates Of The Caribbean ［Live in Miskolc］.opus
 Metal/Epica-Crimson_Bow_and_Arrow.opus
 Metal/Era - The Mass.opus
+Metal/Extreme Metal/
 Metal/Four Seasons.Summer (At Vance).opus
 Metal/Galneryus - 1789 (Silver Mountain cover).opus
 Metal/Galneryus - A Far-Off Distance.opus
@@ -1548,6 +1559,7 @@ Metal/Metallica-Nothing_Else_Matters.opus
 Metal/Metallica-The_Unforgiven.opus
 Metal/Metallica-The_Unforgiven_II.opus
 Metal/Metallica-Whiskey_In_The_Jar.opus
+Metal/Modern & Fusion Metal/
 Metal/Montagues & Capulets (Epica).opus
 Metal/Mystic Formula (Gaja Prelude).opus
 Metal/Mötley Crüe - Kickstart My Heart.opus

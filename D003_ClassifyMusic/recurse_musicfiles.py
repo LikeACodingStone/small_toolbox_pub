@@ -18,16 +18,19 @@ def generate_file_list(folder_path_str):
     # Construct the output filename (saved in the current working directory)
     output_filename = f"{folder_name}_{date_str}.txt"
     
-    # List to store all relative file paths
+    # List to store relative file paths and paths of empty subfolders.
     relative_paths = []
+    empty_directory_count = 0
     
-    # Recursively traverse all contents in the directory using rglob("*")
-    for file_path in root_dir.rglob("*"):
-        # Process only files (ignore directories)
-        if file_path.is_file():
-            # Calculate the relative path from the root directory
-            rel_path = file_path.relative_to(root_dir)
+    # Recursively traverse all contents in the directory using rglob("*").
+    for path in root_dir.rglob("*"):
+        rel_path = path.relative_to(root_dir)
+        if path.is_file():
             relative_paths.append(str(rel_path))
+        elif path.is_dir() and not any(path.iterdir()):
+            # A trailing slash makes empty folders distinct from file entries.
+            relative_paths.append(f"{rel_path}/")
+            empty_directory_count += 1
     
     # Sort the paths for better readability
     relative_paths.sort()
@@ -39,7 +42,8 @@ def generate_file_list(folder_path_str):
             
     print("Processing complete!")
     print(f"Generated file list: {output_filename}")
-    print(f"Total files recorded: {len(relative_paths)}")
+    print(f"Total entries recorded: {len(relative_paths)}")
+    print(f"Empty folders recorded: {empty_directory_count}")
 
 if __name__ == "__main__":
     # Use the command-line argument if provided
