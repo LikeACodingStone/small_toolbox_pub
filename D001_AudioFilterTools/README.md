@@ -49,6 +49,12 @@ Windows:
 .venv\Scripts\python main.py
 ```
 
+Or double-click:
+
+```bat
+Start_AudioFilterTools.bat
+```
+
 Ubuntu:
 
 ```bash
