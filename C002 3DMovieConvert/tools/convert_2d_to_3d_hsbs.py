@@ -1,419 +1,183 @@
 #!/usr/bin/env python3
-"""Stream a 2D video through depth estimation into a 4K Half-SBS AV1 file.
-
-Decoded and generated frames stay in memory. Only the encoded output is written
-to disk, so temporary storage does not grow with the input video's duration.
-"""
-
 from __future__ import annotations
 
 import argparse
 import json
-import math
-import os
+import shutil
 import subprocess
+import sys
+import time
 from pathlib import Path
-from typing import BinaryIO
-
-import cv2
-import numpy as np
-from PIL import Image
-from tqdm import tqdm
 
 
-def capture(cmd: list[str]) -> str:
-    return subprocess.check_output(cmd, text=True, stderr=subprocess.STDOUT).strip()
+def fail(message: str, code: int = 1) -> None:
+    print(f"[ERROR] {message}", flush=True)
+    raise SystemExit(code)
 
 
-def ffprobe_json(input_path: Path) -> dict:
-    raw = capture([
-        "ffprobe",
-        "-v", "error",
-        "-print_format", "json",
-        "-show_streams",
-        "-show_format",
-        str(input_path),
-    ])
-    return json.loads(raw)
+def probe(path: Path) -> tuple[dict, float]:
+    result = subprocess.run(
+        [
+            "ffprobe", "-v", "error", "-select_streams", "v:0",
+            "-show_entries", "stream=width,height,duration:format=duration",
+            "-of", "json", str(path),
+        ],
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+    )
+    if result.returncode != 0:
+        fail(f"ffprobe 检测失败：{result.stderr.strip()}", 4)
+    payload = json.loads(result.stdout)
+    streams = payload.get("streams") or []
+    if not streams:
+        fail("输入文件没有视频流。", 4)
+    stream = streams[0]
+    duration = float(stream.get("duration") or payload.get("format", {}).get("duration") or 0)
+    return stream, duration
 
 
-def video_info(input_path: Path) -> tuple[float, float, str, bool]:
-    data = ffprobe_json(input_path)
-    video_stream = next(s for s in data["streams"] if s["codec_type"] == "video")
-    fps_expr = video_stream.get("avg_frame_rate") or video_stream.get("r_frame_rate") or "24000/1001"
-    if "/" in fps_expr:
-        num, den = fps_expr.split("/", 1)
-        fps = float(num) / float(den)
-    else:
-        fps = float(fps_expr)
-    duration = float(video_stream.get("duration") or data.get("format", {}).get("duration") or 0)
-    has_audio = any(s["codec_type"] == "audio" for s in data["streams"])
-    return duration, fps, fps_expr, has_audio
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="4K 2D to 4K Half-SBS AV1 converter")
+    parser.add_argument("--input", required=True, type=Path)
+    parser.add_argument("--output-dir", required=True, type=Path)
+    parser.add_argument("--encoder", default="libsvtav1")
+    parser.add_argument("--crf", type=float, default=20.0)
+    parser.add_argument("--preset", type=int, default=5)
+    parser.add_argument("--required-width", type=int, default=3840)
+    parser.add_argument("--required-height", type=int, default=2160)
+    parser.add_argument("--eye-width", type=int, default=1920)
+    parser.add_argument("--eye-height", type=int, default=2160)
+    parser.add_argument("--eye-shift", type=int, default=24)
+    parser.add_argument("--threads", type=int, default=0)
+    parser.add_argument("--audio-mode", choices=("copy", "opus", "aac"), default="copy")
+    parser.add_argument("--overwrite", action="store_true")
+    return parser.parse_args()
 
 
-def normalize_depth(depth: Image.Image, width: int, height: int, gamma: float) -> np.ndarray:
-    arr = np.array(depth.resize((width, height), Image.Resampling.BICUBIC)).astype(np.float32)
-    if arr.ndim == 3:
-        arr = arr[..., 0]
-    arr -= arr.min()
-    max_val = arr.max()
-    if max_val > 0:
-        arr /= max_val
-    arr = np.power(arr, gamma)
-    return arr
+def encoder_available(name: str) -> bool:
+    result = subprocess.run(
+        ["ffmpeg", "-hide_banner", "-encoders"],
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+    )
+    return result.returncode == 0 and name in result.stdout
 
 
-def make_stereo_half_sbs(
-    frame_bgr: np.ndarray,
-    depth01: np.ndarray,
-    output_width: int,
-    output_height: int,
-    max_disparity: float,
-    convergence: float,
-) -> np.ndarray:
-    eye_width = output_width // 2
-    eye_height = output_height
-
-    src = cv2.resize(frame_bgr, (eye_width, eye_height), interpolation=cv2.INTER_LANCZOS4)
-    depth = cv2.resize(depth01, (eye_width, eye_height), interpolation=cv2.INTER_CUBIC)
-
-    # Positive near disparity, negative far disparity around convergence plane.
-    disparity = (depth - convergence) * max_disparity
-    h, w = depth.shape
-    x, y = np.meshgrid(np.arange(w, dtype=np.float32), np.arange(h, dtype=np.float32))
-
-    left_map_x = x + disparity / 2.0
-    right_map_x = x - disparity / 2.0
-    left = cv2.remap(src, left_map_x, y, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
-    right = cv2.remap(src, right_map_x, y, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
-    return np.ascontiguousarray(np.concatenate([left, right], axis=1))
-
-
-def load_depth_pipeline(model_name: str, device: str):
-    import torch
-    from transformers import pipeline
-
-    if device == "cuda" and not torch.cuda.is_available():
-        print("[WARN] Requested cuda/ROCm, but torch.cuda.is_available() is false. Falling back to CPU.", flush=True)
-        device_arg = -1
-    elif device == "cpu":
-        device_arg = -1
-    else:
-        device_arg = 0
-
-    dtype = torch.float16 if device_arg == 0 else torch.float32
-    return pipeline("depth-estimation", model=model_name, device=device_arg, torch_dtype=dtype)
-
-
-def directory_size(path: Path) -> int:
-    total = 0
-    for item in path.rglob("*"):
-        try:
-            if item.is_file():
-                total += item.stat().st_size
-        except OSError:
-            # A concurrently removed temporary file is harmless here.
-            continue
-    return total
-
-
-def enforce_work_limit(work_dir: Path, max_work_bytes: int) -> None:
-    if max_work_bytes <= 0:
-        return
-    used = directory_size(work_dir)
-    if used > max_work_bytes:
-        raise RuntimeError(
-            f"Work directory exceeded its limit: {used / 1024**3:.2f} GiB "
-            f"> {max_work_bytes / 1024**3:.2f} GiB"
-        )
-
-
-def read_exact_frame(stream: BinaryIO, buffer: bytearray) -> bool:
-    view = memoryview(buffer)
-    offset = 0
-    while offset < len(buffer):
-        count = stream.readinto(view[offset:])
-        if not count:
-            break
-        offset += count
-    if offset == 0:
-        return False
-    if offset != len(buffer):
-        raise RuntimeError(f"Decoder returned an incomplete frame: {offset}/{len(buffer)} bytes")
-    return True
-
-
-def write_all(stream: BinaryIO, data: memoryview) -> None:
-    offset = 0
-    while offset < len(data):
-        count = stream.write(data[offset:])
-        if not count:
-            raise BrokenPipeError("Encoder accepted zero bytes")
-        offset += count
-
-
-def close_pipe(stream: BinaryIO | None) -> None:
-    if stream is None or stream.closed:
-        return
+def progress_seconds(key: str, value: str) -> float | None:
     try:
-        stream.close()
-    except OSError:
-        # The original encoder/decoder error is more useful than a close error.
-        pass
-
-
-def stop_process(process: subprocess.Popen | None) -> None:
-    if process is None or process.poll() is not None:
-        return
-    process.terminate()
-    try:
-        process.wait(timeout=10)
-    except subprocess.TimeoutExpired:
-        process.kill()
-        process.wait()
-
-
-def stream_convert(
-    *,
-    input_video: Path,
-    partial_output: Path,
-    work_dir: Path,
-    depth_pipe,
-    duration: float,
-    fps: float,
-    fps_expr: str,
-    has_audio: bool,
-    output_width: int,
-    output_height: int,
-    max_disparity: float,
-    depth_gamma: float,
-    convergence: float,
-    test_seconds: str,
-    crf: int,
-    preset: int,
-    audio_codec: str,
-    audio_bitrate: str,
-    audio_channels: int,
-    threads: int,
-    max_work_bytes: int,
-) -> int:
-    eye_width = output_width // 2
-    frame_bytes = eye_width * output_height * 3
-    partial_output.parent.mkdir(parents=True, exist_ok=True)
-
-    decoder_cmd = [
-        "ffmpeg", "-v", "warning",
-        "-i", str(input_video),
-    ]
-    if test_seconds:
-        decoder_cmd += ["-t", test_seconds]
-    decoder_cmd += [
-        "-map", "0:v:0",
-        "-an", "-sn", "-dn",
-        "-vf", f"scale={eye_width}:{output_height}:flags=lanczos",
-        "-r", fps_expr,
-        "-fps_mode", "cfr",
-        "-f", "rawvideo",
-        "-pix_fmt", "bgr24",
-        "pipe:1",
-    ]
-
-    encoder_cmd = [
-        "ffmpeg", "-y",
-        "-f", "rawvideo",
-        "-pix_fmt", "bgr24",
-        "-s:v", f"{output_width}x{output_height}",
-        "-framerate", fps_expr,
-        "-i", "pipe:0",
-    ]
-    if has_audio:
-        if test_seconds:
-            encoder_cmd += ["-t", test_seconds]
-        encoder_cmd += ["-i", str(input_video), "-map", "0:v:0", "-map", "1:a:0?"]
-    else:
-        encoder_cmd += ["-map", "0:v:0"]
-
-    encoder_cmd += [
-        "-c:v", "libsvtav1",
-        "-pix_fmt", "yuv420p10le",
-        "-crf", str(crf),
-        "-preset", str(preset),
-        "-svtav1-params", "tune=0:film-grain=6",
-    ]
-    if threads > 0:
-        encoder_cmd += ["-threads", str(threads)]
-    if has_audio:
-        if audio_codec.lower() == "copy":
-            encoder_cmd += ["-c:a", "copy"]
-        else:
-            encoder_cmd += ["-c:a", audio_codec]
-            if audio_bitrate:
-                encoder_cmd += ["-b:a", audio_bitrate]
-            if audio_channels > 0:
-                encoder_cmd += ["-ac", str(audio_channels)]
-        encoder_cmd += ["-shortest"]
-    encoder_cmd += ["-progress", "pipe:2", "-nostats", str(partial_output)]
-
-    print("[STEP] Start streaming decoder", flush=True)
-    print("+", " ".join(decoder_cmd), flush=True)
-    print("[STEP] Start streaming AV1 encoder", flush=True)
-    print("+", " ".join(encoder_cmd), flush=True)
-
-    decoder: subprocess.Popen | None = None
-    encoder: subprocess.Popen | None = None
-    progress = None
-    completed = False
-    frame_count = 0
-    try:
-        encoder = subprocess.Popen(encoder_cmd, stdin=subprocess.PIPE)
-        decoder = subprocess.Popen(decoder_cmd, stdout=subprocess.PIPE)
-        assert decoder.stdout is not None
-        assert encoder.stdin is not None
-
-        effective_duration = min(duration, float(test_seconds)) if test_seconds else duration
-        expected_frames = math.ceil(effective_duration * fps) if effective_duration > 0 else None
-        progress = tqdm(total=expected_frames, desc="2D->3D->AV1", unit="frame")
-        frame_buffer = bytearray(frame_bytes)
-
-        while read_exact_frame(decoder.stdout, frame_buffer):
-            if encoder.poll() is not None:
-                raise RuntimeError(f"AV1 encoder exited early with code {encoder.returncode}")
-
-            frame_bgr = np.frombuffer(frame_buffer, dtype=np.uint8).reshape(output_height, eye_width, 3)
-            frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
-            result = depth_pipe(Image.fromarray(frame_rgb))
-            depth01 = normalize_depth(result["depth"], eye_width, output_height, depth_gamma)
-            hsbs = make_stereo_half_sbs(
-                frame_bgr,
-                depth01,
-                output_width,
-                output_height,
-                max_disparity,
-                convergence,
-            )
-            try:
-                write_all(encoder.stdin, memoryview(hsbs).cast("B"))
-            except BrokenPipeError as exc:
-                code = encoder.wait()
-                raise RuntimeError(f"AV1 encoder closed its input early with code {code}") from exc
-
-            frame_count += 1
-            progress.update(1)
-            if frame_count % 100 == 0:
-                enforce_work_limit(work_dir, max_work_bytes)
-
-        decoder.stdout.close()
-        decoder_code = decoder.wait()
-        if decoder_code != 0:
-            raise subprocess.CalledProcessError(decoder_code, decoder_cmd)
-        if frame_count == 0:
-            raise RuntimeError("Decoder produced no video frames")
-
-        try:
-            encoder.stdin.close()
-        except BrokenPipeError as exc:
-            code = encoder.wait()
-            raise RuntimeError(f"AV1 encoder failed while finalizing with code {code}") from exc
-        encoder_code = encoder.wait()
-        if encoder_code != 0:
-            raise subprocess.CalledProcessError(encoder_code, encoder_cmd)
-        enforce_work_limit(work_dir, max_work_bytes)
-        completed = True
-        return frame_count
-    finally:
-        if progress is not None:
-            progress.close()
-        if decoder is not None:
-            close_pipe(decoder.stdout)
-        if encoder is not None:
-            close_pipe(encoder.stdin)
-        stop_process(decoder)
-        stop_process(encoder)
-        if not completed and partial_output.exists():
-            partial_output.unlink()
+        if key == "out_time_us":
+            return int(value) / 1_000_000
+        if key == "out_time_ms":
+            # FFmpeg historically labels this field ms although its value is microseconds.
+            return int(value) / 1_000_000
+        if key == "out_time":
+            hours, minutes, seconds = value.split(":")
+            return int(hours) * 3600 + int(minutes) * 60 + float(seconds)
+    except (TypeError, ValueError):
+        return None
+    return None
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--input", required=True)
-    parser.add_argument("--output", required=True)
-    parser.add_argument("--work-dir", required=True)
-    parser.add_argument("--depth-model", required=True)
-    parser.add_argument("--device", default="cuda", choices=["cuda", "cpu"])
-    parser.add_argument("--output-width", type=int, default=3840)
-    parser.add_argument("--output-height", type=int, default=2160)
-    parser.add_argument("--max-disparity", type=float, default=36)
-    parser.add_argument("--depth-gamma", type=float, default=1.25)
-    parser.add_argument("--convergence", type=float, default=0.52)
-    parser.add_argument("--test-seconds", default="")
-    parser.add_argument("--crf", type=int, default=24)
-    parser.add_argument("--preset", type=int, default=5)
-    parser.add_argument("--audio-codec", default="libopus")
-    parser.add_argument("--audio-bitrate", default="192k")
-    parser.add_argument("--audio-channels", type=int, default=2, help="Audio channel count for re-encoding; 0 preserves source layout")
-    parser.add_argument("--ffmpeg-threads", type=int, default=0)
-    parser.add_argument("--max-work-gb", type=float, default=200.0, help="Maximum files allowed in the work directory; 0 disables the guard")
-    parser.add_argument("--frame-ext", default="png", help=argparse.SUPPRESS)
-    args = parser.parse_args()
+    args = parse_args()
+    source = args.input.expanduser().resolve()
+    output_dir = args.output_dir.expanduser().resolve()
 
-    input_video = Path(args.input).expanduser().resolve()
-    output_video = Path(args.output).expanduser().resolve()
-    work_dir = Path(args.work_dir).expanduser().resolve()
+    if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None:
+        fail("ffmpeg/ffprobe 不在 PATH 中。", 3)
+    if not source.is_file():
+        fail(f"输入视频不存在：{source}", 2)
+    if not 0 <= args.crf <= 63:
+        fail(f"CRF 必须在 0-63，当前值：{args.crf}", 2)
+    if args.eye_shift < 0 or args.eye_shift >= args.required_width:
+        fail("EYE_SHIFT 超出有效范围。", 2)
+    if not encoder_available(args.encoder):
+        fail(f"当前 FFmpeg 不包含编码器：{args.encoder}", 3)
 
-    if not input_video.is_file():
-        raise FileNotFoundError(f"Input video not found: {input_video}")
-    if args.output_width % 2 != 0:
-        raise ValueError("output-width must be even")
-    if args.output_width != 3840 or args.output_height != 2160:
-        print(f"[WARN] Requested output is {args.output_width}x{args.output_height}, not standard 4K Half-SBS.", flush=True)
-    if args.max_work_gb < 0:
-        raise ValueError("max-work-gb cannot be negative")
+    video, duration = probe(source)
+    width = int(video.get("width") or 0)
+    height = int(video.get("height") or 0)
+    print(f"[INFO] 输入分辨率：{width}x{height}", flush=True)
+    if (width, height) != (args.required_width, args.required_height):
+        fail(
+            f"视频格式不符合要求：必须是 {args.required_width}x{args.required_height} UHD 4K，"
+            f"实际为 {width}x{height}，不予执行。",
+            5,
+        )
 
-    duration, fps, fps_expr, has_audio = video_info(input_video)
-    max_work_bytes = int(args.max_work_gb * 1024**3)
-    print(f"[INFO] Duration       : {duration:.2f}s")
-    print(f"[INFO] FPS            : {fps_expr}")
-    print(f"[INFO] Audio          : {has_audio}")
-    print("[INFO] Frame storage  : streaming (no extracted frame files)")
-    print(f"[INFO] Work dir limit : {args.max_work_gb:.2f} GiB" if max_work_bytes else "[INFO] Work dir limit : disabled")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output = output_dir / f"{source.stem}_4K_Half-SBS_AV1_CRF{args.crf:g}.mkv"
+    if output.exists() and not args.overwrite:
+        fail(f"输出文件已存在：{output}；如需覆盖，请在 config.env 设置 OVERWRITE=true。", 6)
 
-    work_dir.mkdir(parents=True, exist_ok=True)
-    enforce_work_limit(work_dir, max_work_bytes)
-
-    print("[STEP] Load depth model", flush=True)
-    depth_pipe = load_depth_pipeline(args.depth_model, args.device)
-
-    output_suffix = output_video.suffix or ".mkv"
-    partial_output = output_video.with_name(f"{output_video.stem}.part{output_suffix}")
-    frame_count = stream_convert(
-        input_video=input_video,
-        partial_output=partial_output,
-        work_dir=work_dir,
-        depth_pipe=depth_pipe,
-        duration=duration,
-        fps=fps,
-        fps_expr=fps_expr,
-        has_audio=has_audio,
-        output_width=args.output_width,
-        output_height=args.output_height,
-        max_disparity=args.max_disparity,
-        depth_gamma=args.depth_gamma,
-        convergence=args.convergence,
-        test_seconds=args.test_seconds,
-        crf=args.crf,
-        preset=args.preset,
-        audio_codec=args.audio_codec,
-        audio_bitrate=args.audio_bitrate,
-        audio_channels=args.audio_channels,
-        threads=args.ffmpeg_threads,
-        max_work_bytes=max_work_bytes,
+    crop_width = args.required_width - args.eye_shift
+    filters = (
+        f"[0:v:0]split=2[left][right];"
+        f"[left]crop={crop_width}:{args.required_height}:0:0,"
+        f"scale={args.eye_width}:{args.eye_height}:flags=lanczos[left_eye];"
+        f"[right]crop={crop_width}:{args.required_height}:{args.eye_shift}:0,"
+        f"scale={args.eye_width}:{args.eye_height}:flags=lanczos[right_eye];"
+        f"[left_eye][right_eye]hstack=inputs=2,setsar=1[stereo]"
     )
+    command = [
+        "ffmpeg", "-hide_banner", "-y" if args.overwrite else "-n",
+        "-i", str(source),
+        "-filter_complex", filters,
+        "-map", "[stereo]", "-map", "0:a?", "-map", "0:s?",
+        "-map_metadata", "0", "-map_chapters", "0",
+        "-c:v", args.encoder, "-crf", f"{args.crf:g}",
+        "-preset", str(args.preset), "-pix_fmt", "yuv420p10le",
+        "-threads", str(args.threads),
+    ]
+    if args.audio_mode == "copy":
+        command += ["-c:a", "copy"]
+    elif args.audio_mode == "opus":
+        command += ["-c:a", "libopus", "-b:a", "192k"]
+    else:
+        command += ["-c:a", "aac", "-b:a", "256k"]
+    command += [
+        "-c:s", "copy", "-metadata:s:v:0", "stereo_mode=left_right",
+        "-progress", "pipe:1", "-nostats", str(output),
+    ]
 
-    os.replace(partial_output, output_video)
-    print(f"[DONE] {output_video}", flush=True)
-    print(f"[INFO] Encoded frames: {frame_count}", flush=True)
+    print(f"[INFO] 输出：{output}", flush=True)
+    print(f"[INFO] AV1：encoder={args.encoder}, CRF={args.crf:g}, preset={args.preset}", flush=True)
+    print(f"[INFO] Half-SBS：{args.eye_width}x{args.eye_height} + {args.eye_width}x{args.eye_height}", flush=True)
+    started = time.monotonic()
+    process = subprocess.Popen(
+        command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        text=True, encoding="utf-8", errors="replace", bufsize=1,
+    )
+    last_percent = -1
+    assert process.stdout is not None
+    for raw in process.stdout:
+        line = raw.strip()
+        if "=" in line:
+            key, value = line.split("=", 1)
+            seconds = progress_seconds(key, value)
+            if seconds is not None and duration > 0:
+                percent = min(99, max(0, int(seconds * 100 / duration)))
+                if percent != last_percent:
+                    elapsed = time.monotonic() - started
+                    print(f"\r[PROGRESS] {percent:3d}%  elapsed={elapsed / 60:.1f} min", end="", flush=True)
+                    last_percent = percent
+            elif key == "progress" and value == "end":
+                print("\r[PROGRESS] 100%  转换完成                         ", flush=True)
+        elif "error" in line.lower() or "failed" in line.lower():
+            print(f"\n[FFMPEG] {line}", flush=True)
+
+    return_code = process.wait()
+    if return_code != 0:
+        if output.exists():
+            output.unlink()
+        fail(f"FFmpeg 转换失败，退出码：{return_code}", 7)
+
+    out_video, _ = probe(output)
+    out_width = int(out_video.get("width") or 0)
+    out_height = int(out_video.get("height") or 0)
+    if (out_width, out_height) != (args.eye_width * 2, args.eye_height):
+        fail(f"输出校验失败：得到 {out_width}x{out_height}", 8)
+    print(f"[OK] 输出校验通过：{out_width}x{out_height}, AV1 CRF {args.crf:g}", flush=True)
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    sys.exit(main())
