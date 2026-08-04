@@ -2,9 +2,11 @@
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -554,6 +556,20 @@ def default_output_dir() -> Path:
     return (launch_base_dir() / "converted").resolve()
 
 
+def format_command_for_log(command: list[str]) -> str:
+    parts = [str(part) for part in command]
+    if os.name == "nt":
+        return subprocess.list2cmdline(parts)
+    return shlex.join(parts)
+
+
+def short_log_line(line: str, limit: int = 240) -> str:
+    text = line.replace("\r", "\\r").replace("\n", "\\n")
+    if len(text) <= limit:
+        return text
+    return f"{text[:limit]}..."
+
+
 def find_executable(name: str) -> str:
     exe = shutil.which(name)
     if not exe:
@@ -796,6 +812,17 @@ def stream_duration_seconds(info: VideoInfo) -> float | None:
             return float(duration)
         except ValueError:
             pass
+    return None
+
+
+def video_frame_count(info: VideoInfo) -> int | None:
+    frames = parse_int(info.video.get("nb_frames"))
+    if frames:
+        return frames
+    duration = stream_duration_seconds(info)
+    fps = fraction_to_float(info.video.get("avg_frame_rate") or info.video.get("r_frame_rate"))
+    if duration and fps:
+        return max(1, int(duration * fps))
     return None
 
 
@@ -1306,7 +1333,7 @@ class ProbeWorker(QThread):
 
 class ConvertWorker(QThread):
     item_status = pyqtSignal(str, str)
-    item_progress = pyqtSignal(str, int)
+    item_progress = pyqtSignal(str, float)
     item_done = pyqtSignal(str, str, object)
     item_failed = pyqtSignal(str, str)
     overall_progress = pyqtSignal(int)
@@ -1343,9 +1370,12 @@ class ConvertWorker(QThread):
             output_path = output_path_for(info.path, self.settings.output_dir, self.settings.overwrite)
             command = build_ffmpeg_command(self.ffmpeg, info, output_path, self.settings)
             duration = stream_duration_seconds(info) or 1
+            total_frames = video_frame_count(info)
             self.item_status.emit(key, "转换中")
-            self.item_progress.emit(key, 0)
+            self.item_progress.emit(key, 0.0)
             self.log.emit(f"[转换] {info.path.name} -> {output_path.name}")
+            self.log.emit(f"[DEBUG] progress baseline: duration={duration:.2f}s, total_frames={total_frames or '-'}")
+            self.log.emit(f"[DEBUG] ffmpeg command: {format_command_for_log(command)}")
 
             try:
                 self._process = subprocess.Popen(
@@ -1357,18 +1387,32 @@ class ConvertWorker(QThread):
                     errors="replace",
                     creationflags=ffmpeg_creation_flags(),
                 )
-                last_percent = 0
+                last_percent = 0.01
+                self.item_progress.emit(key, last_percent)
+                self.overall_progress.emit(int(((index + last_percent / 100) / total) * 10000))
+                self.log.emit("[DEBUG] ffmpeg process started; initial progress=0.01%")
+                debug_progress_logs = 0
+                debug_unparsed_logs = 0
+                last_debug_log_at = 0.0
                 assert self._process.stdout is not None
                 for raw_line in self._process.stdout:
                     line = raw_line.strip()
                     if not line:
                         continue
-                    parsed = self._parse_progress_line(line, duration)
+                    parsed = self._parse_progress_line(line, duration, total_frames)
                     if parsed is not None:
                         last_percent = max(last_percent, parsed)
                         self.item_progress.emit(key, last_percent)
-                        overall = int(((index + last_percent / 100) / total) * 100)
+                        overall = int(((index + last_percent / 100) / total) * 10000)
                         self.overall_progress.emit(overall)
+                        now = time.monotonic()
+                        if debug_progress_logs < 8 or now - last_debug_log_at >= 30:
+                            self.log.emit(f"[DEBUG] progress parsed: {last_percent:.2f}% <= {short_log_line(line)}")
+                            debug_progress_logs += 1
+                            last_debug_log_at = now
+                    elif "=" in line and debug_unparsed_logs < 12:
+                        self.log.emit(f"[DEBUG] progress unparsed: {short_log_line(line)}")
+                        debug_unparsed_logs += 1
                     elif line.startswith("[") or "Error" in line or "error" in line:
                         self.log.emit(line)
 
@@ -1387,49 +1431,71 @@ class ConvertWorker(QThread):
                 self.item_done.emit(key, str(output_path), {"probe": output_probe, "report_path": str(transfer_path)})
                 self.log.emit(f"[完成] {output_path.name}")
                 self.log.emit(f"[报告] {transfer_path}")
-                self.overall_progress.emit(int(((index + 1) / total) * 100))
+                self.overall_progress.emit(int(((index + 1) / total) * 10000))
             except Exception as exc:
                 self.item_failed.emit(key, str(exc))
 
         self.finished_all.emit()
 
     @staticmethod
-    def _parse_progress_line(line: str, duration: float) -> int | None:
+    def _parse_progress_line(line: str, duration: float, total_frames: int | None) -> float | None:
         if "=" not in line:
             return None
         key, value = line.split("=", 1)
         if key not in {"out_time_ms", "out_time_us", "out_time", "progress"}:
-            return ConvertWorker._parse_stats_time(line, duration)
+            return ConvertWorker._parse_stats_progress(line, duration, total_frames)
         if key == "progress" and value == "end":
-            return 100
+            return 100.0
         if key in {"out_time_ms", "out_time_us"}:
             try:
                 seconds = int(value) / 1_000_000
-                return min(99, max(0, int(seconds / duration * 100)))
+                return ConvertWorker._percent_from_seconds(seconds, duration)
             except ValueError:
                 return None
         if key == "out_time":
-            parsed = ConvertWorker._percent_from_timestamp(value, duration)
-            return parsed
-        return ConvertWorker._parse_stats_time(line, duration)
+            return ConvertWorker._percent_from_timestamp(value, duration)
+        return ConvertWorker._parse_stats_progress(line, duration, total_frames)
 
     @staticmethod
-    def _percent_from_timestamp(value: str, duration: float) -> int | None:
+    def _percent_from_seconds(seconds: float, duration: float) -> float | None:
+        if duration <= 0:
+            return None
+        percent = seconds / duration * 100
+        if seconds > 0 and percent < 0.01:
+            return 0.01
+        return min(99.99, max(0.0, round(percent, 2)))
+
+    @staticmethod
+    def _percent_from_timestamp(value: str, duration: float) -> float | None:
         parts = value.split(":")
         if len(parts) != 3:
             return None
         try:
             seconds = int(parts[0]) * 3600 + int(parts[1]) * 60 + float(parts[2])
-            return min(99, max(0, int(seconds / duration * 100)))
+            return ConvertWorker._percent_from_seconds(seconds, duration)
         except ValueError:
             return None
 
     @staticmethod
-    def _parse_stats_time(line: str, duration: float) -> int | None:
-        match = re.search(r"\btime=\s*([0-9]+:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?)", line)
-        if not match:
+    def _percent_from_frame(frame: int, total_frames: int | None) -> float | None:
+        if not total_frames or frame <= 0:
             return None
-        return ConvertWorker._percent_from_timestamp(match.group(1), duration)
+        percent = frame / total_frames * 100
+        if percent < 0.01:
+            return 0.01
+        return min(99.99, max(0.0, round(percent, 2)))
+
+    @staticmethod
+    def _parse_stats_progress(line: str, duration: float, total_frames: int | None) -> float | None:
+        time_match = re.search(r"\btime=\s*([0-9]+:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?)", line)
+        if time_match:
+            parsed = ConvertWorker._percent_from_timestamp(time_match.group(1), duration)
+            if parsed and parsed > 0:
+                return parsed
+        frame_match = re.search(r"\bframe=\s*([0-9]+)", line)
+        if not frame_match:
+            return None
+        return ConvertWorker._percent_from_frame(int(frame_match.group(1)), total_frames)
 
 
 class MainWindow(QMainWindow):
@@ -1614,8 +1680,9 @@ class MainWindow(QMainWindow):
         log_layout = QVBoxLayout(self.log_group)
         log_layout.setContentsMargins(10, 8, 10, 10)
         self.overall_progress = QProgressBar()
-        self.overall_progress.setRange(0, 100)
+        self.overall_progress.setRange(0, 10000)
         self.overall_progress.setValue(0)
+        self.overall_progress.setFormat("0.00%")
         log_layout.addWidget(self.overall_progress)
         self.log_edit = QTextEdit()
         self.log_edit.setReadOnly(True)
@@ -2072,6 +2139,7 @@ class MainWindow(QMainWindow):
         self.stop_button.setEnabled(True)
         self.detect_button.setEnabled(False)
         self.overall_progress.setValue(0)
+        self.overall_progress.setFormat("0.00%")
         self.statusBar().showMessage(self.text("status_converting"))
 
         self.convert_worker = ConvertWorker(infos, settings, self.ffmpeg, self.ffprobe)
@@ -2079,12 +2147,16 @@ class MainWindow(QMainWindow):
         self.convert_worker.item_progress.connect(self.on_convert_progress)
         self.convert_worker.item_done.connect(self.on_convert_done)
         self.convert_worker.item_failed.connect(self.on_convert_failed)
-        self.convert_worker.overall_progress.connect(self.overall_progress.setValue)
+        self.convert_worker.overall_progress.connect(self.on_overall_progress)
         self.convert_worker.log.connect(self.log)
         self.convert_worker.finished_all.connect(self.on_convert_finished)
         self.convert_worker.start()
         self._update_stats()
 
+    def on_overall_progress(self, value: int) -> None:
+        value = max(0, min(10000, int(value)))
+        self.overall_progress.setValue(value)
+        self.overall_progress.setFormat(f"{value / 100:.2f}%")
     def stop_convert(self) -> None:
         if self.convert_worker and self.convert_worker.isRunning():
             self.log("[转换] 请求停止当前任务")
@@ -2099,13 +2171,15 @@ class MainWindow(QMainWindow):
         self._paint_status(row, status)
         self._update_stats()
 
-    def on_convert_progress(self, key: str, percent: int) -> None:
+    def on_convert_progress(self, key: str, percent: float) -> None:
         row = self.path_to_row.get(key)
         if row is None:
             return
         self.records[row]["progress"] = percent
-        self.table.item(row, 7).setText(f"{self.status_text('转换中')} {percent}%")
-        self._paint_status(row, "转换中")
+        status = self.records[row].get("status", "")
+        display = "0%" if percent <= 0 else f"{percent:.2f}%"
+        self.table.item(row, 7).setText(f"{self.status_text(status)} {display}")
+        self._paint_status(row, status)
 
     def on_convert_done(self, key: str, output_path: str, output_payload: object) -> None:
         row = self.path_to_row.get(key)
