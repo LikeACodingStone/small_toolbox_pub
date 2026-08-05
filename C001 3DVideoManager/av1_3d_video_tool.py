@@ -87,7 +87,7 @@ TRANSLATIONS = {
         "size_mode": "尺寸模式",
         "custom_width": "自定义宽",
         "crf": "CRF",
-        "preserve_bitrate": "保留源视频码率",
+        "smart_compress": "\u667a\u80fdAV1\u89c2\u611f\u538b\u7f29",
         "preset": "Preset",
         "audio": "音频",
         "overwrite": "允许覆盖同名输出文件",
@@ -228,7 +228,7 @@ TRANSLATIONS = {
         "size_mode": "サイズ設定",
         "custom_width": "カスタム幅",
         "crf": "CRF",
-        "preserve_bitrate": "元動画ビットレートを保持",
+        "smart_compress": "Smart AV1 perceptual compression",
         "preset": "Preset",
         "audio": "音声",
         "overwrite": "同名出力ファイルを上書き",
@@ -369,7 +369,7 @@ TRANSLATIONS = {
         "size_mode": "Size Mode",
         "custom_width": "Custom Width",
         "crf": "CRF",
-        "preserve_bitrate": "Preserve source bitrate",
+        "smart_compress": "Smart AV1 perceptual compression",
         "preset": "Preset",
         "audio": "Audio",
         "overwrite": "Overwrite existing output files",
@@ -521,7 +521,7 @@ class VideoInfo:
 class ConvertSettings:
     output_dir: Path
     encoder: str
-    preserve_bitrate: bool
+    smart_compress: bool
     resolution_mode: str
     custom_width: int
     custom_height: int
@@ -662,7 +662,7 @@ def report_path_for(output_path: Path) -> Path:
 
 def conversion_setting_label(settings: ConvertSettings) -> str:
     return (
-        f"encoder={settings.encoder}, preserve_bitrate={settings.preserve_bitrate}, crf={settings.crf}, preset={settings.preset}, "
+        f"encoder={settings.encoder}, smart_compress={settings.smart_compress}, crf={settings.crf}, preset={settings.preset}, "
         f"resolution_mode={report_resolution_mode(settings.resolution_mode)}, "
         f"audio={report_audio_mode(settings.audio_mode)}"
     )
@@ -724,7 +724,8 @@ def write_transfer_markdown(
         "| 参数 | 值 |",
         "|---|---:|",
         f"| 编码器 | {markdown_escape(settings.encoder)} |",
-        f"| 保留源视频码率 | {markdown_escape(settings.preserve_bitrate)} |",
+        f"| Smart AV1 compression | {markdown_escape(settings.smart_compress)} |",
+        f"| Target AV1 video bitrate | {markdown_escape(format_bitrate(smart_av1_target_bitrate(input_info)) if settings.smart_compress else 'CRF/QP mode')} |",
         f"| CRF/QP | {markdown_escape(settings.crf)} |",
         f"| Preset | {markdown_escape(settings.preset)} |",
         f"| 尺寸模式 | {markdown_escape(report_resolution_mode(settings.resolution_mode))} |",
@@ -955,6 +956,42 @@ def probe_duration_seconds(probe: dict[str, Any], video: dict[str, Any]) -> floa
     return parse_float(video.get("duration"))
 
 
+def estimate_audio_stream_bitrate(stream: dict[str, Any]) -> int:
+    bitrate = parse_int(stream.get("bit_rate"))
+    if bitrate:
+        return bitrate
+
+    codec = (stream.get("codec_name") or "").lower()
+    profile = f"{stream.get('profile') or ''} {stream.get('codec_long_name') or ''}".lower()
+    channels = parse_int(stream.get("channels")) or 2
+    sample_rate = parse_int(stream.get("sample_rate")) or 48000
+    bits = parse_int(stream.get("bits_per_raw_sample")) or parse_int(stream.get("bits_per_sample"))
+
+    if codec.startswith("pcm"):
+        return sample_rate * channels * (bits or 16)
+    if codec in {"truehd", "mlp"}:
+        return 4_500_000
+    if codec in {"dts", "dca"}:
+        if "master" in profile or "hd" in profile or "ma" in profile:
+            return 4_000_000
+        return 1_509_000
+    if codec in {"flac", "alac"}:
+        return 1_500_000
+    if codec == "eac3":
+        return 768_000
+    if codec == "ac3":
+        return 640_000
+    if codec == "opus":
+        return 160_000
+    if codec in {"aac", "mp3"}:
+        return 192_000
+    return max(128_000, channels * 128_000)
+
+
+def estimate_audio_bitrate(audio_streams: list[dict[str, Any]]) -> int:
+    return sum(estimate_audio_stream_bitrate(stream) for stream in audio_streams)
+
+
 def estimate_video_bitrate(
     path: Path,
     probe: dict[str, Any],
@@ -967,14 +1004,17 @@ def estimate_video_bitrate(
 
     format_bitrate_value = parse_int(probe.get("format", {}).get("bit_rate"))
     if format_bitrate_value:
-        known_audio_bitrate = sum(parse_int(stream.get("bit_rate")) or 0 for stream in audio_streams)
-        estimated = max(0, format_bitrate_value - known_audio_bitrate)
+        audio_bitrate = estimate_audio_bitrate(audio_streams)
+        estimated = max(0, format_bitrate_value - audio_bitrate)
         return estimated or format_bitrate_value, "format_estimate"
 
     duration = probe_duration_seconds(probe, video)
     size = file_size(path)
     if duration and size:
-        return int(size * 8 / duration), "file_size_estimate"
+        file_bitrate = int(size * 8 / duration)
+        audio_bitrate = estimate_audio_bitrate(audio_streams)
+        estimated = max(0, file_bitrate - audio_bitrate)
+        return estimated or file_bitrate, "file_size_estimate"
 
     return None, "unknown"
 
@@ -1191,6 +1231,83 @@ def source_video_bitrate(info: VideoInfo) -> int | None:
     return None
 
 
+def smart_av1_ratio(codec_name: str | None, bpppf: float | None) -> float:
+    codec = (codec_name or "").lower()
+    if codec in {"hevc", "h265"}:
+        if bpppf is not None and bpppf >= 0.18:
+            return 0.52
+        if bpppf is not None and bpppf >= 0.12:
+            return 0.56
+        if bpppf is not None and bpppf >= 0.08:
+            return 0.62
+        if bpppf is not None and bpppf >= 0.045:
+            return 0.70
+        return 0.82
+    if codec in {"h264", "avc1"}:
+        return 0.48
+    if codec == "vp9":
+        return 0.68
+    if codec == "av1":
+        return 0.95
+    return 0.65
+
+
+def av1_quality_floor_bpppf(info: VideoInfo) -> float | None:
+    width = parse_int(info.video.get("width"))
+    height = parse_int(info.video.get("height"))
+    fps = fraction_to_float(info.video.get("avg_frame_rate") or info.video.get("r_frame_rate"))
+    if not width or not height or not fps:
+        return None
+
+    if height >= 2160 or width >= 3840:
+        floor = 0.055
+    elif height >= 1440:
+        floor = 0.060
+    elif height >= 1080:
+        floor = 0.065
+    else:
+        floor = 0.075
+
+    if fps > 40:
+        floor *= 1.25
+    pix_fmt = (info.video.get("pix_fmt") or "").lower()
+    if "10" in pix_fmt or "12" in pix_fmt:
+        floor *= 1.05
+    return floor
+
+
+def smart_av1_target_bitrate(info: VideoInfo) -> int | None:
+    source_bitrate = source_video_bitrate(info)
+    if not source_bitrate:
+        return None
+
+    width = parse_int(info.video.get("width"))
+    height = parse_int(info.video.get("height"))
+    fps = fraction_to_float(info.video.get("avg_frame_rate") or info.video.get("r_frame_rate"))
+    bpppf = None
+    if width and height and fps:
+        bpppf = source_bitrate / (width * height * fps)
+
+    target = int(source_bitrate * smart_av1_ratio(info.video.get("codec_name"), bpppf))
+    floor_bpppf = av1_quality_floor_bpppf(info)
+    if floor_bpppf and width and height and fps:
+        target = max(target, int(width * height * fps * floor_bpppf))
+
+    codec = (info.video.get("codec_name") or "").lower()
+    cap_ratio = 0.88 if codec != "av1" else 0.98
+    target = min(target, int(source_bitrate * cap_ratio))
+    return max(300_000, target)
+
+
+def smart_av1_plan_summary(info: VideoInfo) -> str:
+    source_bitrate = source_video_bitrate(info)
+    target_bitrate = smart_av1_target_bitrate(info)
+    if not source_bitrate or not target_bitrate:
+        return "source video bitrate unknown; falling back to CRF/QP"
+    ratio = target_bitrate / source_bitrate * 100
+    return f"source_video={format_bitrate(source_bitrate)}, target_av1={format_bitrate(target_bitrate)} ({ratio:.0f}% of source video)"
+
+
 def output_path_for(input_path: Path, output_dir: Path, overwrite: bool) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     base = output_dir / f"{input_path.stem}_av1.mkv"
@@ -1272,7 +1389,7 @@ def build_ffmpeg_command(
     encoder = settings.encoder
     cmd.extend(["-c:v:0", encoder, "-pix_fmt", av1_pix_fmt(info.video.get("pix_fmt"))])
 
-    target_bitrate = source_video_bitrate(info) if settings.preserve_bitrate else None
+    target_bitrate = smart_av1_target_bitrate(info) if settings.smart_compress else None
     if target_bitrate:
         cmd.extend(["-b:v:0", str(target_bitrate)])
         if encoder == "libsvtav1":
@@ -1375,6 +1492,8 @@ class ConvertWorker(QThread):
             self.item_progress.emit(key, 0.0)
             self.log.emit(f"[转换] {info.path.name} -> {output_path.name}")
             self.log.emit(f"[DEBUG] progress baseline: duration={duration:.2f}s, total_frames={total_frames or '-'}")
+            if self.settings.smart_compress:
+                self.log.emit(f"[DEBUG] smart AV1 plan: {smart_av1_plan_summary(info)}")
             self.log.emit(f"[DEBUG] ffmpeg command: {format_command_for_log(command)}")
 
             try:
@@ -1756,9 +1875,9 @@ class MainWindow(QMainWindow):
         grid.addWidget(self.custom_width_spin, 2, 1)
         grid.addWidget(self.custom_height_spin, 2, 2)
 
-        self.preserve_bitrate_checkbox = QCheckBox()
-        self.preserve_bitrate_checkbox.setChecked(True)
-        grid.addWidget(self.preserve_bitrate_checkbox, 3, 0, 1, 3)
+        self.smart_compress_checkbox = QCheckBox()
+        self.smart_compress_checkbox.setChecked(True)
+        grid.addWidget(self.smart_compress_checkbox, 3, 0, 1, 3)
 
         self.crf_slider = QSlider(Qt.Horizontal)
         self.crf_slider.setRange(0, 63)
@@ -1814,12 +1933,12 @@ class MainWindow(QMainWindow):
         self.preset_slider.valueChanged.connect(self.preset_spin.setValue)
         self.preset_spin.valueChanged.connect(self.preset_slider.setValue)
         self.resolution_combo.currentIndexChanged.connect(self.update_custom_size_enabled)
-        self.preserve_bitrate_checkbox.toggled.connect(self.update_bitrate_mode_enabled)
+        self.smart_compress_checkbox.toggled.connect(self.update_smart_compress_enabled)
         self.update_custom_size_enabled()
-        self.update_bitrate_mode_enabled()
+        self.update_smart_compress_enabled()
 
-    def update_bitrate_mode_enabled(self) -> None:
-        use_crf = not self.preserve_bitrate_checkbox.isChecked()
+    def update_smart_compress_enabled(self) -> None:
+        use_crf = not self.smart_compress_checkbox.isChecked()
         self.crf_label.setEnabled(use_crf)
         self.crf_slider.setEnabled(use_crf)
         self.crf_spin.setEnabled(use_crf)
@@ -1879,7 +1998,7 @@ class MainWindow(QMainWindow):
         self.apply_3d_button.setText(self.text("apply_selected"))
         self.settings_group.setTitle(self.text("av1_settings"))
         self.encoder_label.setText(self.text("encoder"))
-        self.preserve_bitrate_checkbox.setText(self.text("preserve_bitrate"))
+        self.smart_compress_checkbox.setText(self.text("smart_compress"))
         self.resolution_label.setText(self.text("size_mode"))
         self.custom_width_label.setText(self.text("custom_width"))
         self.crf_label.setText(self.text("crf"))
@@ -2219,7 +2338,7 @@ class MainWindow(QMainWindow):
         return ConvertSettings(
             output_dir=Path(self.output_dir_edit.text()),
             encoder=self.encoder_combo.currentData() or "",
-            preserve_bitrate=self.preserve_bitrate_checkbox.isChecked(),
+            smart_compress=self.smart_compress_checkbox.isChecked(),
             resolution_mode=self.resolution_combo.currentData() or "keep",
             custom_width=self.custom_width_spin.value(),
             custom_height=self.custom_height_spin.value(),
