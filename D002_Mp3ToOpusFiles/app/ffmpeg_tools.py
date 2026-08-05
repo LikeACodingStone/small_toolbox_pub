@@ -4,7 +4,13 @@ import json
 import subprocess
 from pathlib import Path
 
-from .models import AudioFile, target_bitrate_auto, target_sample_rate_with_limit
+from .models import (
+    AudioFile,
+    RESAMPLED_FOLDER_SUFFIX,
+    RESAMPLED_OPUS_SUFFIX,
+    target_bitrate_auto,
+    target_sample_rate_with_limit,
+)
 from .platform_utils import find_executable
 
 
@@ -71,10 +77,26 @@ def probe_audio(path: Path, ffprobe_path: str | None = None) -> dict[str, object
     }
 
 
+def opus_resample_output_root(source_root: Path) -> Path:
+    if not source_root.name:
+        return source_root / f"resampled{RESAMPLED_FOLDER_SUFFIX}"
+    return source_root.with_name(f"{source_root.name}{RESAMPLED_FOLDER_SUFFIX}")
+
+
+def opus_resample_output_path(path: Path, source_root: Path) -> Path:
+    output_root = opus_resample_output_root(source_root)
+    try:
+        relative_path = path.relative_to(source_root)
+    except ValueError:
+        relative_path = Path(path.name)
+    return output_root / relative_path
+
+
 def build_audio_file(
     path: Path,
     target_sample_rate: int | None,
     ffprobe_path: str | None = None,
+    opus_source_root: Path | None = None,
 ) -> AudioFile:
     details = probe_audio(path, ffprobe_path=ffprobe_path)
     sample_rate = details["sample_rate"]
@@ -82,10 +104,18 @@ def build_audio_file(
     output_path = path.with_suffix(".opus")
 
     if output_path == path:
-        output_path = path.with_name(f"{path.stem}.resampled.opus")
+        if opus_source_root is not None:
+            output_path = opus_resample_output_path(path, opus_source_root)
+        else:
+            output_path = path.with_name(f"{path.stem}{RESAMPLED_OPUS_SUFFIX}")
 
     chosen_sample_rate = target_sample_rate_with_limit(sample_rate, target_sample_rate)
-    target_bitrate = target_bitrate_auto(bitrate_kbps, path.suffix)
+    target_bitrate = target_bitrate_auto(
+        bitrate_kbps,
+        path.suffix,
+        target_sample_rate_hz=chosen_sample_rate,
+        source_sample_rate_hz=sample_rate,
+    )
 
     status = "Ready"
     message = ""
@@ -104,6 +134,17 @@ def build_audio_file(
         status=status,
         message=message,
     )
+
+
+def format_file_size(size_bytes: int | None) -> str:
+    if size_bytes is None:
+        return "unknown"
+    size = float(size_bytes)
+    for unit in ("B", "KB", "MB", "GB"):
+        if size < 1024 or unit == "GB":
+            return f"{size:.1f} {unit}" if unit != "B" else f"{int(size)} B"
+        size /= 1024
+    return f"{size:.1f} GB"
 
 
 def convert_audio(
@@ -149,6 +190,20 @@ def convert_audio(
         audio.message = result.stderr.strip() or "ffmpeg conversion failed"
         return audio
 
+    try:
+        source_size = audio.source_path.stat().st_size
+    except OSError:
+        source_size = None
+    try:
+        output_size = audio.output_path.stat().st_size
+    except OSError:
+        output_size = None
+
+    size_summary = f"{format_file_size(source_size)} -> {format_file_size(output_size)}"
+    target_summary = f"target {audio.target_bitrate or 'auto'} @ {audio.target_sample_rate or 48000} Hz"
     audio.status = "Converted"
-    audio.message = "OK"
+    if source_size is not None and output_size is not None and output_size > source_size:
+        audio.message = f"OK, output larger: {size_summary}; {target_summary}"
+    else:
+        audio.message = f"OK, size {size_summary}; {target_summary}"
     return audio

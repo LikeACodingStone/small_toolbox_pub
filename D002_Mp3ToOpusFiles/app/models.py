@@ -4,9 +4,20 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-AUDIO_EXTENSIONS = {".mp3", ".flac"}
-SOURCE_DELETE_EXTENSIONS = {".mp3", ".flac"}
+SOURCE_AUDIO_EXTENSIONS = {".mp3", ".flac"}
+OPUS_AUDIO_EXTENSIONS = {".opus"}
+RESAMPLED_OPUS_SUFFIX = ".resampled.opus"
+RESAMPLED_FOLDER_SUFFIX = "_rsm"
+AUDIO_EXTENSIONS = SOURCE_AUDIO_EXTENSIONS | OPUS_AUDIO_EXTENSIONS
+SOURCE_DELETE_EXTENSIONS = SOURCE_AUDIO_EXTENSIONS
 TARGET_SAMPLE_RATES = (8000, 12000, 16000, 24000, 48000)
+DOWNSAMPLE_BITRATE_CAPS_KBPS = {
+    8000: 16,
+    12000: 24,
+    16000: 32,
+    24000: 48,
+    48000: 160,
+}
 
 
 @dataclass
@@ -58,36 +69,67 @@ def target_sample_rate_with_limit(
     return min(chosen, max(allowed_rates))
 
 
-def target_bitrate_auto(bitrate_kbps: float | None, source_suffix: str = "") -> str:
+def _bitrate_label(value_kbps: float) -> str:
+    return f"{max(6, int(round(value_kbps)))}k"
+
+
+def target_bitrate_cap_for_sample_rate(sample_rate_hz: int | None) -> int | None:
+    if sample_rate_hz is None:
+        return None
+    for rate in TARGET_SAMPLE_RATES:
+        if sample_rate_hz <= rate:
+            return DOWNSAMPLE_BITRATE_CAPS_KBPS[rate]
+    return DOWNSAMPLE_BITRATE_CAPS_KBPS[max(TARGET_SAMPLE_RATES)]
+
+
+def target_bitrate_auto(
+    bitrate_kbps: float | None,
+    source_suffix: str = "",
+    target_sample_rate_hz: int | None = None,
+    source_sample_rate_hz: int | None = None,
+) -> str:
     suffix = source_suffix.lower()
     if bitrate_kbps is None:
-        return "128k"
-
-    if suffix == ".mp3":
+        chosen_kbps = 128
+    elif suffix == ".mp3":
         if bitrate_kbps <= 64:
-            return "48k"
-        if bitrate_kbps <= 96:
-            return "64k"
-        if bitrate_kbps <= 128:
-            return "80k"
-        if bitrate_kbps <= 160:
-            return "96k"
-        if bitrate_kbps <= 192:
-            return "112k"
-        if bitrate_kbps <= 256:
-            return "128k"
-        return "160k"
+            chosen_kbps = 48
+        elif bitrate_kbps <= 96:
+            chosen_kbps = 64
+        elif bitrate_kbps <= 128:
+            chosen_kbps = 80
+        elif bitrate_kbps <= 160:
+            chosen_kbps = 96
+        elif bitrate_kbps <= 192:
+            chosen_kbps = 112
+        elif bitrate_kbps <= 256:
+            chosen_kbps = 128
+        else:
+            chosen_kbps = 160
+    elif bitrate_kbps <= 64:
+        chosen_kbps = 48
+    elif bitrate_kbps <= 96:
+        chosen_kbps = 64
+    elif bitrate_kbps <= 128:
+        chosen_kbps = 80
+    elif bitrate_kbps <= 160:
+        chosen_kbps = 96
+    elif bitrate_kbps <= 192:
+        chosen_kbps = 112
+    elif bitrate_kbps <= 256:
+        chosen_kbps = 128
+    else:
+        chosen_kbps = 160
 
-    if bitrate_kbps <= 64:
-        return "48k"
-    if bitrate_kbps <= 96:
-        return "64k"
-    if bitrate_kbps <= 128:
-        return "80k"
-    if bitrate_kbps <= 160:
-        return "96k"
-    if bitrate_kbps <= 192:
-        return "112k"
-    if bitrate_kbps <= 256:
-        return "128k"
-    return "160k"
+    is_downsample = (
+        target_sample_rate_hz is not None
+        and (source_sample_rate_hz is None or source_sample_rate_hz > target_sample_rate_hz)
+    )
+    if is_downsample:
+        cap_kbps = target_bitrate_cap_for_sample_rate(target_sample_rate_hz)
+        if cap_kbps is not None:
+            chosen_kbps = min(chosen_kbps, cap_kbps)
+        if bitrate_kbps is not None:
+            chosen_kbps = min(chosen_kbps, max(6, bitrate_kbps * 0.95))
+
+    return _bitrate_label(chosen_kbps)

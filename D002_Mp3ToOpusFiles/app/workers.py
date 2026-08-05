@@ -2,14 +2,18 @@ from __future__ import annotations
 
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import replace
 from pathlib import Path
 
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 
 from .ffmpeg_tools import convert_audio, require_tools
-from .models import AudioFile
+from .models import AudioFile, SOURCE_DELETE_EXTENSIONS
 from .platform_utils import delete_file
 from .scanner import scan_audio_files
+
+
+MAX_FFMPEG_WORKERS = 2
 
 
 class ScanWorker(QObject):
@@ -50,7 +54,7 @@ class ConvertWorker(QObject):
 
     def __init__(self, files: list[AudioFile], workers: int, overwrite: bool):
         super().__init__()
-        self.files = files
+        self.files = [replace(audio) for audio in files]
         self.workers = workers
         self.overwrite = overwrite
 
@@ -62,12 +66,24 @@ class ConvertWorker(QObject):
             total = len(convertable)
             results: list[AudioFile] = []
             self.log.emit(f"ffmpeg: {ffmpeg}")
-            self.log.emit(f"Convert workers: {max(1, self.workers)}, files: {total}, overwrite: {self.overwrite}")
             if total == 0:
                 self.finished.emit(results)
                 return
 
-            with ThreadPoolExecutor(max_workers=max(1, self.workers)) as executor:
+            max_workers = min(max(1, self.workers), MAX_FFMPEG_WORKERS, total)
+            progress_every = max(1, total // 100)
+            self.log.emit(
+                f"Convert workers: {max_workers}, files: {total}, "
+                f"requested workers: {self.workers}, overwrite: {self.overwrite}"
+            )
+            if max_workers < max(1, self.workers):
+                self.log.emit(
+                    f"Convert workers capped at {MAX_FFMPEG_WORKERS} to keep the UI responsive."
+                )
+            self.log.emit("Convert progress is throttled to keep the UI responsive.")
+
+            status_counter: Counter[str] = Counter()
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 future_map = {
                     executor.submit(convert_audio, audio, self.overwrite, ffmpeg): audio
                     for audio in convertable
@@ -81,8 +97,19 @@ class ConvertWorker(QObject):
                         audio.message = str(exc)
                         result = audio
                     results.append(result)
-                    self.progress.emit(done, total, result)
+                    status_counter[result.status] += 1
 
+                    output_larger = "output larger" in result.message.lower()
+                    if done == total or done % progress_every == 0 or result.status == "Failed" or output_larger:
+                        payload = result if result.status == "Failed" or output_larger else f"Processed {done}/{total}"
+                        self.progress.emit(done, total, payload)
+
+            self.log.emit(
+                "Convert summary: "
+                f"converted={status_counter['Converted']}, "
+                f"skipped={status_counter['Skipped']}, "
+                f"failed={status_counter['Failed']}"
+            )
             self.finished.emit(results)
         except Exception as exc:
             self.failed.emit(str(exc))
@@ -104,7 +131,7 @@ class DeleteWorker(QObject):
         try:
             deletable = [
                 audio for audio in self.files
-                if audio.source_path.suffix.lower() in {".mp3", ".flac"}
+                if audio.source_path.suffix.lower() in SOURCE_DELETE_EXTENSIONS
             ]
             total = len(deletable)
             results: list[AudioFile] = []

@@ -29,7 +29,14 @@ from PyQt5.QtWidgets import (
 )
 
 from .config import load_ui_config
-from .models import AudioFile, TARGET_SAMPLE_RATES, target_bitrate_auto, target_sample_rate_with_limit
+from .models import (
+    AudioFile,
+    OPUS_AUDIO_EXTENSIONS,
+    SOURCE_DELETE_EXTENSIONS,
+    TARGET_SAMPLE_RATES,
+    target_bitrate_auto,
+    target_sample_rate_with_limit,
+)
 from .platform_utils import system_name, worker_count
 from .workers import ConvertWorker, DeleteWorker, ScanWorker
 
@@ -243,12 +250,36 @@ class MainWindow(QMainWindow):
     def selected_target_rate(self) -> int | None:
         return self.sample_rate_combo.currentData()
 
+    def is_opus_resample_mode(self) -> bool:
+        return bool(self.files) and all(
+            audio.source_path.suffix.lower() in OPUS_AUDIO_EXTENSIONS
+            for audio in self.files
+        )
+
+    def needs_downsample(self, audio: AudioFile) -> bool:
+        return (
+            audio.sample_rate is not None
+            and audio.target_sample_rate is not None
+            and audio.sample_rate > audio.target_sample_rate
+        )
+
+    def update_conversion_mode(self) -> None:
+        self.convert_button.setText(
+            "Resample Opus" if self.is_opus_resample_mode() else "Convert to Opus"
+        )
+
     def apply_target_settings(self) -> None:
         target = self.selected_target_rate()
         for audio in self.files:
             audio.target_sample_rate = target_sample_rate_with_limit(audio.sample_rate, target)
-            audio.target_bitrate = target_bitrate_auto(audio.bitrate_kbps, audio.source_path.suffix)
+            audio.target_bitrate = target_bitrate_auto(
+                audio.bitrate_kbps,
+                audio.source_path.suffix,
+                target_sample_rate_hz=audio.target_sample_rate,
+                source_sample_rate_hz=audio.sample_rate,
+            )
         self.populate_table()
+        self.update_conversion_mode()
 
     def scan_folder(self) -> None:
         if not self.folder:
@@ -265,16 +296,29 @@ class MainWindow(QMainWindow):
         if not files:
             QMessageBox.information(self, "No files", "No scannable audio files are loaded.")
             return
+
+        start_message = "Converting audio files..."
+        if self.is_opus_resample_mode():
+            files = [audio for audio in files if self.needs_downsample(audio)]
+            if not files:
+                QMessageBox.information(
+                    self,
+                    "No downsample needed",
+                    "Choose a max sample rate lower than at least one loaded Opus file.",
+                )
+                return
+            start_message = "Resampling Opus files..."
+
         self.start_worker(
             ConvertWorker(files, self.workers_spin.value(), self.overwrite_check.isChecked()),
             self.on_convert_finished,
-            "Converting audio files...",
+            start_message,
         )
 
     def delete_sources(self) -> None:
         candidates = [
             audio for audio in self.files
-            if audio.source_path.suffix.lower() in {".flac", ".mp3"}
+            if audio.source_path.suffix.lower() in SOURCE_DELETE_EXTENSIONS
         ]
         if not candidates:
             QMessageBox.information(self, "No sources", "No FLAC/MP3 files are loaded.")
@@ -294,6 +338,16 @@ class MainWindow(QMainWindow):
         self.start_worker(DeleteWorker(candidates, self.workers_spin.value()), self.on_delete_finished, "Checking and deleting source files...")
 
     def start_worker(self, worker, finished_slot, start_message: str) -> None:
+        try:
+            thread_running = self.thread is not None and self.thread.isRunning()
+        except RuntimeError:
+            thread_running = False
+            self.thread = None
+
+        if thread_running:
+            QMessageBox.information(self, "Busy", "A background task is still running.")
+            return
+
         self.set_busy(True)
         self.progress.setRange(0, 0)
         self.append_log(start_message)
@@ -326,22 +380,26 @@ class MainWindow(QMainWindow):
         self.progress.setValue(done)
         if isinstance(payload, AudioFile):
             self.update_audio(payload)
-            self.append_log(f"[{done}/{total}] {payload.source_path.name}: {payload.status}")
+            message = f" - {payload.message}" if payload.message else ""
+            self.append_log(f"[{done}/{total}] {payload.source_path.name}: {payload.status}{message}")
         else:
             self.append_log(f"[{done}/{total}] {payload}")
 
     def on_scan_finished(self, files: list[AudioFile]) -> None:
         self.files = files
         self.populate_table()
+        self.update_conversion_mode()
         self.progress.setRange(0, max(1, len(files)))
         self.progress.setValue(len(files))
         self.append_log(f"Scan complete: {len(files)} audio files.")
+        if self.is_opus_resample_mode():
+            self.append_log("Opus resample mode: choose a lower max sample rate, then click Resample Opus.")
 
     def on_convert_finished(self, results: list[AudioFile]) -> None:
         for audio in results:
             self.update_audio(audio)
         self.populate_table()
-        self.append_log("Conversion finished.")
+        self.append_log("Opus resampling finished." if self.is_opus_resample_mode() else "Conversion finished.")
 
     def on_delete_finished(self, results: list[AudioFile]) -> None:
         self.append_log(f"Applying delete results to UI: {len(results)} rows")
@@ -367,8 +425,6 @@ class MainWindow(QMainWindow):
 
 
     def closeEvent(self, event) -> None:
-        self.append_log("Closing: clearing table and cached scan results.")
-        self.set_busy(True)
         try:
             thread_running = self.thread is not None and self.thread.isRunning()
         except RuntimeError:
@@ -376,10 +432,16 @@ class MainWindow(QMainWindow):
             self.thread = None
 
         if thread_running:
-            self.append_log("Closing: waiting for active worker thread.")
-            self.thread.quit()
-            self.thread.wait(3000)
+            QMessageBox.information(
+                self,
+                "Task running",
+                "A scan, conversion, or delete task is still running. Please wait for it to finish before closing.",
+            )
+            event.ignore()
+            return
 
+        self.append_log("Closing: clearing table and cached scan results.")
+        self.set_busy(True)
         self.table.setUpdatesEnabled(False)
         self.table.clearContents()
         self.table.setRowCount(0)
