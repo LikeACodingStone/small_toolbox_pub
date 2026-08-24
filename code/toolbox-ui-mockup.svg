@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="920" viewBox="0 0 1440 920" role="img" aria-labelledby="title desc">
+  <title id="title">Small Toolbox PyQt5 UI mockup</title>
+  <desc id="desc">A desktop toolbox layout with a category sidebar, selected tool details, and process output log.</desc>
+  <rect width="1440" height="920" fill="#eef1f4"/>
+
+  <!-- Window frame -->
+  <rect x="28" y="24" width="1384" height="872" rx="8" fill="#ffffff" stroke="#c7cdd4" stroke-width="2"/>
+  <rect x="29" y="25" width="1382" height="62" rx="7" fill="#1f2933"/>
+  <circle cx="58" cy="56" r="8" fill="#ef6a5b"/>
+  <circle cx="84" cy="56" r="8" fill="#f3c65b"/>
+  <circle cx="110" cy="56" r="8" fill="#62c554"/>
+  <text x="140" y="63" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#ffffff">Small Toolbox</text>
+  <text x="1170" y="62" font-family="Arial, sans-serif" font-size="15" fill="#cbd5df">Refresh</text>
+  <text x="1250" y="62" font-family="Arial, sans-serif" font-size="15" fill="#cbd5df">Settings</text>
+  <text x="1340" y="62" font-family="Arial, sans-serif" font-size="15" fill="#cbd5df">About</text>
+
+  <!-- Sidebar -->
+  <rect x="29" y="87" width="314" height="770" fill="#f7f9fb" stroke="#d9dee4"/>
+  <rect x="52" y="113" width="268" height="42" rx="5" fill="#ffffff" stroke="#cbd3db"/>
+  <text x="72" y="140" font-family="Arial, sans-serif" font-size="16" fill="#84909c">Search tools...</text>
+
+  <text x="54" y="194" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#72808d">CATEGORIES</text>
+
+  <!-- Category A -->
+  <text x="58" y="237" font-family="Arial, sans-serif" font-size="17" font-weight="700" fill="#26323c">▾  A  Language / Books</text>
+  <text x="88" y="269" font-family="Arial, sans-serif" font-size="15" fill="#4d5a66">A001  English Audio</text>
+  <text x="88" y="298" font-family="Arial, sans-serif" font-size="15" fill="#4d5a66">A002  Subtitle to MOBI</text>
+  <text x="88" y="327" font-family="Arial, sans-serif" font-size="15" fill="#4d5a66">A003  English Books</text>
+
+  <!-- Category B -->
+  <text x="58" y="375" font-family="Arial, sans-serif" font-size="17" font-weight="700" fill="#26323c">▾  B  Study / Anki</text>
+  <text x="88" y="407" font-family="Arial, sans-serif" font-size="15" fill="#4d5a66">B001  JLPT Grammar</text>
+
+  <!-- Category C -->
+  <text x="58" y="455" font-family="Arial, sans-serif" font-size="17" font-weight="700" fill="#26323c">▾  C  Video / 3D</text>
+  <text x="88" y="487" font-family="Arial, sans-serif" font-size="15" fill="#4d5a66">C001  3D Video Manager</text>
+  <text x="88" y="516" font-family="Arial, sans-serif" font-size="15" fill="#4d5a66">C002  2D to 3D Convert</text>
+
+  <!-- Category D -->
+  <text x="58" y="564" font-family="Arial, sans-serif" font-size="17" font-weight="700" fill="#26323c">▾  D  Audio / Music</text>
+  <rect x="48" y="580" width="276" height="39" rx="5" fill="#dceff0" stroke="#3c8f95"/>
+  <text x="68" y="606" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#17646a">D001  Audio Filter Tools</text>
+  <text x="88" y="649" font-family="Arial, sans-serif" font-size="15" fill="#4d5a66">D002  MP3 to Opus</text>
+  <text x="88" y="678" font-family="Arial, sans-serif" font-size="15" fill="#4d5a66">D003  Classify Music</text>
+
+  <!-- Main content -->
+  <rect x="343" y="87" width="1068" height="470" fill="#ffffff"/>
+  <text x="383" y="137" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#71808c">D001 / AUDIO</text>
+  <text x="383" y="180" font-family="Arial, sans-serif" font-size="31" font-weight="700" fill="#202b34">Audio Filter Tools</text>
+  <text x="383" y="216" font-family="Arial, sans-serif" font-size="17" fill="#5d6a75">Scan, filter, and process audio files with the selected branch tool.</text>
+
+  <rect x="383" y="252" width="170" height="48" rx="5" fill="#287f86"/>
+  <text x="431" y="283" font-family="Arial, sans-serif" font-size="17" font-weight="700" fill="#ffffff">Launch Tool</text>
+  <rect x="571" y="252" width="160" height="48" rx="5" fill="#ffffff" stroke="#aeb8c1" stroke-width="2"/>
+  <text x="604" y="283" font-family="Arial, sans-serif" font-size="17" fill="#35434e">Open Folder</text>
+
+  <line x1="383" y1="341" x2="1372" y2="341" stroke="#e0e5e9" stroke-width="2"/>
+  <text x="383" y="382" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#71808c">TOOL INFORMATION</text>
+  <text x="383" y="420" font-family="Arial, sans-serif" font-size="16" fill="#4d5a66">Branch</text>
+  <text x="560" y="420" font-family="monospace" font-size="16" fill="#202b34">D001_AudioFilterTools</text>
+  <text x="383" y="456" font-family="Arial, sans-serif" font-size="16" fill="#4d5a66">Directory</text>
+  <text x="560" y="456" font-family="monospace" font-size="16" fill="#202b34">./D001_AudioFilterTools</text>
+  <text x="383" y="492" font-family="Arial, sans-serif" font-size="16" fill="#4d5a66">Status</text>
+  <circle cx="563" cy="487" r="7" fill="#45a65a"/>
+  <text x="580" y="492" font-family="Arial, sans-serif" font-size="16" fill="#286d3b">Ready</text>
+
+  <!-- Log panel -->
+  <rect x="343" y="557" width="1068" height="300" fill="#f7f9fb" stroke="#d9dee4"/>
+  <text x="383" y="601" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#26323c">Process Output</text>
+  <rect x="383" y="622" width="989" height="184" rx="4" fill="#202a32"/>
+  <text x="408" y="656" font-family="monospace" font-size="15" fill="#b8c6cf">$ Starting D001_AudioFilterTools</text>
+  <text x="408" y="688" font-family="monospace" font-size="15" fill="#b8c6cf">[INFO] Checking Python and FFmpeg dependencies...</text>
+  <text x="408" y="720" font-family="monospace" font-size="15" fill="#7ed39a">[OK] Dependencies available</text>
+  <text x="408" y="752" font-family="monospace" font-size="15" fill="#b8c6cf">[INFO] Tool window launched</text>
+  <text x="408" y="784" font-family="monospace" font-size="15" fill="#7ed39a">[READY] Waiting for input</text>
+
+  <!-- Status bar -->
+  <rect x="29" y="857" width="1382" height="38" fill="#edf1f4"/>
+  <text x="52" y="882" font-family="Arial, sans-serif" font-size="14" fill="#53616c">Status: Ready</text>
+  <text x="1260" y="882" font-family="Arial, sans-serif" font-size="14" fill="#53616c">Running: 0 tools</text>
+</svg>
