@@ -6,3 +6,6 @@ __pycache__/
 EnvSetup/installed
 EnvSetup/pip_packages
 Log
+tmp_cache
+Output
+original

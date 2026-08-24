@@ -46,6 +46,7 @@ DEFAULT_TRANSLATION_CONFIG = {
     "max_meaning_chars": 8,
     "retry_on_verbose_meaning": True,
     "ambiguous_meaning_policy": "skip",
+    "ollama_api": OLLAMA_API,
     "ollama_temperature": 0.0,
     "ollama_model": "qwen2.5:7b",
     "repeat_window_words": 250,
@@ -54,6 +55,9 @@ DEFAULT_TRANSLATION_CONFIG = {
     "ollama_timeout_seconds": 240,
     "ollama_request_retries": 2,
     "ollama_retry_sleep_seconds": 3,
+    "skip_on_service_unavailable": True,
+    "fail_on_service_unavailable": False,
+    "service_unavailable_failure_limit": 1,
     "ipa_provider": "auto",
 }
 
@@ -73,6 +77,8 @@ _CEFR_ANALYZER = {"loaded": False, "value": None}
 _WORDFREQ_IMPORT = {"loaded": False, "func": None}
 _IPA_CACHE = {}
 _OLLAMA_REQUEST_LOCK = threading.Lock()
+_AI_SERVICE_STATE = {"disabled": False, "reason": "", "failures": 0}
+_AI_SERVICE_STATE_LOCK = threading.Lock()
 
 
 @dataclass
@@ -82,6 +88,7 @@ class AnnotationStats:
     translated_words: int = 0
     inserted_annotations: int = 0
     ollama_requests: int = 0
+    ai_service_unavailable: bool = False
 
 
 def _config_mtime():
@@ -225,6 +232,7 @@ def load_translation_config():
             config["ollama_temperature"] = config_nonnegative_float(
                 section, "TranslationConfig", "OllamaTemperature", config["ollama_temperature"]
             )
+            config["ollama_api"] = section.get("OllamaApi", config["ollama_api"]).strip() or config["ollama_api"]
             config["ollama_model"] = section.get("OllamaModel", config["ollama_model"]).strip() or config["ollama_model"]
             config["repeat_window_words"] = config_positive_int(
                 section, "TranslationConfig", "TranslationRepeatWindowWords", config["repeat_window_words"]
@@ -244,15 +252,42 @@ def load_translation_config():
             config["ollama_retry_sleep_seconds"] = config_positive_int(
                 section, "TranslationConfig", "OllamaRetrySleepSeconds", config["ollama_retry_sleep_seconds"]
             )
+            config["skip_on_service_unavailable"] = config_bool(
+                section,
+                "TranslationConfig",
+                "SkipOnServiceUnavailable",
+                config["skip_on_service_unavailable"],
+            )
+            config["fail_on_service_unavailable"] = config_bool(
+                section,
+                "TranslationConfig",
+                "FailOnServiceUnavailable",
+                config["fail_on_service_unavailable"],
+            )
+            config["service_unavailable_failure_limit"] = config_positive_int(
+                section,
+                "TranslationConfig",
+                "ServiceUnavailableFailureLimit",
+                config["service_unavailable_failure_limit"],
+            )
             config["ipa_provider"] = section.get("IpaProvider", config["ipa_provider"]).strip().lower() or "auto"
 
     env_model = os.getenv("BOOKVOCAB_OLLAMA_MODEL")
     if env_model:
         config["ollama_model"] = env_model.strip() or config["ollama_model"]
+    env_api = os.getenv("BOOKVOCAB_OLLAMA_API")
+    if env_api:
+        config["ollama_api"] = env_api.strip() or config["ollama_api"]
+    env_skip_unavailable = os.getenv("BOOKVOCAB_SKIP_ON_AI_UNAVAILABLE")
+    if env_skip_unavailable is not None:
+        config["skip_on_service_unavailable"] = env_skip_unavailable.strip().lower() in {"1", "true", "yes", "on"}
+    env_fail_unavailable = os.getenv("BOOKVOCAB_FAIL_ON_AI_UNAVAILABLE")
+    if env_fail_unavailable is not None:
+        config["fail_on_service_unavailable"] = env_fail_unavailable.strip().lower() in {"1", "true", "yes", "on"}
 
     logger.info(
         "Translation config: model=%s batch=%s repeat_window_words=%s max_meaning_chars=%s "
-        "max_context_chars=%s timeout=%ss request_retries=%s",
+        "max_context_chars=%s timeout=%ss request_retries=%s api=%s skip_on_unavailable=%s fail_on_unavailable=%s",
         config["ollama_model"],
         config["translation_batch_size"],
         config["repeat_window_words"],
@@ -260,6 +295,9 @@ def load_translation_config():
         config["max_context_chars"],
         config["ollama_timeout_seconds"],
         config["ollama_request_retries"],
+        config["ollama_api"],
+        config["skip_on_service_unavailable"],
+        config["fail_on_service_unavailable"],
     )
     _TRANSLATION_CONFIG_CACHE["mtime"] = mtime
     _TRANSLATION_CONFIG_CACHE["config"] = config
@@ -582,6 +620,10 @@ def call_ollama(prompt, translation_config):
         logger.error("requests is unavailable; cannot call Ollama: %s", exc)
         return ""
 
+    with _AI_SERVICE_STATE_LOCK:
+        if _AI_SERVICE_STATE["disabled"]:
+            raise RuntimeError(f"AI translation temporarily disabled: {_AI_SERVICE_STATE['reason']}")
+
     payload = {
         "model": translation_config["ollama_model"],
         "prompt": prompt,
@@ -590,23 +632,30 @@ def call_ollama(prompt, translation_config):
     }
     retries = max(1, int(translation_config.get("ollama_request_retries", 1)))
     sleep_seconds = max(0, int(translation_config.get("ollama_retry_sleep_seconds", 0)))
+    api_url = translation_config.get("ollama_api") or OLLAMA_API
     last_exc = None
 
     for attempt in range(1, retries + 1):
         try:
             with _OLLAMA_REQUEST_LOCK:
                 response = requests.post(
-                    OLLAMA_API,
+                    api_url,
                     json=payload,
                     timeout=translation_config["ollama_timeout_seconds"],
                 )
             response.raise_for_status()
+            with _AI_SERVICE_STATE_LOCK:
+                _AI_SERVICE_STATE["failures"] = 0
             return response.json().get("response", "").strip()
         except Exception as exc:
             last_exc = exc
+            if should_disable_ai_service(exc, translation_config):
+                mark_ai_service_unavailable(exc, translation_config)
+                break
             if attempt < retries:
                 logger.warning(
-                    "Ollama request failed model=%s attempt=%d/%d: %s",
+                    "AI translation request failed api=%s model=%s attempt=%d/%d: %s",
+                    api_url,
                     translation_config["ollama_model"],
                     attempt,
                     retries,
@@ -616,6 +665,72 @@ def call_ollama(prompt, translation_config):
                     time.sleep(sleep_seconds)
 
     raise last_exc if last_exc is not None else RuntimeError("Ollama request failed")
+
+
+def should_disable_ai_service(exc, translation_config):
+    if not (
+        translation_config.get("skip_on_service_unavailable", True)
+        or translation_config.get("fail_on_service_unavailable", False)
+    ):
+        return False
+
+    status_code = getattr(getattr(exc, "response", None), "status_code", None)
+    if status_code in {408, 429, 500, 502, 503, 504, 520, 521, 522, 523, 524}:
+        return True
+
+    text = str(exc).lower()
+    unavailable_markers = (
+        "service temporarily unavailable",
+        "service unavailable",
+        "temporarily unavailable",
+        "connection refused",
+        "connection aborted",
+        "connection reset",
+        "connect timeout",
+        "read timed out",
+        "timed out",
+        "max retries exceeded",
+        "name or service not known",
+        "temporary failure in name resolution",
+        "failed to establish a new connection",
+        "cf-ray",
+        "/v1/responses",
+    )
+    return any(marker in text for marker in unavailable_markers)
+
+
+def mark_ai_service_unavailable(exc, translation_config):
+    fail_on_unavailable = translation_config.get("fail_on_service_unavailable", False)
+    if not translation_config.get("skip_on_service_unavailable", True) and not fail_on_unavailable:
+        return
+
+    limit = max(1, int(translation_config.get("service_unavailable_failure_limit", 1) or 1))
+    reason = str(exc).strip() or exc.__class__.__name__
+    with _AI_SERVICE_STATE_LOCK:
+        _AI_SERVICE_STATE["failures"] += 1
+        if fail_on_unavailable or _AI_SERVICE_STATE["failures"] >= limit:
+            _AI_SERVICE_STATE["disabled"] = True
+            _AI_SERVICE_STATE["reason"] = reason
+            action = "failing this run" if fail_on_unavailable else "skipping AI translation for the rest of this run"
+            logger.warning(
+                "AI translation service unavailable; %s: %s",
+                action,
+                reason,
+            )
+    if fail_on_unavailable:
+        raise RuntimeError(f"AI translation service unavailable: {exc}") from exc
+
+
+def mark_stats_ai_service_unavailable(stats):
+    if stats is not None:
+        stats.ai_service_unavailable = True
+
+
+def ai_translation_disabled_reason():
+    with _AI_SERVICE_STATE_LOCK:
+        if not _AI_SERVICE_STATE["disabled"]:
+            return ""
+        return _AI_SERVICE_STATE["reason"] or "service unavailable"
 
 
 def trim_context(text, max_chars):
@@ -633,6 +748,14 @@ def chunked(values, size):
 
 def translate_words_mapping(words_list, context_text="", filter_words=None, stats=None):
     translation_config = load_translation_config()
+    disabled_reason = ai_translation_disabled_reason()
+    if disabled_reason:
+        mark_stats_ai_service_unavailable(stats)
+        if translation_config.get("fail_on_service_unavailable", False):
+            raise RuntimeError(f"AI translation service unavailable: {disabled_reason}")
+        logger.info("Skipping AI translation because service is unavailable: %s", disabled_reason)
+        return {}
+
     difficulty_config = load_difficulty_config()
     unique_words = []
     seen = set()
@@ -680,10 +803,19 @@ def translate_words_mapping(words_list, context_text="", filter_words=None, stat
                 )
                 response_text = call_ollama(prompt, translation_config)
             except Exception as exc:
-                if len(remaining_words) > 1:
+                if ai_translation_disabled_reason():
+                    mark_stats_ai_service_unavailable(stats)
+                    if translation_config.get("fail_on_service_unavailable", False):
+                        raise
+                    logger.warning(
+                        "Skipping %d word(s) because AI translation service is unavailable: %s",
+                        len(remaining_words),
+                        exc,
+                    )
+                elif len(remaining_words) > 1:
                     midpoint = len(remaining_words) // 2
                     logger.warning(
-                        "Ollama request failed for %d word(s); splitting batch and retrying: %s",
+                        "AI translation request failed for %d word(s); splitting batch and retrying: %s",
                         len(remaining_words),
                         exc,
                     )

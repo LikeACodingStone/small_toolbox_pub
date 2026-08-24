@@ -1,0 +1,85 @@
+[OriginalConfigPath]
+OriginalBookPath = ./original
+OutputBookPath = ./Output
+WorkPath = ./tmp_cache
+
+[RuntimeConfig]
+RunMode = remote
+CaculateCore = CPU
+MaxWorkers = 0
+BookWorkers = 1
+OcrWorkers = 0
+
+[RemoteConfig]
+RemoteWorkers = 
+	ccs2@172.30.2.200:/home/ccs2/A003_BookEnglishInsertCh,
+	neu@172.30.2.221:/home/neu/A003_BookEnglishInsertCh,
+	neu@172.30.2.212:/home/neu/A003_BookEnglishInsertCh,
+	neu@172.30.2.144:/home/neu/A003_BookEnglishInsertCh,
+	ccs9@172.30.2.204:~/A003_BookEnglishInsertCh
+RemoteIncludeLocalWorker = 1
+RemoteWorkPath = /tmp/bookvocab_remote
+RemotePython = ./venv/bin/python3
+RemoteSyncProject = 1
+RemoteSetupIfMissing = 1
+RemoteSshOptions = -o StrictHostKeyChecking=accept-new -o ConnectTimeout=8 -o ServerAliveInterval=30 -o ServerAliveCountMax=3
+RemoteSshControlPath = /tmp/bookvocab_remote_ssh
+RemoteSshControlPersistSeconds = 259200
+RemoteSshPasswordRetries = 3
+RemoteMemoryReservePercent = 15
+RemoteMinFreeMemoryMB = 2048
+RemoteMemoryPerJobMB = 4096
+RemoteCpuPerJob = 2
+RemoteMaxJobsPerHost = 0
+RemoteChunksPerSlot = 16
+
+[DifficultyConfig]
+AdvancedLevels = C1,C2
+MinCandidateLength = 5
+B1MinLength = 8
+B1FrequencyThreshold = 0.000003
+B2MinLength = 8
+B2FrequencyThreshold = 0.000012
+UnknownMinLength = 8
+UnknownFrequencyThreshold = 0.000003
+
+[TranslationConfig]
+SegmentsPerTranslation = 1
+UseContextMeaning = 1
+MaxMeaningChars = 8
+RetryOnVerboseMeaning = 1
+AmbiguousMeaningPolicy = skip
+OllamaTemperature = 0
+OllamaApi = http://localhost:11434/api/generate
+OllamaModel = qwen2.5:7b
+TranslationRepeatWindowWords = 250
+TranslationBatchSize = 8
+MaxContextChars = 1800
+OllamaTimeoutSeconds = 240
+OllamaRequestRetries = 2
+OllamaRetrySleepSeconds = 3
+SkipOnServiceUnavailable = 1
+FailOnServiceUnavailable = 0
+ServiceUnavailableFailureLimit = 1
+IpaProvider = auto
+
+[ProperNounConfig]
+SkipProperNouns = 1
+NlpModel = en_core_web_sm
+EntityLabels = PERSON,GPE,LOC,FAC,ORG
+SkipWords = 
+
+[OcrConfig]
+EnablePdfOcr = 1
+ForcePdfOcr = 1
+OcrLanguage = eng
+PdfDpi = 300
+TesseractPsm = 1
+MinPdfTextChars = 200
+
+[BookOutputConfig]
+OutputFormat = azw3
+InputSuffixes = .pdf,.epub,.mobi,.azw3,.azw,.txt,.html,.htm,.docx,.rtf
+OverwriteOutput = 0
+KeepIntermediate = 0
+

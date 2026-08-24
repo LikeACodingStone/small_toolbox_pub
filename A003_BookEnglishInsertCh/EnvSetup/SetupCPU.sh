@@ -64,6 +64,15 @@ info "CPU threads  : $CPU_THREADS"
 info "ENVSETUP_DIR : $ENVSETUP_DIR"
 info "CODE_DIR     : $CODE_DIR"
 
+section "========== 0b. Checking sudo =========="
+if sudo -n true 2>/dev/null; then
+    success "sudo is already authenticated"
+else
+    info "sudo password may be required once on this server"
+    sudo -v
+    success "sudo authenticated"
+fi
+
 section "========== 1. Checking required files =========="
 [[ -f "$REQUIREMENTS" ]] || die "Not found: $REQUIREMENTS"
 [[ -d "$PIP_PACKAGES" ]] || warn "Offline pip package directory not found: $PIP_PACKAGES"
@@ -215,6 +224,8 @@ parser.set("RuntimeConfig", "CaculateCore", "CPU")
 parser.set("RuntimeConfig", "MaxWorkers", "0")
 parser.set("RuntimeConfig", "BookWorkers", "1")
 parser.set("RuntimeConfig", "OcrWorkers", "0")
+if not parser.has_option("RuntimeConfig", "RunMode"):
+    parser.set("RuntimeConfig", "RunMode", "remote")
 if not parser.has_section("TranslationConfig"):
     parser.add_section("TranslationConfig")
 parser.set("TranslationConfig", "TranslationBatchSize", "8")
@@ -222,6 +233,14 @@ parser.set("TranslationConfig", "MaxContextChars", "1800")
 parser.set("TranslationConfig", "OllamaTimeoutSeconds", "240")
 parser.set("TranslationConfig", "OllamaRequestRetries", "2")
 parser.set("TranslationConfig", "OllamaRetrySleepSeconds", "3")
+if not parser.has_option("TranslationConfig", "OllamaApi"):
+    parser.set("TranslationConfig", "OllamaApi", "http://localhost:11434/api/generate")
+if not parser.has_option("TranslationConfig", "SkipOnServiceUnavailable"):
+    parser.set("TranslationConfig", "SkipOnServiceUnavailable", "1")
+if not parser.has_option("TranslationConfig", "FailOnServiceUnavailable"):
+    parser.set("TranslationConfig", "FailOnServiceUnavailable", "0")
+if not parser.has_option("TranslationConfig", "ServiceUnavailableFailureLimit"):
+    parser.set("TranslationConfig", "ServiceUnavailableFailureLimit", "1")
 with config_path.open("w", encoding="utf-8") as handle:
     parser.write(handle)
 PYEOF
