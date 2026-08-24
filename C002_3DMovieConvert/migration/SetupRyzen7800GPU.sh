@@ -49,17 +49,12 @@ fix_dpkg_dkms_blockers() {
 
     if command -v dpkg >/dev/null 2>&1 && dpkg --audit | grep -q .; then
         warn "dpkg has unfinished package configuration. Trying to repair it."
-        if ! sudo dpkg --configure -a; then
-            if dpkg-query -W -f='${db:Status-Abbrev}\n' virtualbox-dkms 2>/dev/null | grep -q '^i'; then
-                warn "virtualbox-dkms is blocking dpkg. Removing only this DKMS package."
-                warn "This does not remove or affect KVM/QEMU."
-                sudo apt-get remove --purge -y virtualbox-dkms
-                sudo apt-get -f install -y
-                sudo dpkg --configure -a
-            else
-                die "dpkg repair failed and virtualbox-dkms is not installed. Check the error above."
-            fi
-        fi
+        sudo dpkg --configure -a || {
+            warn "If this mentions virtualbox-dkms, run:"
+            warn "  sudo apt-get remove --purge virtualbox-dkms virtualbox virtualbox-*"
+            warn "  sudo apt-get -f install"
+            return 1
+        }
     fi
 }
 
