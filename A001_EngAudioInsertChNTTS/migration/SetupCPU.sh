@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 # =============================================================================
 # SetupCPU.sh - Podcast toolchain CPU environment deployment script
 # Usage: run "bash SetupCPU.sh" from the migration/ directory
@@ -23,7 +23,58 @@ section() { echo -e "${CYAN}$*${NC}"; }
 # ---------- Path configuration ----------
 MIGRATION_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CODE_DIR="$(dirname "$MIGRATION_DIR")"
-VENV_DIR="$CODE_DIR/venv"
+DEPENDENCE_DIR="$(cd "$CODE_DIR/.." && pwd)/DependenceLib"
+VENV_DIR="$DEPENDENCE_DIR/.venv"
+INSTALLED_DIR="$DEPENDENCE_DIR/installed"
+ROCM_INSTALL_DIR="$INSTALLED_DIR/ctranslate2-rocm"
+
+environment_ready() {
+    [[ -x "$VENV_DIR/bin/python" ]] || return 1
+    "$VENV_DIR/bin/python" - "$REQUIREMENTS" <<'PY'
+import sys
+from importlib.metadata import PackageNotFoundError, version
+from pathlib import Path
+
+if sys.prefix == sys.base_prefix:
+    raise SystemExit(1)
+for line in Path(sys.argv[1]).read_text().splitlines():
+    if not line.strip() or line.startswith("#"):
+        continue
+    name, expected = line.strip().split("==", 1)
+    try:
+        if version(name) != expected:
+            raise SystemExit(1)
+    except PackageNotFoundError:
+        raise SystemExit(1)
+PY
+}
+
+install_system_dependencies() {
+    local package
+    local missing=()
+    for package in libopenblas-dev libomp-dev python3-venv python3-pip curl ffmpeg; do
+        if [[ "$(dpkg-query -W -f='${Status}' "$package" 2>/dev/null || true)" != "install ok installed" ]]; then
+            missing+=("$package")
+        fi
+    done
+    if (( ${#missing[@]} )); then
+        sudo apt-get update -qq
+        sudo apt-get install -y "${missing[@]}"
+    fi
+}
+
+create_environment() {
+    mkdir -p "$DEPENDENCE_DIR"
+    if [[ ! -e "$VENV_DIR" ]]; then
+        python3 -m venv "$VENV_DIR"
+    elif ! "$VENV_DIR/bin/python" -c 'import sys; assert sys.prefix != sys.base_prefix' 2>/dev/null; then
+        echo "Invalid virtual environment: $VENV_DIR. Repair it before continuing." >&2
+        return 1
+    fi
+    source "$VENV_DIR/bin/activate"
+    python -m pip --version >/dev/null 2>&1 || python -m ensurepip
+}
+
 REQUIREMENTS="$MIGRATION_DIR/requirements.txt"
 PIP_PACKAGES="$MIGRATION_DIR/pip_packages"
 BASHRC="$HOME/.bashrc"
@@ -97,8 +148,7 @@ success "All required files present"
 # =============================================================================
 section "========== 2. Installing system dependencies =========="
 
-sudo apt-get update -qq
-sudo apt-get install -y libopenblas-dev libomp-dev python3-venv python3-pip curl ffmpeg
+install_system_dependencies
 success "System dependencies installed"
 
 # =============================================================================
@@ -142,14 +192,10 @@ fi
 # =============================================================================
 section "========== 4. Creating Python venv =========="
 
-if [[ -d "$VENV_DIR" ]]; then
-    warn "venv already exists, skipping creation: $VENV_DIR"
-else
-    python3 -m venv "$VENV_DIR"
-    success "venv created: $VENV_DIR"
+create_environment
+if [[ -d "$ROCM_INSTALL_DIR/lib" ]]; then
+    export LD_LIBRARY_PATH="$ROCM_INSTALL_DIR/lib:/usr/lib/llvm-18/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 fi
-
-source "$VENV_DIR/bin/activate"
 success "venv activated: $(python3 --version)"
 
 # =============================================================================
@@ -157,7 +203,9 @@ success "venv activated: $(python3 --version)"
 # =============================================================================
 section "========== 5. Installing Python dependencies =========="
 
-pip install --upgrade pip --quiet
+if environment_ready; then
+    success "Python dependencies already satisfy requirements"
+else
 
 if pip install \
     --no-index \
@@ -172,6 +220,7 @@ else
         -r "$REQUIREMENTS" \
         --quiet
     success "Hybrid installation complete"
+fi
 fi
 
 if pip show faster-whisper 2>/dev/null | grep -q "Version: $FASTER_WHISPER_VERSION"; then
@@ -216,21 +265,24 @@ export AUDIOSOURCE_MAX_WORKERS=1
 export AUDIOSOURCE_USE_PROCESS_POOL=0
 export AUDIOSOURCE_OLLAMA_MODEL=qwen2.5:7b
 
-python3 - "$CODE_DIR/config.ini" << 'PYEOF'
+python3 - "$CODE_DIR" << 'PYEOF'
 import configparser
+import os
 import sys
 from pathlib import Path
 
-config_path = Path(sys.argv[1])
-parser = configparser.ConfigParser()
-parser.read(config_path, encoding="utf-8")
-if not parser.has_section("RuntimeConfig"):
-    parser.add_section("RuntimeConfig")
-parser.set("RuntimeConfig", "CaculateCore", "CPU")
-with config_path.open("w", encoding="utf-8") as handle:
-    parser.write(handle)
+if os.getenv("PODCAST_SETUP_AUTO") != "1":
+    for folder in ("InsertSpeech", "SubtitleOnly", "TranslateAudio"):
+        config_path = Path(sys.argv[1]) / folder / "config.ini"
+        parser = configparser.ConfigParser()
+        parser.read(config_path, encoding="utf-8")
+        if not parser.has_section("RuntimeConfig"):
+            parser.add_section("RuntimeConfig")
+        parser.set("RuntimeConfig", "CaculateCore", "CPU")
+        with config_path.open("w", encoding="utf-8") as handle:
+            parser.write(handle)
 PYEOF
-success "config.ini RuntimeConfig.CaculateCore set to CPU"
+success "CPU environment configured"
 
 # =============================================================================
 # 7. Verification
@@ -278,5 +330,5 @@ echo -e "${GREEN}============================================${NC}"
 echo ""
 echo "To run:"
 echo "  cd $CODE_DIR"
-echo "  bash run.sh"
+echo "  bash insertSpeech.sh"
 echo ""

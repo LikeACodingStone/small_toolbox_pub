@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 # =============================================================================
 # SetupRyzen7800GPU.sh - Podcast toolchain GPU/ROCm environment deployment script
 # Usage: run "bash SetupRyzen7800GPU.sh" from the migration/ directory
@@ -23,8 +23,58 @@ section() { echo -e "${CYAN}$*${NC}"; }
 # ---------- Path configuration ----------
 MIGRATION_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CODE_DIR="$(dirname "$MIGRATION_DIR")"
-VENV_DIR="$CODE_DIR/venv"
-INSTALLED_DIR="$MIGRATION_DIR/installed"
+DEPENDENCE_DIR="$(cd "$CODE_DIR/.." && pwd)/DependenceLib"
+VENV_DIR="$DEPENDENCE_DIR/.venv"
+INSTALLED_DIR="$DEPENDENCE_DIR/installed"
+ROCM_INSTALL_DIR="$INSTALLED_DIR/ctranslate2-rocm"
+
+environment_ready() {
+    [[ -x "$VENV_DIR/bin/python" ]] || return 1
+    "$VENV_DIR/bin/python" - "$REQUIREMENTS" <<'PY'
+import sys
+from importlib.metadata import PackageNotFoundError, version
+from pathlib import Path
+
+if sys.prefix == sys.base_prefix:
+    raise SystemExit(1)
+for line in Path(sys.argv[1]).read_text().splitlines():
+    if not line.strip() or line.startswith("#"):
+        continue
+    name, expected = line.strip().split("==", 1)
+    try:
+        if version(name) != expected:
+            raise SystemExit(1)
+    except PackageNotFoundError:
+        raise SystemExit(1)
+PY
+}
+
+install_system_dependencies() {
+    local package
+    local missing=()
+    for package in libopenblas-dev libomp-dev python3-venv python3-pip curl ffmpeg; do
+        if [[ "$(dpkg-query -W -f='${Status}' "$package" 2>/dev/null || true)" != "install ok installed" ]]; then
+            missing+=("$package")
+        fi
+    done
+    if (( ${#missing[@]} )); then
+        sudo apt-get update -qq
+        sudo apt-get install -y "${missing[@]}"
+    fi
+}
+
+create_environment() {
+    mkdir -p "$DEPENDENCE_DIR"
+    if [[ ! -e "$VENV_DIR" ]]; then
+        python3 -m venv "$VENV_DIR"
+    elif ! "$VENV_DIR/bin/python" -c 'import sys; assert sys.prefix != sys.base_prefix' 2>/dev/null; then
+        echo "Invalid virtual environment: $VENV_DIR. Repair it before continuing." >&2
+        return 1
+    fi
+    source "$VENV_DIR/bin/activate"
+    python -m pip --version >/dev/null 2>&1 || python -m ensurepip
+}
+
 ROCM_INSTALL_DIR="$INSTALLED_DIR/ctranslate2-rocm"
 ROCM_TAR="$MIGRATION_DIR/ctranslate2-rocm.tar.gz"
 REQUIREMENTS="$MIGRATION_DIR/requirements.txt"
@@ -71,6 +121,8 @@ PYEOF
 }
 
 clear_legacy_env_prefix
+
+python3 -c 'import sys, platform; assert sys.version_info[:2] == (3, 12) and platform.machine() == "x86_64", "ROCm archive requires Python 3.12 on x86_64"'
 
 # =============================================================================
 # 0. System / GPU / ROCm info
@@ -129,8 +181,7 @@ success "All required files present"
 # =============================================================================
 section "========== 2. Installing system dependencies =========="
 
-sudo apt-get update -qq
-sudo apt-get install -y libopenblas-dev libomp-dev python3-venv python3-pip curl ffmpeg
+install_system_dependencies
 success "System dependencies installed"
 
 # =============================================================================
@@ -177,14 +228,8 @@ fi
 # =============================================================================
 section "========== 4. Creating Python venv =========="
 
-if [[ -d "$VENV_DIR" ]]; then
-    warn "venv already exists, skipping creation: $VENV_DIR"
-else
-    python3 -m venv "$VENV_DIR"
-    success "venv created: $VENV_DIR"
-fi
-
-source "$VENV_DIR/bin/activate"
+create_environment
+python3 -c 'import sys; assert sys.version_info[:2] == (3, 12), "Existing virtual environment must use Python 3.12 for ROCm"'
 success "venv activated: $(python3 --version)"
 
 # =============================================================================
@@ -192,7 +237,9 @@ success "venv activated: $(python3 --version)"
 # =============================================================================
 section "========== 5. Installing Python dependencies =========="
 
-pip install --upgrade pip --quiet
+if environment_ready; then
+    success "Python dependencies already satisfy requirements"
+else
 
 if pip install \
     --no-index \
@@ -207,6 +254,7 @@ else
         -r "$REQUIREMENTS" \
         --quiet
     success "Hybrid installation complete"
+fi
 fi
 
 # =============================================================================
@@ -229,6 +277,7 @@ section "========== 6. Deploying CTranslate2 ROCm =========="
 mkdir -p "$INSTALLED_DIR"
 info "Created installed dir: $INSTALLED_DIR"
 
+if [[ ! -f "$ROCM_INSTALL_DIR/lib/libctranslate2.so.4" || ! -f "$INSTALLED_DIR/ctranslate2/$EXT_SO_NAME" ]]; then
 tar -xzf "$ROCM_TAR" -C "$INSTALLED_DIR"
 success "Extraction complete"
 
@@ -257,6 +306,8 @@ info "Cleaned up temporary extraction paths"
 [[ -f "$ROCM_INSTALL_DIR/lib/libctranslate2.so.4" ]] \
     || die "libctranslate2.so.4 not found after relocation"
 success "libctranslate2.so.4 confirmed"
+fi
+EXTRACTED_EXT="$INSTALLED_DIR/ctranslate2/$EXT_SO_NAME"
 
 # =============================================================================
 # 7. Replace _ext.so with ROCm build
@@ -268,11 +319,13 @@ TARGET_EXT_SO="$VENV_CT2_DIR/$EXT_SO_NAME"
 
 [[ -d "$VENV_CT2_DIR" ]] || die "venv ctranslate2 directory not found: $VENV_CT2_DIR"
 
+if ! cmp -s "$EXTRACTED_EXT" "$TARGET_EXT_SO"; then
 cp "$TARGET_EXT_SO" "${TARGET_EXT_SO}.bak_cuda"
 info "Original CUDA _ext.so backed up"
 
 cp "$EXTRACTED_EXT" "$TARGET_EXT_SO"
 success "_ext.so replaced with ROCm build"
+fi
 
 # =============================================================================
 # 8. Write environment variables to ~/.bashrc
@@ -306,21 +359,24 @@ export AUDIOSOURCE_WHISPER_COMPUTE_TYPE=float16
 export AUDIOSOURCE_MAX_WORKERS=1
 export AUDIOSOURCE_OLLAMA_MODEL=qwen2.5:7b
 
-python3 - "$CODE_DIR/config.ini" << 'PYEOF'
+python3 - "$CODE_DIR" << 'PYEOF'
 import configparser
+import os
 import sys
 from pathlib import Path
 
-config_path = Path(sys.argv[1])
-parser = configparser.ConfigParser()
-parser.read(config_path, encoding="utf-8")
-if not parser.has_section("RuntimeConfig"):
-    parser.add_section("RuntimeConfig")
-parser.set("RuntimeConfig", "CaculateCore", "GPU")
-with config_path.open("w", encoding="utf-8") as handle:
-    parser.write(handle)
+if os.getenv("PODCAST_SETUP_AUTO") != "1":
+    for folder in ("InsertSpeech", "SubtitleOnly", "TranslateAudio"):
+        config_path = Path(sys.argv[1]) / folder / "config.ini"
+        parser = configparser.ConfigParser()
+        parser.read(config_path, encoding="utf-8")
+        if not parser.has_section("RuntimeConfig"):
+            parser.add_section("RuntimeConfig")
+        parser.set("RuntimeConfig", "CaculateCore", "GPU")
+        with config_path.open("w", encoding="utf-8") as handle:
+            parser.write(handle)
 PYEOF
-success "config.ini RuntimeConfig.CaculateCore set to GPU"
+success "GPU environment configured"
 
 # =============================================================================
 # 9. Verify
@@ -366,7 +422,6 @@ echo -e "${GREEN}============================================${NC}"
 echo ""
 echo "To run:"
 echo "  cd $CODE_DIR"
-echo "  source venv/bin/activate"
-echo "  python3 main_batch.py"
+echo "  bash insertSpeech.sh"
 echo ""
 echo "Note: environment variables load automatically in new terminals (written to ~/.bashrc)"
