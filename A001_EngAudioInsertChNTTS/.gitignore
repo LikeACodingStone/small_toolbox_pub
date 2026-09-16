@@ -1,0 +1,4 @@
+*.whl
+*.pyc
+*.log
+*.so
