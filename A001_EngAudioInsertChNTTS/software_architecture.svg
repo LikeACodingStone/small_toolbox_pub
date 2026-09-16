@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1560" height="1840" viewBox="0 0 1560 1840" role="img" aria-labelledby="title desc">
+<title id="title">Podcast Audio Processing: Software Architecture</title>
+<desc id="desc">Three Python workflows, their libraries and services, CPU and AMD GPU inference, software categories, and external dependency installation.</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#64716b"/></marker></defs>
+<style>text{font-family:"DejaVu Sans",Arial,sans-serif;fill:#202923;letter-spacing:0}.title{font-size:32px;font-weight:700}.head{font-size:22px;font-weight:700}.body{font-size:17px}.small{font-size:16px}.line{stroke:#64716b;stroke-width:2;fill:none;marker-end:url(#arrow)}</style>
+<rect width="1560" height="1840" fill="#f7faf8"/>
+<text x="48" y="58" class="title">Podcast Audio Processing | Software Architecture</text>
+<text x="48" y="91" class="body">A001_EngAudioInsertChNTTS  |  Application code, runtime dependencies, and migration scripts</text>
+<text x="48" y="145" class="head">01  Three independent application workflows</text>
+<rect x="48" y="168" width="460" height="170" rx="6" fill="#fff" stroke="#cbd8cf"/>
+<text x="66" y="199" class="head">InsertSpeech</text>
+<text x="66" y="229" class="body">insertSpeech.sh -&gt; main_batch.py</text>
+<text x="66" y="256" class="body">Audio -&gt; transcription -&gt; translation -&gt; TTS</text>
+<text x="66" y="283" class="body">Output: annotated audio and Markdown</text>
+<rect x="550" y="168" width="460" height="170" rx="6" fill="#fff" stroke="#cbd8cf"/>
+<text x="568" y="199" class="head">SubtitleOnly</text>
+<text x="568" y="229" class="body">subtitleOnly.sh -&gt; subtitle_improve.py</text>
+<text x="568" y="256" class="body">Existing Markdown -&gt; punctuation / vocabulary</text>
+<text x="568" y="283" class="body">Output: improved Markdown; no audio</text>
+<rect x="1052" y="168" width="460" height="170" rx="6" fill="#fff" stroke="#cbd8cf"/>
+<text x="1070" y="199" class="head">TranslateAudio</text>
+<text x="1070" y="229" class="body">translateAudio.sh -&gt; translate_audio.py</text>
+<text x="1070" y="256" class="body">Vocabulary sentences -&gt; synthesized speech</text>
+<text x="1070" y="283" class="body">Output: vocabulary sentence audio</text>
+<path class="line" d="M278 338 L278 378"/>
+<path class="line" d="M780 338 L780 378"/>
+<path class="line" d="M1282 338 L1282 378"/>
+<rect x="48" y="378" width="1464" height="96" rx="6" fill="#e9f3ed" stroke="#cbd8cf"/>
+<text x="66" y="409" class="head">Python application layer | Standard-library orchestration</text>
+<text x="66" y="439" class="body">configparser / pathlib / logging / asyncio / subprocess / thread and process pools | Each feature keeps its own configuration and code.</text>
+<text x="48" y="520" class="head">02  Core library and service relationships</text>
+<rect x="48" y="544" width="460" height="152" rx="6" fill="#edf5f1" stroke="#cbd8cf"/>
+<text x="66" y="575" class="head">Speech recognition</text>
+<text x="66" y="605" class="body">faster-whisper -&gt; CTranslate2</text>
+<text x="66" y="632" class="body">Model: Whisper large-v3</text>
+<text x="66" y="659" class="body">PyAV / NumPy: audio and numerical support</text>
+<rect x="550" y="544" width="460" height="152" rx="6" fill="#edf3fa" stroke="#cbd8cf"/>
+<text x="568" y="575" class="head">Vocabulary and translation</text>
+<text x="568" y="605" class="body">cefrpy: CEFR levels; wordfreq: frequency</text>
+<text x="568" y="632" class="body">requests -&gt; HTTP -&gt; Ollama</text>
+<text x="568" y="659" class="body">Optional: spaCy entity filtering</text>
+<rect x="1052" y="544" width="460" height="152" rx="6" fill="#fcf0ef" stroke="#cbd8cf"/>
+<text x="1070" y="575" class="head">Speech synthesis and audio</text>
+<text x="1070" y="605" class="body">edge-tts -&gt; online speech service</text>
+<text x="1070" y="632" class="body">pydub + FFmpeg / ffprobe</text>
+<text x="1070" y="659" class="body">Segment, probe, convert, combine, export</text>
+<path class="line" d="M278 696 L278 730"/>
+<path class="line" d="M780 696 L780 730"/>
+<path class="line" d="M1282 696 L1282 730"/>
+<rect x="48" y="730" width="460" height="137" rx="6" fill="#fff" stroke="#cbd8cf"/>
+<text x="66" y="761" class="head">Two inference paths</text>
+<text x="66" y="791" class="body">CPU: int8 / CPU threads</text>
+<text x="66" y="818" class="body">AMD GPU: ROCm + custom CTranslate2</text>
+<text x="66" y="845" class="body">GPU API argument: device="cuda"</text>
+<rect x="550" y="730" width="460" height="137" rx="6" fill="#fff" stroke="#cbd8cf"/>
+<text x="568" y="761" class="head">Ollama | Local service</text>
+<text x="568" y="791" class="body">http://localhost:11434/api/generate</text>
+<text x="568" y="818" class="body">Default model: qwen2.5:7b</text>
+<text x="568" y="845" class="body">Contextual translation and punctuation</text>
+<rect x="1052" y="730" width="460" height="137" rx="6" fill="#fff" stroke="#cbd8cf"/>
+<text x="1070" y="761" class="head">Local tools and remote service</text>
+<text x="1070" y="791" class="body">FFmpeg / ffprobe: local executables</text>
+<text x="1070" y="818" class="body">Edge TTS: network access required</text>
+<text x="1070" y="845" class="body">edge-tts is a client, not a local model</text>
+<text x="48" y="918" class="head">03  Software categories and their role in this project</text>
+<rect x="48" y="941" width="1464" height="484" rx="6" fill="#fff" stroke="#cbd8cf"/>
+<rect x="49" y="942" width="1462" height="47" fill="#edf3ef"/>
+<text x="64" y="972" class="body">Programming Language</text>
+<text x="390" y="972" class="small">Python for application logic; Bash for deployment; C++ in native inference libraries.</text>
+<text x="64" y="1020" class="body">Library</text>
+<text x="390" y="1020" class="small">faster-whisper, pydub, edge-tts, requests, cefrpy, wordfreq; spaCy is optional.</text>
+<rect x="49" y="1038" width="1462" height="47" fill="#edf3ef"/>
+<text x="64" y="1068" class="body">Framework</text>
+<text x="390" y="1068" class="small">No application framework such as Django or Spring; Python scripts and modules.</text>
+<text x="64" y="1116" class="body">Middleware</text>
+<text x="390" y="1116" class="small">No dedicated message middleware; the application calls Ollama over local HTTP.</text>
+<rect x="49" y="1134" width="1462" height="47" fill="#edf3ef"/>
+<text x="64" y="1164" class="body">Engine</text>
+<text x="390" y="1164" class="small">CTranslate2: neural inference engine, provided as a native library and Python extension.</text>
+<text x="64" y="1212" class="body">Runtime</text>
+<text x="390" y="1212" class="small">CPython + venv; the bundled GPU extension requires Python 3.12 on Linux x86_64.</text>
+<rect x="49" y="1230" width="1462" height="47" fill="#edf3ef"/>
+<text x="64" y="1260" class="body">Platform / SDK</text>
+<text x="390" y="1260" class="small">AMD ROCm / HIP; setup checks the platform but does not install the complete ROCm stack.</text>
+<text x="64" y="1308" class="body">Software / Service</text>
+<text x="390" y="1308" class="small">Ollama, FFmpeg / ffprobe, and the remote Edge TTS service.</text>
+<rect x="49" y="1326" width="1462" height="47" fill="#edf3ef"/>
+<text x="64" y="1356" class="body">Development / Operations</text>
+<text x="390" y="1356" class="small">pip, venv, apt, dpkg, curl, tar; the original Setup scripts handle deployment.</text>
+<text x="64" y="1404" class="body">Operating System</text>
+<text x="390" y="1404" class="small">Linux; deployment uses apt, dpkg, and sudo, targeting Debian / Ubuntu environments.</text>
+<text x="48" y="1474" class="head">04  Deployment paths and installation boundaries</text>
+<rect x="48" y="1497" width="713" height="196" rx="6" fill="#fff" stroke="#cbd8cf"/>
+<text x="66" y="1528" class="head">Project directory | Original files stay in place</text>
+<text x="66" y="1558" class="body">A001_EngAudioInsertChNTTS/</text>
+<text x="66" y="1585" class="body">Three launchers + InsertSpeech / SubtitleOnly / TranslateAudio</text>
+<text x="66" y="1612" class="body">migration/: SetupCPU.sh / SetupRyzen7800GPU.sh</text>
+<text x="66" y="1639" class="body">requirements.txt, pip_packages/, and the ROCm archive</text>
+<text x="66" y="1666" class="body">Environment checks are built into the original shell scripts</text>
+<rect x="799" y="1497" width="713" height="196" rx="6" fill="#e9f3ed" stroke="#cbd8cf"/>
+<text x="817" y="1528" class="head">External dependencies | ../DependenceLib</text>
+<text x="817" y="1558" class="body">podcast/DependenceLib/</text>
+<text x="817" y="1585" class="body">  .venv/: Python environment and installed packages</text>
+<text x="817" y="1612" class="body">  installed/: CTranslate2 ROCm libraries and extension</text>
+<text x="817" y="1639" class="body">Create when missing; check and reuse existing dependencies</text>
+<text x="817" y="1666" class="body">Offline wheels first; online fallback for missing packages</text>
+<text x="48" y="1740" class="body">System locations: FFmpeg, OpenBLAS, OpenMP, ROCm, and Ollama. Model caches are not moved into DependenceLib.</text>
+<text x="48" y="1774" class="small">Models are data artifacts, not frameworks. The custom ROCm backend still uses the API name "cuda" for AMD GPU execution.</text>
+<text x="48" y="1808" class="small">Scope: major runtime technologies. See LIBRARIES.md for all 61 pinned packages, optional components, and standard-library modules.</text>
+</svg>
