@@ -42,6 +42,8 @@ def ensure_default_config():
         "AudioTranslatedPath=../Resource/chineseTTS\n"
         "\n"
         "[RuntimeConfig]\n"
+        "# Dependency directory, resolved relative to the project root.\n"
+        "env_folder=../DependenceLib\n"
         "# Select the compute branch: GPU uses the ROCm/CUDA Whisper path, CPU uses all available CPU cores.\n"
         "CaculateCore=GPU\n"
         "\n"

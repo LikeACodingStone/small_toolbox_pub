@@ -17,7 +17,7 @@ import requests
 SCRIPT_DIR = Path(__file__).resolve().parent
 CONFIG_FILE = SCRIPT_DIR / "config.ini"
 LOG_DIR = SCRIPT_DIR / "Log"
-OLLAMA_API = "http://localhost:11434/api/generate"
+OLLAMA_API = os.getenv("AUDIOSOURCE_OLLAMA_API", "http://localhost:11434/api/generate")
 DEFAULT_NO_OUTPUT_TIMEOUT_SECONDS = 8 * 60 * 60
 COMPLETE_MARKER = "<!-- TRANSCRIPTION_COMPLETE -->"
 OLLAMA_SEMAPHORE = None

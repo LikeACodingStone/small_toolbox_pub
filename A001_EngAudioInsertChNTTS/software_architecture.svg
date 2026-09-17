@@ -54,7 +54,7 @@
 <text x="66" y="845" class="body">GPU API argument: device="cuda"</text>
 <rect x="550" y="730" width="460" height="137" rx="6" fill="#fff" stroke="#cbd8cf"/>
 <text x="568" y="761" class="head">Ollama | Local service</text>
-<text x="568" y="791" class="body">http://localhost:11434/api/generate</text>
+<text x="568" y="791" class="body">Private loopback API per env_folder</text>
 <text x="568" y="818" class="body">Default model: qwen2.5:7b</text>
 <text x="568" y="845" class="body">Contextual translation and punctuation</text>
 <rect x="1052" y="730" width="460" height="137" rx="6" fill="#fff" stroke="#cbd8cf"/>
@@ -98,13 +98,13 @@
 <text x="66" y="1639" class="body">requirements.txt, pip_packages/, and the ROCm archive</text>
 <text x="66" y="1666" class="body">Environment checks are built into the original shell scripts</text>
 <rect x="799" y="1497" width="713" height="196" rx="6" fill="#e9f3ed" stroke="#cbd8cf"/>
-<text x="817" y="1528" class="head">External dependencies | ../DependenceLib</text>
+<text x="817" y="1528" class="head">env_folder | Default: ../DependenceLib</text>
 <text x="817" y="1558" class="body">podcast/DependenceLib/</text>
 <text x="817" y="1585" class="body">  .venv/: Python environment and installed packages</text>
 <text x="817" y="1612" class="body">  installed/: CTranslate2 ROCm libraries and extension</text>
-<text x="817" y="1639" class="body">Create when missing; check and reuse existing dependencies</text>
+<text x="817" y="1639" class="body">  components/ and models/: tools, runtimes, model stores</text>
 <text x="817" y="1666" class="body">Offline wheels first; online fallback for missing packages</text>
-<text x="48" y="1740" class="body">System locations: FFmpeg, OpenBLAS, OpenMP, ROCm, and Ollama. Model caches are not moved into DependenceLib.</text>
+<text x="48" y="1740" class="body">env_folder stores packages, tools, and models. Host requirements: Python, OS libraries, GPU drivers, and ROCm.</text>
 <text x="48" y="1774" class="small">Models are data artifacts, not frameworks. The custom ROCm backend still uses the API name "cuda" for AMD GPU execution.</text>
 <text x="48" y="1808" class="small">Scope: major runtime technologies. See LIBRARIES.md for all 61 pinned packages, optional components, and standard-library modules.</text>
 </svg>

@@ -122,6 +122,7 @@ These modules ship with Python and do not require individual pip installations.
 | configparser | Reads and writes INI configuration. |
 | datetime | Produces timestamps for logs and output metadata. |
 | faulthandler | Helps diagnose interpreter crashes and stalled execution. |
+| fcntl | Locks each dependency directory's Ollama startup state to coordinate concurrent launchers. |
 | gc | Supports explicit cleanup of Python objects around processing. |
 | hashlib | Computes hashes used by TTS caching and identifiers. |
 | json | Encodes and decodes structured data, including service and subprocess payloads. |
@@ -133,6 +134,7 @@ These modules ship with Python and do not require individual pip installations.
 | re | Parses and cleans text, subtitle content, and vocabulary with regular expressions. |
 | resource | Reports process resource information on Unix-like systems. |
 | shutil | Locates external executables and performs filesystem operations. |
+| socket | Selects an available loopback port for the environment's Ollama process. |
 | subprocess | Starts FFmpeg/ffprobe and isolated transcription workers. |
 | sys | Supplies the current Python executable, process arguments, and interpreter information. |
 | tempfile | Creates temporary working files and directories. |
@@ -140,6 +142,7 @@ These modules ship with Python and do not require individual pip installations.
 | time | Measures elapsed time and implements waits/retries. |
 | types | Provides `SimpleNamespace` for lightweight attribute-based objects. |
 | unicodedata | Normalizes Unicode text in the vocabulary-audio workflow. |
+| urllib.request | Probes the managed Ollama HTTP endpoint during startup without requiring installed third-party libraries. |
 | importlib.metadata | Reads installed package versions during shell-script dependency checks. |
 | venv | Creates the external Python virtual environment during setup. |
 | ensurepip | Bootstraps pip if the virtual environment lacks it. |
@@ -151,12 +154,12 @@ These are separate from Python packages. Models are data artifacts, not applicat
 | Component | Software category | Function |
 | --- | --- | --- |
 | CTranslate2 native library and Python extension | Library / inference engine | Executes Whisper inference. The bundled ROCm archive supplies the GPU-specific binary components. |
-| OpenBLAS (`libopenblas-dev`) | Native library | CPU linear-algebra support installed as a system dependency. |
-| OpenMP (`libomp-dev`) | Native runtime library | Native parallel execution support. The GPU loader path also references `/usr/lib/llvm-18/lib`. |
+| OpenBLAS (`libopenblas0-pthread`) | Native library | CPU linear-algebra runtime downloaded and extracted into env_folder/components/native. |
+| OpenMP (`libomp5-18`) | Native runtime library | Native parallel execution support extracted into env_folder/components/native and loaded through the launcher's library search path. |
 | AMD ROCm / HIP | Platform / SDK / runtime | Provides the AMD GPU execution platform expected by the bundled CTranslate2 build. Setup checks ROCm-related tools; it does not install the complete ROCm stack. |
 | FFmpeg | Standalone software | Audio decoding, conversion, segmentation, concatenation, and encoding. |
 | ffprobe | Standalone tool | Reads audio duration, codec, and stream metadata. |
-| Ollama | Local service | Hosts the language model at `http://localhost:11434`; handles translation and punctuation requests. |
+| Ollama | Local service | Installed under env_folder and started on a private loopback port; handles translation and punctuation requests. The launcher passes its endpoint through AUDIOSOURCE_OLLAMA_API. |
 | Edge TTS online service | Remote service | Produces synthesized speech requested by edge-tts; requires network access. |
 | Whisper large-v3 | Speech model | Default model loaded for speech recognition and setup verification. |
 | qwen2.5:7b | Language model | Default Ollama model selected by setup and launcher environment settings. |
@@ -190,14 +193,22 @@ podcast/
 |       `-- ctranslate2-rocm.tar.gz
 `-- DependenceLib/
     |-- .venv/
+    |-- components/
+    |   |-- ffmpeg/
+    |   |-- ollama/
+    |   `-- native/
+    |-- models/
+    |-- downloads/
+    |-- cache/
+    |-- run/
     `-- installed/
         |-- ctranslate2-rocm/
         `-- ctranslate2/
 ```
 
-The install destination is `../DependenceLib` relative to the project root. Python packages live in `.venv`; extracted ROCm-specific CTranslate2 artifacts live in `installed`. Original migration scripts and offline installation inputs stay in the project. Each original shell script contains its own environment checks; no additional environment helper is required.
+The install destination comes from `[RuntimeConfig] env_folder` in each feature's config.ini, defaulting to `../DependenceLib` relative to the project root. Explicit migration runs default to InsertSpeech/config.ini and accept `--config PATH`. Python packages live in `.venv`; extracted ROCm-specific CTranslate2 artifacts live in `installed`. FFmpeg, Ollama, and local native runtime packages live in `components`; model stores live in `models`, and downloads/cache files stay under the same configured directory. Original migration scripts and offline installation inputs stay in the project. Each original shell script contains its own environment checks; no additional environment helper is required.
 
-Setup checks existing packages against pinned versions and reuses matching installations. GPU setup reuses extracted artifacts and replaces the environment's CTranslate2 extension when needed. System packages, Ollama, and model caches keep their existing system or user locations. An invalid virtual environment raises an error rather than being silently deleted.
+Setup checks existing packages against pinned versions and reuses matching installations. GPU setup reuses extracted artifacts and replaces the environment's CTranslate2 extension when needed. Existing system installations and old model caches are not moved or deleted. New model downloads use the configured environment directory. Python, bootstrap tools, GPU drivers, the system loader, libc, and the required ROCm platform remain host prerequisites. Local native package extraction targets Ubuntu 24.04 and libomp5-18. An invalid virtual environment raises an error rather than being silently deleted.
 
 ## Classification notes
 

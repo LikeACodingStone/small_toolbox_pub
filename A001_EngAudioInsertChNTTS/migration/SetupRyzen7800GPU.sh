@@ -23,10 +23,141 @@ section() { echo -e "${CYAN}$*${NC}"; }
 # ---------- Path configuration ----------
 MIGRATION_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CODE_DIR="$(dirname "$MIGRATION_DIR")"
-DEPENDENCE_DIR="$(cd "$CODE_DIR/.." && pwd)/DependenceLib"
+PROJECT_DIR="$CODE_DIR"
+CONFIG_FILE="$CODE_DIR/InsertSpeech/config.ini"
+if (( $# )); then
+    [[ $# == 2 && "$1" == --config ]] || die "Usage: bash ${0##*/} [--config PATH]"
+    CONFIG_FILE="$2"
+fi
+DEPENDENCE_DIR="$(python3 - "$PROJECT_DIR" "$CONFIG_FILE" <<'PY'
+import configparser
+import sys
+from pathlib import Path
+
+root, config_path = map(Path, sys.argv[1:])
+config = configparser.ConfigParser(interpolation=None)
+with config_path.open(encoding="utf-8") as handle:
+    config.read_file(handle)
+value = config.get("RuntimeConfig", "env_folder", fallback="../DependenceLib").strip()
+if not value:
+    raise SystemExit("RuntimeConfig.env_folder must not be empty")
+path = Path(value).expanduser()
+print((root / path).resolve())
+PY
+)"
 VENV_DIR="$DEPENDENCE_DIR/.venv"
 INSTALLED_DIR="$DEPENDENCE_DIR/installed"
 ROCM_INSTALL_DIR="$INSTALLED_DIR/ctranslate2-rocm"
+
+COMPONENTS_DIR="$DEPENDENCE_DIR/components"
+export PATH="$COMPONENTS_DIR/ffmpeg/bin:$COMPONENTS_DIR/ollama/bin:$PATH"
+export HF_HOME="$DEPENDENCE_DIR/models/huggingface"
+export HF_HUB_CACHE="$HF_HOME/hub"
+export OLLAMA_MODELS="$DEPENDENCE_DIR/models/ollama"
+export PIP_CACHE_DIR="$DEPENDENCE_DIR/cache/pip"
+export XDG_CACHE_HOME="$DEPENDENCE_DIR/cache"
+export LD_LIBRARY_PATH="$ROCM_INSTALL_DIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+load_native_libraries() {
+if [[ -d "$COMPONENTS_DIR/native" ]]; then
+    while IFS= read -r library_dir; do
+        export LD_LIBRARY_PATH="$library_dir:$LD_LIBRARY_PATH"
+    done < <(find "$COMPONENTS_DIR/native" -type d -name '*lib*' -o -type d -name '*linux-gnu*' -o -type d -name 'openblas-pthread')
+fi
+}
+load_native_libraries
+
+native_components_ready() {
+    local triplet
+    triplet=""
+    case "$(uname -m)" in
+        x86_64) triplet=x86_64-linux-gnu ;;
+        aarch64) triplet=aarch64-linux-gnu ;;
+    esac
+    [[ -f "$COMPONENTS_DIR/native/.complete" &&
+       -f "$COMPONENTS_DIR/native/usr/lib/$triplet/libomp.so.5" &&
+       -f "$COMPONENTS_DIR/native/usr/lib/$triplet/openblas-pthread/libopenblas.so.0" ]]
+}
+
+components_ready() {
+    [[ -x "$COMPONENTS_DIR/ffmpeg/bin/ffmpeg" &&
+       -x "$COMPONENTS_DIR/ffmpeg/bin/ffprobe" &&
+       -x "$COMPONENTS_DIR/ollama/bin/ollama" &&
+       -f "$COMPONENTS_DIR/ollama/.complete" &&
+       -f "$COMPONENTS_DIR/native/.complete" ]] && native_components_ready &&
+        "$COMPONENTS_DIR/ffmpeg/bin/ffmpeg" -version >/dev/null 2>&1 &&
+        "$COMPONENTS_DIR/ffmpeg/bin/ffprobe" -version >/dev/null 2>&1
+}
+
+start_local_ollama() {
+    # Each dependency directory owns a server and model store, separate from system Ollama.
+    OLLAMA_HOST="$(python3 - "$DEPENDENCE_DIR" <<'PY'
+import fcntl
+import json
+import os
+from pathlib import Path
+import socket
+import subprocess
+import sys
+import time
+import urllib.request
+
+root = Path(sys.argv[1])
+run = root / "run"
+run.mkdir(parents=True, exist_ok=True)
+state_path = run / "ollama.json"
+binary = root / "components/ollama/bin/ollama"
+opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+
+def healthy(host):
+    try:
+        with opener.open("http://" + host + "/api/tags", timeout=1) as response:
+            return isinstance(json.load(response).get("models"), list)
+    except Exception:
+        return False
+
+with (run / "ollama.lock").open("a") as lock:
+    fcntl.flock(lock, fcntl.LOCK_EX)
+    try:
+        state = json.loads(state_path.read_text())
+        environment = Path(f"/proc/{int(state['pid'])}/environ").read_bytes().split(b"\0")
+        executable = Path(f"/proc/{int(state['pid'])}/exe").resolve()
+        expected = ("OLLAMA_MODELS=" + os.environ["OLLAMA_MODELS"]).encode()
+        if executable == binary.resolve() and expected in environment and healthy(state["host"]):
+            print(state["host"])
+            raise SystemExit(0)
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+
+    with socket.socket() as listener:
+        listener.bind(("127.0.0.1", 0))
+        host = "127.0.0.1:" + str(listener.getsockname()[1])
+    env = dict(os.environ, OLLAMA_HOST=host)
+    with (run / "ollama.log").open("ab") as log:
+        process = subprocess.Popen([str(binary), "serve"], env=env,
+                                   stdin=subprocess.DEVNULL, stdout=log, stderr=log,
+                                   start_new_session=True)
+    for _ in range(60):
+        if process.poll() is not None:
+            raise SystemExit(f"Ollama exited; see {run / 'ollama.log'}")
+        if healthy(host):
+            state_path.write_text(json.dumps({"pid": process.pid, "host": host}))
+            print(host)
+            break
+        time.sleep(0.5)
+    else:
+        process.terminate()
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
+        raise SystemExit(f"Ollama startup timed out; see {run / 'ollama.log'}")
+PY
+)"
+    export OLLAMA_HOST
+    export AUDIOSOURCE_OLLAMA_API="http://$OLLAMA_HOST/api/generate"
+}
+
 
 environment_ready() {
     [[ -x "$VENV_DIR/bin/python" ]] || return 1
@@ -52,7 +183,7 @@ PY
 install_system_dependencies() {
     local package
     local missing=()
-    for package in libopenblas-dev libomp-dev python3-venv python3-pip curl ffmpeg; do
+    for package in python3-venv curl xz-utils zstd; do
         if [[ "$(dpkg-query -W -f='${Status}' "$package" 2>/dev/null || true)" != "install ok installed" ]]; then
             missing+=("$package")
         fi
@@ -62,6 +193,97 @@ install_system_dependencies() {
         sudo apt-get install -y "${missing[@]}"
     fi
 }
+
+install_local_components() {
+    local arch archive stage package
+    case "$(uname -m)" in
+        x86_64) arch=amd64 ;;
+        aarch64) arch=arm64 ;;
+        *) die "Unsupported component architecture: $(uname -m)" ;;
+    esac
+    mkdir -p "$DEPENDENCE_DIR/downloads" "$COMPONENTS_DIR" "$OLLAMA_MODELS" "$HF_HOME"
+
+    if [[ ! -x "$COMPONENTS_DIR/ffmpeg/bin/ffmpeg" || ! -x "$COMPONENTS_DIR/ffmpeg/bin/ffprobe" ]] ||
+        ! "$COMPONENTS_DIR/ffmpeg/bin/ffmpeg" -version >/dev/null 2>&1 ||
+        ! "$COMPONENTS_DIR/ffmpeg/bin/ffprobe" -version >/dev/null 2>&1; then
+        archive="$DEPENDENCE_DIR/downloads/ffmpeg-$arch-static.tar.xz"
+        if [[ ! -f "$archive" ]]; then
+            info "Downloading FFmpeg: https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-$arch-static.tar.xz"
+            curl -fL --retry 3 "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-$arch-static.tar.xz" -o "$archive.part"
+            mv "$archive.part" "$archive"
+        fi
+        stage="$(mktemp -d "$DEPENDENCE_DIR/downloads/ffmpeg.XXXXXX")"
+        tar -xJf "$archive" -C "$stage" --strip-components=1
+        mkdir -p "$COMPONENTS_DIR/ffmpeg/bin"
+        install -m 755 "$stage/ffmpeg" "$stage/ffprobe" "$COMPONENTS_DIR/ffmpeg/bin/"
+        # Keep the extracted distribution, including license information, under env_folder.
+        mv "$stage" "$COMPONENTS_DIR/ffmpeg/distribution-$(date +%s)"
+    fi
+
+    if ! native_components_ready; then
+        mkdir -p "$COMPONENTS_DIR/native"
+        stage="$(mktemp -d "$DEPENDENCE_DIR/downloads/native.XXXXXX")"
+        # Resolve runtime packages locally; libc and the OS loader remain host prerequisites.
+        python3 - "$stage" "$COMPONENTS_DIR/native" <<'PY'
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+download, destination = map(Path, sys.argv[1:])
+pending = ["libopenblas0-pthread", "libomp5-18"]
+seen = set()
+while pending:
+    package = pending.pop()
+    if package in seen or re.fullmatch(r"libc6|libgcc-s1|libstdc\+\+6|gcc-.*-base", package):
+        continue
+    seen.add(package)
+    dependencies = subprocess.check_output(
+        ["apt-cache", "depends", "--no-recommends", "--no-suggests", "--no-conflicts",
+         "--no-breaks", "--no-replaces", "--no-enhances", package], text=True)
+    for line in dependencies.splitlines():
+        match = re.match(r"\s*(?:PreDepends|Depends): ([a-z0-9.+-]+)(?::\w+)?$", line)
+        if match:
+            pending.append(match.group(1))
+    subprocess.run(["apt-get", "download", package], cwd=download, check=True)
+for archive in sorted(download.glob("*.deb")):
+    subprocess.run(["dpkg-deb", "-x", str(archive), str(destination)], check=True)
+PY
+        touch "$COMPONENTS_DIR/native/.complete"
+    fi
+    # The custom CTranslate2 build requests libomp.so, while runtime packages ship .so.5.
+    while IFS= read -r omp_library; do
+        if [[ ! -e "${omp_library%.5}" && ! -L "${omp_library%.5}" ]]; then
+            ln -s "$(basename "$omp_library")" "${omp_library%.5}"
+        fi
+    done < <(find "$COMPONENTS_DIR/native" -name libomp.so.5)
+    load_native_libraries
+
+    if [[ ! -f "$COMPONENTS_DIR/ollama/.complete" || ! -x "$COMPONENTS_DIR/ollama/bin/ollama" ]]; then
+        download_ollama_archive "ollama-linux-$arch"
+        touch "$COMPONENTS_DIR/ollama/.complete"
+    fi
+    if [[ "${SETUP_CORE:-CPU}" == GPU && ! -f "$COMPONENTS_DIR/ollama/.rocm-complete" ]]; then
+        download_ollama_archive "ollama-linux-$arch-rocm"
+        touch "$COMPONENTS_DIR/ollama/.rocm-complete"
+    fi
+    hash -r
+    components_ready || die "Local components failed validation: $COMPONENTS_DIR"
+}
+
+download_ollama_archive() {
+    local name="$1" archive stage
+    archive="$DEPENDENCE_DIR/downloads/$name.tar.zst"
+    if [[ ! -f "$archive" ]]; then
+        curl -fL --retry 3 "https://ollama.com/download/$name.tar.zst" -o "$archive.part"
+        mv "$archive.part" "$archive"
+    fi
+    stage="$(mktemp -d "$DEPENDENCE_DIR/downloads/ollama.XXXXXX")"
+    tar --zstd -xf "$archive" -C "$stage"
+    mkdir -p "$COMPONENTS_DIR/ollama"
+    cp -a "$stage/." "$COMPONENTS_DIR/ollama/"
+}
+
 
 create_environment() {
     mkdir -p "$DEPENDENCE_DIR"
@@ -135,6 +357,8 @@ info "Kernel        : $(uname -r)"
 info "Python        : $(python3 --version 2>&1)"
 info "MIGRATION_DIR : $MIGRATION_DIR"
 info "CODE_DIR      : $CODE_DIR"
+info "CONFIG_FILE   : $CONFIG_FILE"
+info "env_folder    : $DEPENDENCE_DIR"
 info "INSTALLED_DIR : $INSTALLED_DIR"
 
 echo ""
@@ -182,6 +406,8 @@ success "All required files present"
 section "========== 2. Installing system dependencies =========="
 
 install_system_dependencies
+SETUP_CORE=GPU
+install_local_components
 success "System dependencies installed"
 
 # =============================================================================
@@ -189,33 +415,9 @@ success "System dependencies installed"
 # =============================================================================
 section "========== 3. Installing Ollama =========="
 
-if command -v ollama &>/dev/null; then
-    success "Ollama already installed: $(ollama --version 2>&1)"
-else
-    info "Downloading and installing Ollama..."
-    curl -fsSL https://ollama.com/install.sh | sh
-    success "Ollama installed"
-fi
+start_local_ollama
 
-# Start ollama service if not running
-if ! pgrep -x "ollama" &>/dev/null; then
-    info "Starting Ollama service..."
-    ollama serve &>/dev/null &
-    # Wait for service to be ready
-    for i in {1..15}; do
-        if curl -s http://localhost:11434 &>/dev/null; then
-            success "Ollama service is up"
-            break
-        fi
-        info "Waiting for Ollama to start... ($i/15)"
-        sleep 2
-    done
-else
-    success "Ollama service already running"
-fi
-
-# Pull model if not present
-if ollama list 2>/dev/null | grep -q "$OLLAMA_MODEL"; then
+if ollama show "$OLLAMA_MODEL" >/dev/null 2>&1; then
     success "Model $OLLAMA_MODEL already present"
 else
     info "Pulling model $OLLAMA_MODEL (this may take a while)..."
@@ -328,9 +530,9 @@ success "_ext.so replaced with ROCm build"
 fi
 
 # =============================================================================
-# 8. Write environment variables to ~/.bashrc
+# 8. Apply GPU environment and remove legacy global settings
 # =============================================================================
-section "========== 8. Writing environment variables =========="
+section "========== 8. Configuring GPU environment =========="
 
 MARKER="# >>> podcast-rocm-env >>>"
 MARKER_END="# <<< podcast-rocm-env <<<"
@@ -340,35 +542,23 @@ CPU_MARKER_END="# <<< podcast-cpu-env <<<"
 remove_bashrc_block "$MARKER" "$MARKER_END"
 remove_bashrc_block "$CPU_MARKER" "$CPU_MARKER_END"
 
-cat >> "$BASHRC" << EOF
+# Runtime paths and mode are loaded by the launchers, not persisted globally.
 
-$MARKER
-export LD_LIBRARY_PATH=$ROCM_INSTALL_DIR/lib:/usr/lib/llvm-18/lib\${LD_LIBRARY_PATH:+:\$LD_LIBRARY_PATH}
-export AUDIOSOURCE_WHISPER_DEVICE=cuda
-export AUDIOSOURCE_WHISPER_COMPUTE_TYPE=float16
-export AUDIOSOURCE_MAX_WORKERS=1
-export AUDIOSOURCE_OLLAMA_MODEL=qwen2.5:7b
-$MARKER_END
-EOF
-success "Environment variables written to $BASHRC"
-
-# Apply to current shell immediately
-export LD_LIBRARY_PATH="$ROCM_INSTALL_DIR/lib:/usr/lib/llvm-18/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export LD_LIBRARY_PATH="$ROCM_INSTALL_DIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export AUDIOSOURCE_WHISPER_DEVICE=cuda
 export AUDIOSOURCE_WHISPER_COMPUTE_TYPE=float16
 export AUDIOSOURCE_MAX_WORKERS=1
 export AUDIOSOURCE_OLLAMA_MODEL=qwen2.5:7b
 
-python3 - "$CODE_DIR" << 'PYEOF'
+python3 - "$CONFIG_FILE" << 'PYEOF'
 import configparser
 import os
 import sys
 from pathlib import Path
 
 if os.getenv("PODCAST_SETUP_AUTO") != "1":
-    for folder in ("InsertSpeech", "SubtitleOnly", "TranslateAudio"):
-        config_path = Path(sys.argv[1]) / folder / "config.ini"
-        parser = configparser.ConfigParser()
+    for config_path in (Path(sys.argv[1]),):
+        parser = configparser.ConfigParser(interpolation=None)
         parser.read(config_path, encoding="utf-8")
         if not parser.has_section("RuntimeConfig"):
             parser.add_section("RuntimeConfig")
@@ -394,7 +584,7 @@ ffmpeg  -version 2>&1 | head -1 || warn "ffmpeg not found"
 ffprobe -version 2>&1 | head -1 || warn "ffprobe not found"
 
 info "--- Ollama ---"
-if curl -s http://localhost:11434/api/generate \
+if curl -s "$AUDIOSOURCE_OLLAMA_API" \
     -d "{\"model\":\"$OLLAMA_MODEL\",\"prompt\":\"hi\",\"stream\":false}" \
     --max-time 15 | grep -q "response"; then
     success "Ollama $OLLAMA_MODEL responding"
@@ -424,4 +614,4 @@ echo "To run:"
 echo "  cd $CODE_DIR"
 echo "  bash insertSpeech.sh"
 echo ""
-echo "Note: environment variables load automatically in new terminals (written to ~/.bashrc)"
+echo "Runtime paths load from the selected config when using a project launcher."

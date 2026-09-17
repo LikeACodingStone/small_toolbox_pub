@@ -29,7 +29,7 @@ _TRANSLATION_CONFIG_CACHE = {"mtime": None, "config": None}
 _SPACY_NLP_CACHE = {"model": None, "nlp": None, "failed_models": set()}
 
 analyzer = CEFRAnalyzer()
-OLLAMA_API = "http://localhost:11434/api/generate"
+OLLAMA_API = os.getenv("AUDIOSOURCE_OLLAMA_API", "http://localhost:11434/api/generate")
 FILTER_FILE = Path(__file__).resolve().parent / "filter.txt"
 CONFIG_FILE = Path(__file__).resolve().parent / "config.ini"
 COMPLETE_MARKER = "<!-- TRANSCRIPTION_COMPLETE -->"
