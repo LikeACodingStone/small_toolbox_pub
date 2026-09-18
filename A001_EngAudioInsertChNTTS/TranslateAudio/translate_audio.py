@@ -125,6 +125,35 @@ def row_has_vocabulary(row):
     return bool(translation) and not should_skip_tts(translation)
 
 
+def sentence_vocabulary(row):
+    """Accept only explicit word/meaning pairs whose word occurs in this row.
+
+    Older Markdown attaches a whole group's vocabulary to its final row.
+    Its group boundaries are not recorded, so never guess another sentence's
+    translation from neighboring rows.
+    """
+    def normalize(text):
+        return unicodedata.normalize("NFKC", text).replace("’", "'").casefold()
+
+    english = normalize(row.get("english", ""))
+    raw = re.sub(r"\*\*|`", "", row.get("translation", ""))
+    raw = re.sub(r"^\s*Vocabulary\s*[:：]\s*", "", raw, flags=re.IGNORECASE)
+    accepted = []
+    for entry in re.split(r"[;；\n]", raw):
+        pair = re.fullmatch(r"\s*([A-Za-z][A-Za-z’' -]*?)\s*[:：]\s*(\S.*?)\s*", entry)
+        if not pair:
+            if entry.strip():
+                logging.warning("Omit unrecognized vocabulary at %.2fs: %r", row["start"], entry)
+            continue
+        word, meaning = pair.groups()
+        pattern = r"(?<![\w'-])" + re.escape(normalize(word)) + r"(?![\w'-])"
+        if re.search(pattern, english):
+            accepted.append(f"{word}: {meaning}")
+        else:
+            logging.warning("Omit vocabulary absent from sentence at %.2fs: %s", row["start"], word)
+    return "; ".join(accepted)
+
+
 def write_filtered_concat(rows, tts_paths, original_audio, original_duration, output_path, tmp_dir):
     ffmpeg, ffprobe = require_ffmpeg()
     profile = build_output_profile(original_audio, output_path, ffprobe)
@@ -221,10 +250,10 @@ def write_filtered_concat(rows, tts_paths, original_audio, original_duration, ou
     tmp_output.replace(output_path)
 
 
-def process_one(audio_path, translation_dir, output_dir, output_suffix):
+def process_one(audio_path, translation_dir, output_dir, output_suffix, force=False):
     audio_path = Path(audio_path)
     output_path = output_path_for_source(audio_path, output_dir, output_suffix)
-    if output_path.exists() and output_path.stat().st_size > 0:
+    if not force and output_path.exists() and output_path.stat().st_size > 0:
         logging.info("Skip existing output: %s", output_path)
         return "skipped"
 
@@ -237,6 +266,7 @@ def process_one(audio_path, translation_dir, output_dir, output_suffix):
     all_rows = sorted(rows, key=lambda item: item["start"])
     selected_rows = []
     for index, row in enumerate(all_rows):
+        row = {**row, "translation": sentence_vocabulary(row)}
         if not row_has_vocabulary(row):
             continue
         selected_rows.append(
@@ -248,6 +278,9 @@ def process_one(audio_path, translation_dir, output_dir, output_suffix):
 
     if not selected_rows:
         logging.info("No vocabulary sentences found in: %s", markdown_path)
+        if force and output_path.exists():
+            output_path.unlink()
+            logging.info("Removed outdated output with no sentence-matched vocabulary: %s", output_path)
         return "no_vocabulary"
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -270,6 +303,7 @@ def build_arg_parser():
     parser.add_argument("--translate-dir", "--input-dir", dest="translate_dir", type=Path, default=None)
     parser.add_argument("--source-dir", type=Path, default=None)
     parser.add_argument("--output-dir", type=Path, default=None)
+    parser.add_argument("--force", action="store_true", help="Rebuild existing audio; remove old output if no sentence-matched vocabulary remains.")
     return parser
 
 
@@ -295,7 +329,7 @@ def main(argv=None):
     failed = 0
     for audio_path in files:
         try:
-            status = process_one(audio_path, translation_dir, output_dir, output_suffix)
+            status = process_one(audio_path, translation_dir, output_dir, output_suffix, force=args.force)
             if status == "ok":
                 completed += 1
         except Exception:

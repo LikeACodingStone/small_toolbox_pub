@@ -1347,11 +1347,10 @@ def write_segment_group(
     recent_translations=None,
     repeat_window_seconds=RECENT_TRANSLATION_WINDOW_SECONDS,
 ):
-    if not segments:
-        return
-
-    if len(segments) == 1:
-        start_seconds, english_text = segments[0]
+    # Buffering may still group segments, but vocabulary belongs to the exact
+    # sentence containing it. Group-wide vocabulary on the last row breaks
+    # consumers such as TranslateAudio that play selected sentences only.
+    for start_seconds, english_text in segments:
         write_segment(
             handle,
             start_seconds,
@@ -1360,30 +1359,6 @@ def write_segment_group(
             recent_translations=recent_translations,
             repeat_window_seconds=repeat_window_seconds,
         )
-        return
-
-    group_start = segments[0][0]
-    group_end = segments[-1][0]
-    combined_text = " ".join(english_text for _start_seconds, english_text in segments if english_text)
-    translation_text = build_translation_text(
-        group_end,
-        combined_text,
-        filter_words=filter_words,
-        recent_translations=recent_translations,
-        repeat_window_seconds=repeat_window_seconds,
-    )
-    logger.info(
-        "Grouped translation segments=%d start=%.2fs end=%.2fs",
-        len(segments),
-        group_start,
-        group_end,
-    )
-
-    for index, (start_seconds, english_text) in enumerate(segments):
-        segment_translation = translation_text if index == len(segments) - 1 else ""
-        write_markdown_segment(handle, start_seconds, english_text, segment_translation)
-
-    handle.flush()
 
 
 def markdown_has_segments(markdown_path):
