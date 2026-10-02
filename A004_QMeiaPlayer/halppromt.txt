@@ -1,0 +1,7 @@
+1. I want to improve this player function. you decide which part should keep. 
+2. Refer to Icons/QMediaplayer.png, I need to made the exactly same UI like this picture. 
+3. Besides except (00:00)/(03:40)/(1/500) these three part are using label.  and besides except two showing textedit. All the other  parts are button can be clicked 
+4. GI function explaintion
+	- OPEN button used for open a path, if first time open tools. this is mandatory, if it is not first time. remember the folder path in a db file.
+	- other/rockPOP/blues/country/chinese/punk/hardrock/jPop/solo/metal for all these button. while click these button, will move the current song to a relative path. suppose the default opened folder is A. then the song will move to ../classify/rockPOP . each different button to different path. named by the button name.
+	- VOL-  VOL+ each time click will reduce 
