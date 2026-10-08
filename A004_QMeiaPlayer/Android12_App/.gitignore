@@ -1,0 +1,35 @@
+# Gradle / Android build outputs and local SDK configuration
+.gradle/
+.kotlin/
+local.properties
+build/
+.externalNativeBuild/
+.cxx/
+captures/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# Gradle user-home data accidentally generated in the project root
+/caches/
+/daemon/
+/native/
+/wrapper/
+/android/
+/.tmp/
+/notifications/
+/jdks/
+# Keep gradle/wrapper/gradle-wrapper.jar and .properties in Git.
+
+# Local Android Studio settings and signing material
+.idea/
+*.iml
+*.jks
+*.keystore
+keystore.properties
+
+# Generated visual previews and build verification results
+/design/*.png
+/verification/apk-sha256.txt

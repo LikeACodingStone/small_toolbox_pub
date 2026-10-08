@@ -1,0 +1,43 @@
+# Python caches and local environments (Linux / Windows)
+__pycache__/
+*.py[cod]
+.venv/
+.venv-*/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+
+# Generated packages; keep PyInstaller .spec project files
+build/
+dist/
+*.exe
+
+# Local IDE and operating-system files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+
+# Runtime data and legacy user settings
+/Configs/
+/backupFiles/
+/logs/
+/config.ini
+/config_modules.ini
+/config_random.ini
+*.log
+*.db
+*.db-journal
+*.db-wal
+*.db-shm

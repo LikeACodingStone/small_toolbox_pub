@@ -1,0 +1,32 @@
+plugins { id 'com.android.application' }
+
+// Some IDE imports request this root-only Gradle tooling task on the module.
+tasks.register('prepareKotlinBuildScriptModel') {
+    dependsOn rootProject.tasks.named('prepareKotlinBuildScriptModel')
+}
+
+android {
+    namespace 'com.qmedia.classifier'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'com.qmedia.classifier'
+        minSdk 31
+        targetSdk 32
+        versionCode 1
+        versionName '1.0'
+    }
+    lint {
+        // This is an Android 12 sideload app, not a Play Store submission.
+        disable 'ExpiredTargetSdkVersion'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+android.applicationVariants.all { variant ->
+    variant.outputs.all {
+        outputFileName = "RingPlayer.apk"
+    }
+}
