@@ -1,0 +1,41 @@
+{
+  "tool": "A003",
+  "branch": "A003_BookEnglishInsertCh",
+  "source_commit": "4a04464e1f8c85b8192ea85feca16f2ac2fac673",
+  "source_dirty": false,
+  "built_at": "2026-10-08T09:55:07.969001+00:00",
+  "platform": "Linux-7.0.0-34-generic-x86_64-with-glibc2.39",
+  "architecture": "x86_64",
+  "runtime": "../../../Envsetup/environments/A003",
+  "python": "Python 3.12.3",
+  "runtime_packages": [
+    "cefrpy==1.0.2",
+    "certifi==2026.7.22",
+    "charset-normalizer==3.5.2",
+    "Cython==3.3.0",
+    "ftfy==6.3.1",
+    "idna==3.20",
+    "langcodes==3.5.1",
+    "locate==1.1.1",
+    "msgpack==1.2.3",
+    "packaging==26.3",
+    "regex==2026.9.29",
+    "requests==2.34.0",
+    "setuptools==84.0.0",
+    "urllib3==2.8.0",
+    "wcwidth==0.9.2",
+    "wheel==0.48.0",
+    "wordfreq==3.1.1"
+  ],
+  "sha256": {
+    "config.ini": "225167f7e85aa6a0db4389b8e79435900e127e9f4b267d3bdc2ed3bcdaffeb57",
+    "filter.txt": "0a60699dbfc76be96ccb757c0520048dab7995f83232e5c7b0cd1bb2e74c424c",
+    "run": "cf4f3bbee70522449257a1ea4b3e1188e97b7dd0350d38672ca1634e10ea9fb5",
+    "lib/book_vocab_module.cpython-312-x86_64-linux-gnu.so": "f4216c6fb5b5a94e0a47b4824a445a914e3d021a40da2709115ce226083fa15c",
+    "lib/main_batch.cpython-312-x86_64-linux-gnu.so": "158c37c4832f1c0e9050e40996907bf849250bcd8d137fb9442f3fa4b81ece13",
+    "Log/book_batch_20261008_185507.log": "c4ef92ff1400edaded3cab0c90047fd118b462f73fe1dd918d2490e798586b02",
+    "open-terminal": "a1293ceb67607f2627fa51e7af3420b253cbd85c8a64007a41644a5c0d997b89",
+    "terminal.rc": "63e57185c8eb796792f79ddb03cf2594b0f18292328b52b066a21c306b51de3d"
+  },
+  "launch_mode": "terminal"
+}

@@ -2,3 +2,13 @@ __pycache__/
 *.py[cod]
 code/.venv/
 .worktrees
+
+/Envsetup/environments/
+/Envsetup/build/
+/tools/**/*.backup-*/
+/tools/**/Log/
+/tools/**/output/
+/tools/**/cache/
+/tools/**/input/
+/tools/**/app_ui_debug.log
+/tools/**/app_ui_state.json

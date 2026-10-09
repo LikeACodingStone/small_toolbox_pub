@@ -3,8 +3,8 @@ setlocal EnableExtensions
 
 for %%I in ("%~dp0..") do set "PROJECT_ROOT=%%~fI"
 set "CODE_DIR=%PROJECT_ROOT%\code"
-set "VENV_DIR=%CODE_DIR%\.venv"
-set "REQUIREMENTS_FILE=%CODE_DIR%\requirements.txt"
+set "VENV_DIR=%PROJECT_ROOT%\Envsetup\environments\toolbox\.venv"
+set "REQUIREMENTS_FILE=%PROJECT_ROOT%\Envsetup\requirements\toolbox.txt"
 
 if not exist "%REQUIREMENTS_FILE%" (
     echo Requirements file not found: %REQUIREMENTS_FILE%

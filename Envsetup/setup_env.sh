@@ -4,8 +4,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 CODE_DIR="${PROJECT_ROOT}/code"
-VENV_DIR="${CODE_DIR}/.venv"
-REQUIREMENTS_FILE="${CODE_DIR}/requirements.txt"
+VENV_DIR="${SCRIPT_DIR}/environments/toolbox/.venv"
+REQUIREMENTS_FILE="${SCRIPT_DIR}/requirements/toolbox.txt"
 
 if [[ ! -f "${REQUIREMENTS_FILE}" ]]; then
     echo "Requirements file not found: ${REQUIREMENTS_FILE}" >&2

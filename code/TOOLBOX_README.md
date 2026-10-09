@@ -13,8 +13,8 @@ For example, `toolbox_linux/A001_EngAudioInsertChNTTS.sh` appears as
 ## Setup
 
 From the repository root, run the setup script for your platform. It creates a
-virtual environment at `code/.venv` and installs every package in
-`code/requirements.txt`.
+virtual environment at `Envsetup/environments/toolbox/.venv` and installs every package in
+`Envsetup/requirements/toolbox.txt`.
 
 Linux/macOS:
 
@@ -47,3 +47,12 @@ directory.
 
 Use **Refresh** after adding or removing scripts. Each process has its own
 output log and can be stopped from the selected tool page.
+
+## Packaged tools
+
+See [PACKAGING.md](../PACKAGING.md) for `./package.sh A001` through `A004`, or
+`./package.sh all --setup`. Tool launchers use releases under `tools/`, not source
+worktrees. Each project has one entry. A001/A003 open an interactive terminal in
+their release folder and wait for your commands; A002/A004 launch their UI.
+Close the external terminal to end the shell; toolbox Stop does not reliably
+control processes owned by a separate terminal emulator.
