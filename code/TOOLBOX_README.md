@@ -50,7 +50,7 @@ output log and can be stopped from the selected tool page.
 
 ## Packaged tools
 
-See [PACKAGING.md](../PACKAGING.md) for `./package.sh A001` through `A004`, or
+See [PACKAGING.md](../PACKAGING.md) for `./package.sh English01`, `English02`, `English03`, or `Audio04`, or
 `./package.sh all --setup`. Tool launchers use releases under `tools/`, not source
 worktrees. Each project has one entry. A001/A003 open an interactive terminal in
 their release folder and wait for your commands; A002/A004 launch their UI.

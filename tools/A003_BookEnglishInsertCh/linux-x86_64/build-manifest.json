@@ -1,9 +1,10 @@
 {
   "tool": "A003",
-  "branch": "A003_BookEnglishInsertCh",
+  "branch": "English03_BookEngInsertCh",
+  "launch_mode": "terminal",
   "source_commit": "4a04464e1f8c85b8192ea85feca16f2ac2fac673",
   "source_dirty": false,
-  "built_at": "2026-10-08T09:55:07.969001+00:00",
+  "built_at": "2026-10-09T09:21:46.515675+00:00",
   "platform": "Linux-7.0.0-34-generic-x86_64-with-glibc2.39",
   "architecture": "x86_64",
   "runtime": "../../../Envsetup/environments/A003",
@@ -28,14 +29,13 @@
     "wordfreq==3.1.1"
   ],
   "sha256": {
+    "terminal.rc": "63e57185c8eb796792f79ddb03cf2594b0f18292328b52b066a21c306b51de3d",
     "config.ini": "225167f7e85aa6a0db4389b8e79435900e127e9f4b267d3bdc2ed3bcdaffeb57",
     "filter.txt": "0a60699dbfc76be96ccb757c0520048dab7995f83232e5c7b0cd1bb2e74c424c",
-    "run": "cf4f3bbee70522449257a1ea4b3e1188e97b7dd0350d38672ca1634e10ea9fb5",
-    "lib/book_vocab_module.cpython-312-x86_64-linux-gnu.so": "f4216c6fb5b5a94e0a47b4824a445a914e3d021a40da2709115ce226083fa15c",
-    "lib/main_batch.cpython-312-x86_64-linux-gnu.so": "158c37c4832f1c0e9050e40996907bf849250bcd8d137fb9442f3fa4b81ece13",
-    "Log/book_batch_20261008_185507.log": "c4ef92ff1400edaded3cab0c90047fd118b462f73fe1dd918d2490e798586b02",
     "open-terminal": "a1293ceb67607f2627fa51e7af3420b253cbd85c8a64007a41644a5c0d997b89",
-    "terminal.rc": "63e57185c8eb796792f79ddb03cf2594b0f18292328b52b066a21c306b51de3d"
-  },
-  "launch_mode": "terminal"
+    "run": "cf4f3bbee70522449257a1ea4b3e1188e97b7dd0350d38672ca1634e10ea9fb5",
+    "lib/book_vocab_module.cpython-312-x86_64-linux-gnu.so": "9e901fc55ed631a2a4d025b6ea2d66686a0bb47edb085dd5ef75f54f906c1f8a",
+    "lib/main_batch.cpython-312-x86_64-linux-gnu.so": "25f713cdbde22af53be35bd74231c2011b963fe6a1bdf9b96e970511cd241a93",
+    "Log/book_batch_20261009_182146.log": "0ffd95cd9a8b2cee205beb180a41eae09a225d2827c891fd717780572d8588d2"
+  }
 }

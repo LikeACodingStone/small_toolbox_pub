@@ -1,9 +1,10 @@
 {
   "tool": "A002",
-  "branch": "A002_PodcastSubtitleToMobi",
+  "branch": "English02_SubtitlesToMobi",
+  "launch_mode": "ui",
   "source_commit": "b00e7c5c8ae6eff6b95f07cc9ed29c14d8c31a85",
   "source_dirty": false,
-  "built_at": "2026-10-08T09:54:18.334698+00:00",
+  "built_at": "2026-10-09T09:20:56.754514+00:00",
   "platform": "Linux-7.0.0-34-generic-x86_64-with-glibc2.39",
   "architecture": "x86_64",
   "runtime": "../../../Envsetup/environments/A002",
@@ -71,7 +72,7 @@
   ],
   "sha256": {
     "run": "360a470835ce77ff9620093761dee89b3494cbd0a170309c866d26b8dce88211",
-    "lib/app_ui.cpython-312-x86_64-linux-gnu.so": "1e3a1082d6df2b187eafa3ced299804821a74520d7c5f8c38e1318ec79dbfe97",
-    "lib/subtitle_to_ebook.cpython-312-x86_64-linux-gnu.so": "f93cd79b1a480972f7f921bff8723f835b05e6aebe476de2412e1d90b1b4edc4"
+    "lib/app_ui.cpython-312-x86_64-linux-gnu.so": "c28860c23fc96f1a889fe77864de2a2a6fa6762e292af765aaeb52472b325063",
+    "lib/subtitle_to_ebook.cpython-312-x86_64-linux-gnu.so": "00c5a238abc2e06e2b19cf45243cf682144c7c48219ffd5458d44de9f8e3ec31"
   }
 }

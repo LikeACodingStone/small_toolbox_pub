@@ -1,9 +1,10 @@
 {
   "tool": "A004",
-  "branch": "A004_QMeiaPlayer",
+  "branch": "Audio04_QMeiaPlayer",
+  "launch_mode": "ui",
   "source_commit": "ed5ab4f5e1d316a5fec591757fa3d171d913bb57",
   "source_dirty": false,
-  "built_at": "2026-10-08T09:55:18.875732+00:00",
+  "built_at": "2026-10-09T09:21:57.243691+00:00",
   "platform": "Linux-7.0.0-34-generic-x86_64-with-glibc2.39",
   "architecture": "x86_64",
   "runtime": "../../../Envsetup/environments/A004",
@@ -21,8 +22,8 @@
   ],
   "sha256": {
     "run": "18572df94fc52989511531d60d8f288c18f973c38f8db840aea809572ad12aa0",
-    "lib/library.cpython-312-x86_64-linux-gnu.so": "f5210c28d3d127e9582d18cf320200b4d24455af6e6db5181567fc42e65975b4",
-    "lib/player.cpython-312-x86_64-linux-gnu.so": "fbdeca3db7d12d3a691463b694234769c22e91f7904304257d31aceb8e12c434",
+    "lib/library.cpython-312-x86_64-linux-gnu.so": "053f5b838e184759cf99de1aa923b7d3b635c9cc8c7ad0ec7f566bf2742c306d",
+    "lib/player.cpython-312-x86_64-linux-gnu.so": "b2bd7401b50014188b6f2add0781e62835fb4abd4b4d3e5c46e321b5a423f329",
     "Icons/Play.png": "0663f00fb82d697ae410da129625aa7ac352d34ad804fd3efdf994e1b14cec39",
     "Icons/COUNTRY.png": "d3cd0009d8dc6cdeaf8996c1682bb38ed15127597796d0637237c756ede50165",
     "Icons/BLUES.png": "e691967961773cc6a701f0d4182e40e3a0b6dc98b7fde3afea838e6dd7784b79",

@@ -27,6 +27,24 @@ TOOLS = {
 }
 
 
+BRANCHES = {
+    'A001': 'English01_AudioInsertChTTS',
+    'A002': 'English02_SubtitlesToMobi',
+    'A003': 'English03_BookEngInsertCh',
+    'A004': 'Audio04_QMeiaPlayer',
+}
+
+
+def tool_id(value):
+    if value.lower() == 'all':
+        return 'all'
+    for code, branch in BRANCHES.items():
+        aliases = (branch, branch.split('_', 1)[0])
+        if value.lower() in (alias.lower() for alias in aliases):
+            return code
+    raise argparse.ArgumentTypeError('Unknown tool. Use English01, English02, English03, Audio04 or all.')
+
+
 def run(args, **kwargs):
     print('[RUN]', ' '.join(map(str, args)), flush=True)
     return subprocess.run(list(map(str, args)), check=True, **kwargs)
@@ -36,18 +54,23 @@ def source_for(code, worktrees):
     name = TOOLS[code][0]
     # Detect registered worktrees by branch, rather than assuming their folder names.
     result = subprocess.check_output(['git', '-C', str(ROOT), 'worktree', 'list', '--porcelain'], text=True)
-    candidates = []
+    registered = {}
     for block in result.split('\n\n'):
         fields = dict(line.split(' ', 1) for line in block.splitlines() if ' ' in line)
-        if fields.get('branch') == 'refs/heads/' + name:
-            candidates.append(Path(fields['worktree']))
-    candidates += [worktrees / code, worktrees / name]
+        if 'branch' in fields:
+            registered[fields['branch']] = Path(fields['worktree'])
+    branch = BRANCHES[code]
+    short = branch.split('_', 1)[0]
+    # Prefer renamed branches even when an old branch also has a worktree.
+    candidates = [registered['refs/heads/' + ref] for ref in (branch, short, name)
+                  if 'refs/heads/' + ref in registered]
+    candidates += [worktrees / folder for folder in (short, branch, code, name)]
     for base in candidates:
-        for source in (base / name, base):
+        for source in (base / branch, base / short, base / name, base):
             marker = 'InsertSpeech/main_batch.py' if code == 'A001' else TOOLS[code][1][0] + '.py'
             if (source / marker).is_file():
                 return source.resolve()
-    raise RuntimeError(f'{code}: source worktree not found. Create a worktree for branch {name}.')
+    raise RuntimeError(f'{short}: source worktree not found. Create a worktree for branch {branch}.')
 
 
 def compile_modules(code, source, candidate, work, python):
@@ -192,7 +215,8 @@ def package(code, args):
     if forbidden:
         raise RuntimeError(f'Unexpected source files in release: {forbidden}')
     manifest = {
-        'tool': code, 'branch': name,
+        'tool': code, 'branch': subprocess.check_output(
+            ['git', '-C', str(source), 'branch', '--show-current'], text=True).strip(),
         'launch_mode': 'terminal' if code in ('A001', 'A003') else 'ui',
         'source_commit': subprocess.check_output(['git', '-C', str(source), 'rev-parse', 'HEAD'], text=True).strip(),
         'source_dirty': bool(subprocess.check_output(['git', '-C', str(source), 'status', '--porcelain'], text=True).strip()),
@@ -221,7 +245,8 @@ def package(code, args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('tools', nargs='+', type=lambda value: 'A' + value if value in ('001', '002', '003', '004') else value.upper() if value.lower() != 'all' else 'all', choices=[*TOOLS, 'all'])
+    parser.add_argument('tools', nargs='+', type=tool_id, metavar='TOOL',
+                        help='English01, English02, English03, Audio04 or all (full branch names also accepted)')
     parser.add_argument('--worktrees', type=Path, default=ROOT / '.worktrees')
     parser.add_argument('--output', type=Path, default=ROOT / 'tools')
     parser.add_argument('--setup', action='store_true', help='Install isolated build/runtime dependencies first')
