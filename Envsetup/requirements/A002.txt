@@ -1,4 +1,0 @@
-PyYAML>=6.0
-gradio>=6.0,<7.0
-cmudict==1.1.3
-
