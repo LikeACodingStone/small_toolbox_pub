@@ -5,6 +5,7 @@ and `packaging/`; worktrees are read-only inputs. The A001 branch's `package.sh`
 is not invoked. Each branch can still run independently with its original scripts.
 
 ```bash
+./add_worktrees.sh               # fetch origin and create/update source worktrees
 ./package.sh all --dry-run        # inspect detected worktrees and outputs
 ./package.sh Audio04 --setup         # prepare its environment, compile, verify, publish
 ./package.sh English01 English02 --setup    # select several tools
@@ -12,8 +13,9 @@ is not invoked. Each branch can still run independently with its original script
 ./package.sh all                 # rebuild using prepared environments
 ```
 
-The packager finds registered worktrees by their branch names. Both a project
-folder inside the worktree and a flat project at its root are supported. The
+The packager finds registered worktrees by their exact current branch names and
+checks that the source is on that branch. It prefers source files at the worktree
+root; the original project subfolder is supported for recovered sources. The
 fallback search directory can be changed with `--worktrees PATH`.
 `--output PATH` changes the release root, but the default toolbox launchers always
 use `small_toolbox_pub/tools`; use the default for toolbox integration.
@@ -125,4 +127,8 @@ The source branches are `English01_AudioInsertChTTS`,
 `Audio04_QMeiaPlayer`. Full branch names are also accepted (case-insensitive). Renamed worktrees may retain the original
 project folder inside. Release directories and Envsetup IDs remain unchanged,
 so existing toolbox launchers and installed environments continue to work.
-New manifests record the actual checked-out source branch.
+New manifests record the actual checked-out source branch. Legacy branch names
+and A001–A004 worktree folder names are no longer used for source discovery.
+Currently English02, English03 and Audio04 have flat source layouts;
+the recovered English01 uses `English01/A001_EngAudioInsertChNTTS/`.
+Packaging uses the checked-out commits without fetching or updating them itself.

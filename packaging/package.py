@@ -53,20 +53,27 @@ def run(args, **kwargs):
 def source_for(code, worktrees):
     name = TOOLS[code][0]
     # Detect registered worktrees by branch, rather than assuming their folder names.
-    result = subprocess.check_output(['git', '-C', str(ROOT), 'worktree', 'list', '--porcelain'], text=True)
+    result = subprocess.check_output(['git', '-C', str(ROOT), 'worktree', 'list', '--porcelain', '-z'], text=True)
     registered = {}
-    for block in result.split('\n\n'):
-        fields = dict(line.split(' ', 1) for line in block.splitlines() if ' ' in line)
+    for block in result.split('\0\0'):
+        fields = dict(line.split(' ', 1) for line in block.split('\0') if ' ' in line)
         if 'branch' in fields:
             registered[fields['branch']] = Path(fields['worktree'])
     branch = BRANCHES[code]
     short = branch.split('_', 1)[0]
-    # Prefer renamed branches even when an old branch also has a worktree.
-    candidates = [registered['refs/heads/' + ref] for ref in (branch, short, name)
-                  if 'refs/heads/' + ref in registered]
-    candidates += [worktrees / folder for folder in (short, branch, code, name)]
+    # An exact branch match takes precedence over folder naming conventions.
+    registered_source = registered.get('refs/heads/' + branch)
+    candidates = ([registered_source] if registered_source else
+                  [worktrees / short, worktrees / branch])
     for base in candidates:
-        for source in (base / branch, base / short, base / name, base):
+        if not base.is_dir():
+            continue
+        actual_branch = subprocess.check_output(
+            ['git', '-C', str(base), 'branch', '--show-current'], text=True).strip()
+        if actual_branch != branch:
+            raise RuntimeError(f'{base}: expected branch {branch}, found {actual_branch or "detached HEAD"}')
+        # Current branches are flat; recovered English01 still uses its old folder.
+        for source in (base, base / name):
             marker = 'InsertSpeech/main_batch.py' if code == 'A001' else TOOLS[code][1][0] + '.py'
             if (source / marker).is_file():
                 return source.resolve()
@@ -168,7 +175,7 @@ def package(code, args):
     name = TOOLS[code][0]
     target = args.output / name / ('linux-' + platform.machine())
     env = ROOT / 'Envsetup/environments' / code
-    print(f'{code}: {source}\n  -> {target}\n  runtime: {env}', flush=True)
+    print(f'{BRANCHES[code]}: {source}\n  -> {target}\n  runtime: {env}', flush=True)
     if args.dry_run:
         return
     if args.setup:
