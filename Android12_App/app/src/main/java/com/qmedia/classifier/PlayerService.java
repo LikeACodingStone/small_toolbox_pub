@@ -179,9 +179,16 @@ public final class PlayerService extends Service {
         }
         busy=true;publish(true);
         int index=tracks.indexOf(current);List<String> order=new ArrayList<>();for(int i=1;i<tracks.size();i++)order.add(tracks.get((index+i)%tracks.size()).uri);
+        // Strategy: classifying a song also moves every other unclassified track by the same singer.
+        String singer=current.singer();List<Track> sameSinger=new ArrayList<>();
+        if(!singer.isEmpty())for(Track t:tracks)if(!t.uri.equals(current.uri)&&singer.equals(t.singer()))sameSinger.add(t);
         Uri target=docs.directory(docs.root(Uri.parse(destination)),genre);
-        docs.move(current,target);forget(current,"classified");successors.clear();successors.addAll(order);classified=true;
-        log="Moved: "+genre+" · Still "+(player!=null&&player.isPlaying()?"playing":"paused");
+        docs.move(current,target);forget(current,"classified");
+        int moved=1,errors=0;
+        for(Track t:sameSinger){try{docs.move(t,target);forget(t,"classified");moved++;}catch(Exception e){errors++;}}
+        order.removeIf(u->find(u)==null);
+        successors.clear();successors.addAll(order);classified=true;
+        log="Moved "+(moved>1?moved+" tracks by "+current.name.substring(0,current.name.indexOf(" - ")).trim():"1 track")+" to "+genre+(errors>0?" ("+errors+" failed)":"")+" · Still "+(player!=null&&player.isPlaying()?"playing":"paused");
     });}
     private void deleteTrack(Track track)throws Exception{
         // Prune before moving: a cleanup failure never leaves an unrecorded new deletion.

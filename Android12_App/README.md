@@ -55,7 +55,7 @@ Cancellation leaves the existing library unchanged. If access is revoked, use OP
 ## Behavior
 
 - Auto-scan and prepare paused after selecting a folder; remember folders, current track, mode, volume and the random queue in SQLite.
-- **Classify:** move the original immediately, while playback continues from a private disk cache to the end. A paused track stays paused. Already-classified tracks cannot be classified or deleted again from the current session.
+- **Classify:** moves the current song and every other unclassified track by the same singer (filename text before ` - `; names without it move alone), immediately, while playback continues from a private disk cache to the end. A paused track stays paused. Already-classified tracks cannot be classified or deleted again from the current session.
 - **SEQ / RANDOM:** exclusive red selection; loop sequentially or shuffle each round with no within-round repeats. Avoid the same track across round boundaries when possible. Previous in random mode follows actual navigation history.
 - **VOL− / VOL+:** adjust the app's volume by 10 percentage points. Android's hardware volume still controls overall media output.
 - **DEL:** move current unclassified track to the source folder's `tmp_trash` without confirmation, then advance.
