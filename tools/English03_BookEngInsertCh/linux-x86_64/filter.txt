@@ -1,0 +1,2 @@
+# One word per line. Words listed here will not be annotated even if they match difficulty rules.
+# Add character names, place names, author-specific terms, or any vocabulary you do not want translated.

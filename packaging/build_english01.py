@@ -1,4 +1,4 @@
-# A001 application compiler, maintained on main. Inputs: source, output, environment.
+# English01 application compiler, maintained on main. Inputs: source, output, environment.
 import ast
 import configparser
 import json

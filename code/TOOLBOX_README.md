@@ -7,8 +7,8 @@ the current operating system:
 - Windows: `toolbox_win/*.bat`
 
 The displayed tool name is generated directly from the script filename stem.
-For example, `toolbox_linux/A001_EngAudioInsertChNTTS.sh` appears as
-`A001_EngAudioInsertChNTTS`. No registration file is required.
+For example, `toolbox_linux/English01_AudioInsertChTTS.sh` appears as
+`English01_AudioInsertChTTS`. No registration file is required.
 
 ## Setup
 
@@ -52,7 +52,7 @@ output log and can be stopped from the selected tool page.
 
 See [PACKAGING.md](../PACKAGING.md) for `./package.sh English01`, `English02`, `English03`, or `Audio04`, or
 `./package.sh all --setup`. Tool launchers use releases under `tools/`, not source
-worktrees. Each project has one entry. A001/A003 open an interactive terminal in
-their release folder and wait for your commands; A002/A004 launch their UI.
+worktrees. Each project has one entry. English01/English03 open an interactive terminal in
+their release folder and wait for your commands; English02/Audio04 launch their UI.
 Close the external terminal to end the shell; toolbox Stop does not reliably
 control processes owned by a separate terminal emulator.

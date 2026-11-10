@@ -1,0 +1,34 @@
+{
+  "tool": "Audio02_Mp3ToOpusFiles",
+  "branch": "Audio02_Mp3ToOpusFiles",
+  "launch_mode": "ui",
+  "source_commit": "258975f38b837468db66a462be5b47d0c95e1c94",
+  "source_dirty": false,
+  "built_at": "2026-11-10T08:58:06.079337+00:00",
+  "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+  "architecture": "x86_64",
+  "runtime": "../../../Envsetup/environments/Audio02_Mp3ToOpusFiles",
+  "python": "Python 3.12.3",
+  "runtime_packages": [
+    "Cython==3.3.1",
+    "packaging==26.3",
+    "PyQt5==5.15.11",
+    "PyQt5-Qt5==5.15.19",
+    "PyQt5_sip==12.20.0",
+    "setuptools==84.2.1",
+    "wheel==0.48.0"
+  ],
+  "sha256": {
+    "run": "96d00cd650b014f7ef5f953875f0ddc17be6bfc44a48ccdaab12ba3eb31f1eea",
+    "lib/main.cpython-312-x86_64-linux-gnu.so": "3e02dabcd89487274b874fe9e8e9a376106939447fac199cb7a53b80bd2b51d3",
+    "app/config.evn": "2e5c83035da9ccffa3f9fbb49d2394adcca7adf4daa22c46119caaf670c44654",
+    "lib/app/config.cpython-312-x86_64-linux-gnu.so": "1981aa6ba994867ddaa768e5dd73c51e4eaea41f082d992d817ba12186005ba2",
+    "lib/app/workers.cpython-312-x86_64-linux-gnu.so": "5ea2754d861cad339288a23de95522ae6c9cb203a83540001216183811ca93fa",
+    "lib/app/ffmpeg_tools.cpython-312-x86_64-linux-gnu.so": "eb492daff9966f1c00ead9985125ce4fda314cb8f8ab2d792e13be2f3e60ae51",
+    "lib/app/models.cpython-312-x86_64-linux-gnu.so": "6f88fe64e756f2220ce780a49f38bc906b0f2890166ff0cf1f918018c14c5fb4",
+    "lib/app/platform_utils.cpython-312-x86_64-linux-gnu.so": "906d2f2467c0d88a6c352aec03e93e84ca113f8a9be130d763bce6225cf7c689",
+    "lib/app/scanner.cpython-312-x86_64-linux-gnu.so": "6221f064b518c6497718c984930c71a67cb732370741b92b92ce3d1e441317d7",
+    "lib/app/__init__.cpython-312-x86_64-linux-gnu.so": "dc5b82d71b3148f870e330841d408d04efdaff18a61f161809391c784bbfe1a7",
+    "lib/app/main_window.cpython-312-x86_64-linux-gnu.so": "c1e3f61d9bbb25ea5ce1b69b00e20c6f2484a382c969215d6a9edb6a52d06a83"
+  }
+}

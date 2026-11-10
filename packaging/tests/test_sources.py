@@ -13,9 +13,8 @@ class SourceTests(unittest.TestCase):
         for code, branch in package.BRANCHES.items():
             with self.subTest(branch=branch), tempfile.TemporaryDirectory(prefix='source space ') as folder:
                 base = Path(folder)
-                marker = ('InsertSpeech/main_batch.py' if code == 'A001'
-                          else package.TOOLS[code][1][0] + '.py')
-                nested = base / package.TOOLS[code][0]
+                marker = package.source_marker(code)
+                nested = base / package.LEGACY_FOLDERS.get(code, code)
                 for source in (base, nested):
                     path = source / marker
                     path.parent.mkdir(parents=True, exist_ok=True)
@@ -35,7 +34,7 @@ class SourceTests(unittest.TestCase):
             (source / 'app_ui.py').touch()
             with patch.object(package.subprocess, 'check_output', side_effect=['', 'main']):
                 with self.assertRaisesRegex(RuntimeError, 'expected branch English02_SubtitlesToMobi'):
-                    package.source_for('A002', root)
+                    package.source_for('English02_SubtitlesToMobi', root)
 
 
 if __name__ == '__main__':

@@ -11,7 +11,7 @@ from terminal import add_terminal_entry
 
 class TerminalTests(unittest.TestCase):
     def test_manual_shell_and_terminal_dispatch(self):
-        for code in ('A001', 'A003'):
+        for code in ('English01_AudioInsertChTTS', 'English03_BookEngInsertCh'):
             with self.subTest(code=code), tempfile.TemporaryDirectory(prefix='release space ') as folder:
                 root = Path(folder)
                 add_terminal_entry(root, code)
@@ -40,7 +40,7 @@ class TerminalTests(unittest.TestCase):
 
     def test_ui_tools_have_no_terminal_entry(self):
         with tempfile.TemporaryDirectory() as folder:
-            for code in ('A002', 'A004'):
+            for code in ('English02_SubtitlesToMobi', 'Audio04_QMeiaPlayer'):
                 add_terminal_entry(Path(folder), code)
             self.assertEqual(list(Path(folder).iterdir()), [])
 

@@ -1,0 +1,34 @@
+{
+  "tool": "A005",
+  "branch": "Audio01_AudioFilterTools",
+  "launch_mode": "ui",
+  "source_commit": "d881cd6c04b82030419e4c9e17ccf1a9754ba77f",
+  "source_dirty": false,
+  "built_at": "2026-11-10T08:15:11.811774+00:00",
+  "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+  "architecture": "x86_64",
+  "runtime": "../../../Envsetup/environments/A005",
+  "python": "Python 3.12.3",
+  "runtime_packages": [
+    "Cython==3.3.1",
+    "packaging==26.3",
+    "PyQt5==5.15.11",
+    "PyQt5-Qt5==5.15.19",
+    "PyQt5_sip==12.20.0",
+    "setuptools==84.2.1",
+    "wheel==0.48.0"
+  ],
+  "sha256": {
+    "run": "99230f41f535efea7b6d5175b1eb1aab26ca32a8640b7aa76c70763fe47c175d",
+    "lib/audio_filter_tools/config.cpython-312-x86_64-linux-gnu.so": "da60ac9153d9a9a75c75512b63b407c19bf26ab5dbfaa377561b68caf695ead8",
+    "lib/audio_filter_tools/song_matcher.cpython-312-x86_64-linux-gnu.so": "7db0d2d4372243180a767c462e19430cb16260fceeeeb0faab4805524ac32912",
+    "lib/audio_filter_tools/operations.cpython-312-x86_64-linux-gnu.so": "4a36a8ba18dce27d431f348fe4f4821f21141cc6e27d365022d916fb9074e665",
+    "lib/audio_filter_tools/models.cpython-312-x86_64-linux-gnu.so": "8ec14f3956e80efddc1108196b3ae04dd4b7bc08b9adb4ace4ba2079537dcee5",
+    "lib/audio_filter_tools/logging_setup.cpython-312-x86_64-linux-gnu.so": "7d5a48124c3aa02d35cf16a41415828a0a93821b89a9a5a594a02dc786368fa5",
+    "lib/audio_filter_tools/scanner.cpython-312-x86_64-linux-gnu.so": "c7ad0938342f408ee9f7387682e410a7f463a6e063ab9398158fe5d304fb29dc",
+    "lib/audio_filter_tools/__init__.cpython-312-x86_64-linux-gnu.so": "c0acf568b5e13f1c202d8a9098e915a7f0b03f2fe82f8fb28cd77a119320a30e",
+    "lib/audio_filter_tools/storage.cpython-312-x86_64-linux-gnu.so": "220c443cb8937575b38bd529eb35444ed13a32680a760ce3497ab46a060f9c1f",
+    "lib/audio_filter_tools/app.cpython-312-x86_64-linux-gnu.so": "0aa6bc1f59070437be4011f678e4f3ad4cd8f92cf4aaca3e8878ce1f6ef8b33b",
+    "lib/audio_filter_tools/platforms.cpython-312-x86_64-linux-gnu.so": "503d880d2eb0de4f946dfe0ba3f1252dd2aca51ab84da0db773ade150ad38f44"
+  }
+}

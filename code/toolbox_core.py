@@ -48,8 +48,8 @@ def discover_tools(base_dir: Path, system: str | None = None) -> list[ToolScript
     """Discover direct child scripts in the active platform folder.
 
     Script extensions are compared case-insensitively.  The returned name is
-    exactly the filename stem, so ``A001_Foo.sh`` appears as
-    ``A001_Foo`` without any manually maintained metadata.
+    exactly the filename stem, so ``Audio01_Foo.sh`` appears as
+    ``Audio01_Foo`` without any manually maintained metadata.
     """
 
     folder_name, suffix, _ = _platform_settings(system)

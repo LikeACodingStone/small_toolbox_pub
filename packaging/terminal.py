@@ -3,10 +3,10 @@ from pathlib import Path
 
 
 def add_terminal_entry(release: Path, code: str):
-    if code not in ('A001', 'A003'):
+    if code not in ('English01_AudioInsertChTTS', 'English03_BookEngInsertCh'):
         return
     commands = ('./podcast insert-speech\n./podcast subtitle-only\n./podcast translate-audio'
-                if code == 'A001' else './run --help\n./run\n./run --input /path/to/book')
+                if code == 'English01_AudioInsertChTTS' else './run --help\n./run\n./run --input /path/to/book')
     (release / 'terminal.rc').write_text('''# Interactive shell for this release. No application runs automatically.
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")" || return
 printf '\\n%s\\n' 'Available commands (run one yourself):'

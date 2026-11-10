@@ -1,0 +1,25 @@
+{
+  "tool": "Video01_3DVideoManager",
+  "branch": "Video01_3DVideoManager",
+  "launch_mode": "ui",
+  "source_commit": "39c68f2e6941547c3d510d8ecd73d3412a85342d",
+  "source_dirty": true,
+  "built_at": "2026-11-10T08:58:58.016305+00:00",
+  "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+  "architecture": "x86_64",
+  "runtime": "../../../Envsetup/environments/Video01_3DVideoManager",
+  "python": "Python 3.12.3",
+  "runtime_packages": [
+    "Cython==3.3.1",
+    "packaging==26.3",
+    "PyQt5==5.15.11",
+    "PyQt5-Qt5==5.15.19",
+    "PyQt5_sip==12.20.0",
+    "setuptools==84.2.1",
+    "wheel==0.48.0"
+  ],
+  "sha256": {
+    "run": "02b4eacdce3a1905f12642a91d0a270afd77c5e93db63acf440811f4fb165440",
+    "lib/av1_3d_video_tool.cpython-312-x86_64-linux-gnu.so": "d7f9f5240e8cf3a41fe8fd15fcc1fd352b4ea8a29439a0a34770444ad5ee0f26"
+  }
+}

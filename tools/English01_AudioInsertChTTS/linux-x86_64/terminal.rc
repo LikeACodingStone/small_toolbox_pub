@@ -1,0 +1,10 @@
+# Interactive shell for this release. No application runs automatically.
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")" || return
+printf '\n%s\n' 'Available commands (run one yourself):'
+cat <<'COMMANDS'
+./podcast insert-speech
+./podcast subtitle-only
+./podcast translate-audio
+COMMANDS
+printf '\nWorking directory: %s\n\n' "$PWD"
+PS1='[toolbox \W]\$ '

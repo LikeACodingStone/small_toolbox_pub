@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+case "${1:---help}" in
+    insert-speech) feature=InsertSpeech ;;
+    subtitle-only) feature=SubtitleOnly ;;
+    translate-audio) feature=TranslateAudio ;;
+    --help|-h) printf 'Usage: podcast {insert-speech|subtitle-only|translate-audio} [options]\\n'; exit 0 ;;
+    *) printf 'Unknown command: %s\\n' "$1" >&2; exit 2 ;;
+esac
+shift
+exec python3 - "$ROOT" "$feature" "$@" <<'BOOTSTRAP'
+import configparser
+import os
+from pathlib import Path
+import sys
+
+root, feature = Path(sys.argv[1]), sys.argv[2]
+config = configparser.ConfigParser(interpolation=None)
+with (root / "config" / feature / "config.ini").open(encoding="utf-8") as handle:
+    config.read_file(handle)
+value = config.get("RuntimeConfig", "env_folder", fallback="../DependenceLib").strip()
+if not value:
+    raise SystemExit("RuntimeConfig.env_folder must not be empty")
+dependency = (root / Path(value).expanduser()).resolve()
+python = dependency / ".venv/bin/python"
+if not python.is_file():
+    raise SystemExit(f"External Python environment not found: {python}. Prepare env_folder separately.")
+libraries = [dependency / "installed/ctranslate2-rocm/lib"]
+native = dependency / "components/native"
+if native.is_dir():
+    libraries.extend(sorted({p.parent for p in native.rglob("*.so*") if p.is_file()}))
+env = os.environ.copy()
+env.pop("PYTHONPATH", None)
+env.pop("PYTHONHOME", None)
+env["LD_LIBRARY_PATH"] = ":".join(str(p) for p in libraries if p.is_dir()) + (":" + env["LD_LIBRARY_PATH"] if env.get("LD_LIBRARY_PATH") else "")
+env["PODCAST_PACKAGE_ROOT"] = str(root)
+env["PODCAST_FEATURE"] = feature
+code = "import os,sys; from pathlib import Path; sys.path.insert(0,str(Path(os.environ['PODCAST_PACKAGE_ROOT'])/'lib'/os.environ['PODCAST_FEATURE'])); import podcast_entry; sys.exit(podcast_entry.main())"
+os.execve(str(python), [str(python), "-c", code, *sys.argv[3:]], env)
+BOOTSTRAP

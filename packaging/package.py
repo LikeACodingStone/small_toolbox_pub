@@ -20,19 +20,37 @@ from terminal import add_terminal_entry
 
 ROOT = Path(__file__).resolve().parents[1]
 TOOLS = {
-    'A001': ('A001_EngAudioInsertChNTTS', (), ''),
-    'A002': ('A002_PodcastSubtitleToMobi', ('app_ui', 'subtitle_to_ebook'), 'app_ui'),
-    'A003': ('A003_BookEnglishInsertCh', ('main_batch', 'book_vocab_module'), 'main_batch'),
-    'A004': ('A004_QMeiaPlayer', ('player', 'library'), 'player'),
+    'English01_AudioInsertChTTS': ('English01_AudioInsertChTTS', (), ''),
+    'English02_SubtitlesToMobi': ('English02_SubtitlesToMobi', ('app_ui', 'subtitle_to_ebook'), 'app_ui'),
+    'English03_BookEngInsertCh': ('English03_BookEngInsertCh', ('main_batch', 'book_vocab_module'), 'main_batch'),
+    'Audio04_QMeiaPlayer': ('Audio04_QMeiaPlayer', ('player', 'library'), 'player'),
+    # A module entry is a top-level file (name) or a package folder (compiled recursively).
+    'Audio01_AudioFilterTools': ('Audio01_AudioFilterTools', ('audio_filter_tools',), 'audio_filter_tools.app'),
+    'Audio02_Mp3ToOpusFiles': ('Audio02_Mp3ToOpusFiles', ('app', 'main'), 'main'),
+    'Audio03_ClassifyMusic': ('Audio03_ClassifyMusic', ('music_file_list_gui', 'recurse_musicfiles', 'extract_musicfiles'),
+             'music_file_list_gui'),
+    'Video01_3DVideoManager': ('Video01_3DVideoManager', ('av1_3d_video_tool',), 'av1_3d_video_tool'),
 }
+# Generic PyQt applications: rewrite __file__-relative paths to the release root.
+GENERIC = ('Audio01_AudioFilterTools', 'Audio02_Mp3ToOpusFiles', 'Audio03_ClassifyMusic', 'Video01_3DVideoManager')
+SELF_CHECK = {'English02_SubtitlesToMobi': 'module.build_ui()', 'English03_BookEngInsertCh': 'module.load_config()',
+              'Audio04_QMeiaPlayer': "assert (root / 'Icons/Play.png').is_file()"}
+for _code in GENERIC:
+    SELF_CHECK[_code] = 'assert callable(module.main)'
 
 
 BRANCHES = {
-    'A001': 'English01_AudioInsertChTTS',
-    'A002': 'English02_SubtitlesToMobi',
-    'A003': 'English03_BookEngInsertCh',
-    'A004': 'Audio04_QMeiaPlayer',
+    'English01_AudioInsertChTTS': 'English01_AudioInsertChTTS',
+    'English02_SubtitlesToMobi': 'English02_SubtitlesToMobi',
+    'English03_BookEngInsertCh': 'English03_BookEngInsertCh',
+    'Audio04_QMeiaPlayer': 'Audio04_QMeiaPlayer',
+    'Audio01_AudioFilterTools': 'Audio01_AudioFilterTools',
+    'Audio02_Mp3ToOpusFiles': 'Audio02_Mp3ToOpusFiles',
+    'Audio03_ClassifyMusic': 'Audio03_ClassifyMusic',
+    'Video01_3DVideoManager': 'Video01_3DVideoManager',
 }
+# Folder names inside recovered sources, from before tools were named after their branches.
+LEGACY_FOLDERS = {'English01_AudioInsertChTTS': 'A001_EngAudioInsertChNTTS'}
 
 
 def tool_id(value):
@@ -42,7 +60,7 @@ def tool_id(value):
         aliases = (branch, branch.split('_', 1)[0])
         if value.lower() in (alias.lower() for alias in aliases):
             return code
-    raise argparse.ArgumentTypeError('Unknown tool. Use English01, English02, English03, Audio04 or all.')
+    raise argparse.ArgumentTypeError('Unknown tool. Use ' + ', '.join(b.split('_', 1)[0] for b in BRANCHES.values()) + ' or all.')
 
 
 def run(args, **kwargs):
@@ -50,8 +68,17 @@ def run(args, **kwargs):
     return subprocess.run(list(map(str, args)), check=True, **kwargs)
 
 
+MARKERS = {'English01_AudioInsertChTTS': 'InsertSpeech/main_batch.py', 'Audio01_AudioFilterTools': 'audio_filter_tools/__init__.py',
+           'Audio02_Mp3ToOpusFiles': 'app/__init__.py'}
+
+
+def source_marker(code):
+    """File whose presence identifies a usable source folder."""
+    return MARKERS[code] if code in MARKERS else TOOLS[code][1][0] + '.py'
+
+
 def source_for(code, worktrees):
-    name = TOOLS[code][0]
+    name = LEGACY_FOLDERS.get(code, code)
     # Detect registered worktrees by branch, rather than assuming their folder names.
     result = subprocess.check_output(['git', '-C', str(ROOT), 'worktree', 'list', '--porcelain', '-z'], text=True)
     registered = {}
@@ -74,53 +101,84 @@ def source_for(code, worktrees):
             raise RuntimeError(f'{base}: expected branch {branch}, found {actual_branch or "detached HEAD"}')
         # Current branches are flat; recovered English01 still uses its old folder.
         for source in (base, base / name):
-            marker = 'InsertSpeech/main_batch.py' if code == 'A001' else TOOLS[code][1][0] + '.py'
+            marker = source_marker(code)
             if (source / marker).is_file():
                 return source.resolve()
     raise RuntimeError(f'{short}: source worktree not found. Create a worktree for branch {branch}.')
+
+
+def rewrite_paths(text, relative):
+    """Point __file__-relative lookups at the release, where only .so files exist in lib/."""
+    root = '__import__("os").environ["TOOLBOX_PACKAGE_ROOT"]'
+    folder = '/'.join(relative.parts[:-1])
+    here = f'(Path({root}) / {folder!r})' if folder else f'Path({root})'
+    text = text.replace('Path(__file__).resolve().parent.parent', f'Path({root})' if len(relative.parts) == 2 else f'({here}).parent')
+    return text.replace('Path(__file__).resolve().parent', here)
 
 
 def compile_modules(code, source, candidate, work, python):
     _, modules, entry = TOOLS[code]
     staged = work / 'source'
     staged.mkdir()
+    expected = 0
     for module in modules:
-        text = (source / (module + '.py')).read_text(encoding='utf-8-sig')
-        if code == 'A002' and module == 'app_ui':
-            old = 'if __name__ == "__main__":'
-            if text.count(old) != 1:
-                raise RuntimeError('A002 entry point changed; update packaging adapter.')
-            text = text.replace(old, 'def main():')
-        if code == 'A003':
-            text = text.replace('Path(__file__).resolve().parent', 'Path(os.environ["TOOLBOX_PACKAGE_ROOT"])')
-            if module == 'main_batch':
-                old = 'sys.executable,\n        str(SCRIPT_DIR / "main_batch.py"),'
-                if old not in text:
-                    raise RuntimeError('A003 local worker entry point changed; update packaging adapter.')
-                text = text.replace(old, 'str(SCRIPT_DIR / "run"),')
-                # Existing remote source workers remain usable. Never rsync a binary
-                # release over their source checkout using the original --delete path.
-                old = 'def sync_project_to_worker(worker, remote_config):\n'
-                text = text.replace(old, old + '    if remote_config.get("sync_project") or remote_config.get("setup_if_missing"):\n        raise RuntimeError("Packaged remote mode requires preconfigured source workers; set RemoteSyncProject=0 and RemoteSetupIfMissing=0. Use the source branch to deploy workers.")\n')
-        if code == 'A004' and module == 'player':
-            text = text.replace('BASE = Path(__file__).resolve().parent', 'BASE = Path(os.environ["TOOLBOX_PACKAGE_ROOT"])')
-        ast.parse(text)
-        (staged / (module + '.py')).write_text(text)
+        package_dir = source / module
+        if package_dir.is_dir():
+            files = sorted(p for p in package_dir.rglob('*.py') if '__pycache__' not in p.parts)
+            for data in package_dir.rglob('*'):
+                # Keep user-editable data (e.g. config.env) beside the compiled package.
+                if data.is_file() and data.suffix not in ('.py', '.pyc') and '__pycache__' not in data.parts:
+                    target = candidate / data.relative_to(source)
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(data, target)
+        else:
+            files = [source / (module + '.py')]
+        for path in files:
+            text = path.read_text(encoding='utf-8-sig')
+            relative = path.relative_to(source)
+            if code == 'English02_SubtitlesToMobi' and module == 'app_ui':
+                old = 'if __name__ == "__main__":'
+                if text.count(old) != 1:
+                    raise RuntimeError('English02 entry point changed; update packaging adapter.')
+                text = text.replace(old, 'def main():')
+            if code == 'English03_BookEngInsertCh':
+                text = text.replace('Path(__file__).resolve().parent', 'Path(os.environ["TOOLBOX_PACKAGE_ROOT"])')
+                if module == 'main_batch':
+                    old = 'sys.executable,\n        str(SCRIPT_DIR / "main_batch.py"),'
+                    if old not in text:
+                        raise RuntimeError('English03 local worker entry point changed; update packaging adapter.')
+                    text = text.replace(old, 'str(SCRIPT_DIR / "run"),')
+                    # Existing remote source workers remain usable. Never rsync a binary
+                    # release over their source checkout using the original --delete path.
+                    old = 'def sync_project_to_worker(worker, remote_config):\n'
+                    text = text.replace(old, old + '    if remote_config.get("sync_project") or remote_config.get("setup_if_missing"):\n        raise RuntimeError("Packaged remote mode requires preconfigured source workers; set RemoteSyncProject=0 and RemoteSetupIfMissing=0. Use the source branch to deploy workers.")\n')
+            if code == 'Audio04_QMeiaPlayer' and module == 'player':
+                text = text.replace('BASE = Path(__file__).resolve().parent', 'BASE = Path(os.environ["TOOLBOX_PACKAGE_ROOT"])')
+            if code in GENERIC:
+                text = rewrite_paths(text, relative)
+            ast.parse(text)
+            out = staged / relative
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(text, encoding='utf-8')
+            expected += 1
     (staged / '_build.py').write_text('''from pathlib import Path
 from setuptools import setup, Extension
 from Cython.Build import cythonize
-modules = [Extension(p.stem, [str(p)]) for p in Path('.').glob('*.py') if p.name != '_build.py']
+modules = []
+for p in sorted(Path('.').rglob('*.py')):
+    if p.name != '_build.py':
+        modules.append(Extension('.'.join(p.with_suffix('').parts), [str(p)]))
 setup(ext_modules=cythonize(modules, compiler_directives={'language_level': 3, 'binding': True, 'annotation_typing': False}))
 ''')
     lib = candidate / 'lib'
     lib.mkdir()
     run([python, staged / '_build.py', 'build_ext', '--build-lib', lib,
          '--build-temp', work / 'objects', '--parallel', '2'], cwd=staged)
-    if len(list(lib.glob('*.so'))) != len(modules):
+    if len(list(lib.rglob('*.so'))) != expected:
         raise RuntimeError('Some application modules were not compiled')
-    if code == 'A004':
+    if code == 'Audio04_QMeiaPlayer':
         shutil.copytree(source / 'Icons', candidate / 'Icons')
-    if code == 'A003':
+    if code == 'English03_BookEngInsertCh':
         cfg = configparser.ConfigParser(interpolation=None)
         cfg.read(source / 'config.ini')
         cfg.set('RuntimeConfig', 'RunMode', 'local')
@@ -162,7 +220,7 @@ os.environ.setdefault('APP_LOG_FILE', str(root / 'app_ui_debug.log'))
 os.environ.setdefault('APP_STATE_FILE', str(root / 'app_ui_state.json'))
 module = importlib.import_module(''' + repr(entry) + ''')
 if sys.argv[1:] == ['--self-check']:
-    ''' + ({'A002': "module.build_ui()", 'A003': "module.load_config()", 'A004': "assert (root / 'Icons/Play.png').is_file()"}[code]) + '''
+    ''' + (SELF_CHECK[code]) + '''
     print(json.dumps({'status': 'ok', 'tool': ''' + repr(code) + ''', 'module': module.__file__}))
 else:
     sys.exit(module.main())
@@ -190,9 +248,9 @@ def package(code, args):
     build.mkdir(parents=True, exist_ok=True)
     work = Path(tempfile.mkdtemp(prefix='build-', dir=build))
     candidate = work / 'release'
-    if code == 'A001':
-        run([sys.executable, ROOT / 'packaging/build_a001.py', source, candidate, env])
-        # A001 compiler writes paths relative to its output; adjust at publication.
+    if code == 'English01_AudioInsertChTTS':
+        run([sys.executable, ROOT / 'packaging/build_english01.py', source, candidate, env])
+        # English01 compiler writes paths relative to its output; adjust at publication.
         for path in (candidate / 'config').glob('*/config.ini'):
             cfg = configparser.ConfigParser(interpolation=None)
             cfg.read(path)
@@ -208,14 +266,14 @@ def package(code, args):
         script.chmod(0o755)
         check_env = dict(os.environ, QT_QPA_PLATFORM='offscreen', SDL_AUDIODRIVER='dummy')
         run([script, '--self-check'], cwd='/tmp', env=check_env)
-        if code == 'A003':
+        if code == 'English03_BookEngInsertCh':
             run([script, '--help'], cwd='/tmp', env=check_env, stdout=subprocess.DEVNULL)
         script.write_text(launcher(code, entry, os.path.relpath(env, target)))
     add_terminal_entry(candidate, code)
     for binary in candidate.rglob('*.so'):
         if binary.stat().st_size == 0:
             raise RuntimeError(f'Empty compiled module: {binary}')
-    executable = candidate / ('podcast' if code == 'A001' else 'run')
+    executable = candidate / ('podcast' if code == 'English01_AudioInsertChTTS' else 'run')
     if not executable.read_bytes().startswith(b'#!/usr/bin/env bash\n'):
         raise RuntimeError(f'Invalid executable launcher: {executable}')
     forbidden = [p for p in candidate.rglob('*') if p.suffix in ('.py', '.pyc', '.pyx', '.c')]
@@ -224,7 +282,7 @@ def package(code, args):
     manifest = {
         'tool': code, 'branch': subprocess.check_output(
             ['git', '-C', str(source), 'branch', '--show-current'], text=True).strip(),
-        'launch_mode': 'terminal' if code in ('A001', 'A003') else 'ui',
+        'launch_mode': 'terminal' if code in ('English01_AudioInsertChTTS', 'English03_BookEngInsertCh') else 'ui',
         'source_commit': subprocess.check_output(['git', '-C', str(source), 'rev-parse', 'HEAD'], text=True).strip(),
         'source_dirty': bool(subprocess.check_output(['git', '-C', str(source), 'status', '--porcelain'], text=True).strip()),
         'built_at': datetime.now(timezone.utc).isoformat(),

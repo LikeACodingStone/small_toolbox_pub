@@ -4,8 +4,8 @@
   "launch_mode": "ui",
   "source_commit": "a333f410dc30d7c67fdd9abd1233fb42e918fec0",
   "source_dirty": false,
-  "built_at": "2026-10-13T08:59:18.872550+00:00",
-  "platform": "Linux-7.0.0-34-generic-x86_64-with-glibc2.39",
+  "built_at": "2026-11-10T08:13:55.614034+00:00",
+  "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
   "architecture": "x86_64",
   "runtime": "../../../Envsetup/environments/A002",
   "python": "Python 3.12.3",
@@ -72,7 +72,7 @@
   ],
   "sha256": {
     "run": "360a470835ce77ff9620093761dee89b3494cbd0a170309c866d26b8dce88211",
-    "lib/app_ui.cpython-312-x86_64-linux-gnu.so": "e7cae9ae047d1dbd36a0c15c987fcc820b96c725420dd6c16bddae7dc3ab7830",
-    "lib/subtitle_to_ebook.cpython-312-x86_64-linux-gnu.so": "a549fb791f859a549a1e17300b820f2bd9779ddadb1c63d5ddcf13901a7129ab"
+    "lib/app_ui.cpython-312-x86_64-linux-gnu.so": "10e8ba20d9caa0920418e673f1388191cb98f9438df78f74e97844a4369f7e92",
+    "lib/subtitle_to_ebook.cpython-312-x86_64-linux-gnu.so": "2c713b97dfccf27e2d12b83846aa0a3dac966e857819015875190cb90ed08c34"
   }
 }
