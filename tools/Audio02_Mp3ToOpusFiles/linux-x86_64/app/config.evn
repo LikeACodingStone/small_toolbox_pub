@@ -1,6 +1,0 @@
-# Qt UI font settings
-# Restart the program after changing these values.
-FONT_SIZE=16
-LOG_FONT_SIZE=16
-TABLE_ROW_HEIGHT=54
-LOG_MAX_HEIGHT=260
